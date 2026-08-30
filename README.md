@@ -6,9 +6,9 @@ Human-in-the-loop social media content workspace. Turn an idea into a platform-s
 
 - Responsive dashboard and content metrics
 - Platform and tone-aware local draft generation
-- Review and edit step before approval
+- Review, save, and resume drafts before approval
 - Explicit approval gate before saving
-- Approved-content calendar and scheduling state
+- Approved-content calendar with custom scheduling, rescheduling, and unscheduling
 - Browser persistence for local MVP data
 - No automatic publishing and no client-side API keys
 
