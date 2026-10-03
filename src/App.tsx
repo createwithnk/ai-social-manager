@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BarChart3, CalendarDays, CheckCircle2, Clock3, FileText, LayoutDashboard, LoaderCircle, LogOut, Menu, Plus, Sparkles, WandSparkles, X } from 'lucide-react'
 import { useAuth, type AuthState } from './lib/auth'
-import { createDraft } from './lib/content'
+import { generateDraft } from './lib/content'
 import { fetchPosts, savePostForUser } from './lib/posts'
 import { isSupabaseConfigured } from './lib/supabase'
-import type { Platform, Post } from './types'
+import { uploadMedia, mediaPreview } from './lib/media'
+import type { Platform, Post, PostMedia } from './types'
 
 type View = 'dashboard' | 'create' | 'calendar' | 'detail'
 
@@ -188,6 +189,19 @@ function Dashboard({ posts, drafts, approved, scheduled, onCreate, onEdit, onVie
   return <section className="content"><div className="hero"><div><span className="eyebrow">YOUR CONTENT COMMAND CENTER</span><h2>Turn one idea into<br /><em>platform-ready content.</em></h2><p>Draft with AI, review every word, and approve only when it feels right.</p><button className="primary" onClick={onCreate} disabled={loading}><Sparkles /> Create with AI</button></div><div className="hero-orbit"><div className="orb"><WandSparkles /></div><span>IDEA</span><span>REVIEW</span><span>APPROVE</span></div></div><div className="stats"><Stat icon={<BarChart3 />} value={posts.length} label="Total content" /><Stat icon={<FileText />} value={drafts} label="Drafts" /><Stat icon={<CheckCircle2 />} value={approved} label="Approved" /><Stat icon={<Clock3 />} value={scheduled} label="Scheduled" /></div><div className="panel"><div className="panel-head"><div><span className="eyebrow">WORKSPACE</span><h3>Recent content</h3></div><button className="ghost" onClick={onCreate} disabled={loading}>Create new <Plus /></button></div>{loading ? <div className="empty"><LoaderCircle className="spinner" /><p>Loading your content…</p></div> : posts.length === 0 ? <div className="empty"><div><Sparkles /></div><h3>Your ideas start here</h3><p>Create your first post and keep full control before anything is scheduled.</p><button className="primary" onClick={onCreate}>Create first post</button></div> : <div className="post-list">{posts.slice(0, 6).map((post) => <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.caption.slice(0, 100)}{post.caption.length > 100 ? '…' : ''}</p></div><div className="schedule-controls"><button className="ghost" onClick={() => onView(post)}>View</button>{post.status === 'draft' ? <button className="ghost" onClick={() => onEdit(post)}>Continue draft</button> : <span className={`status ${post.status}`}>{post.status}</span>}</div></article>)}</div>}</div></section>
 }
 
+function Attachment({ media }: { media: PostMedia }) {
+  const [url, setUrl] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    let active = true
+    const refresh = () => { void mediaPreview(media).then((value) => { if (active) { setUrl(value); setError(null) } }).catch((reason) => { if (active) { setUrl(null); setError(errorMessage(reason)) } }) }
+    refresh()
+    const timer = setInterval(refresh, 240000)
+    return () => { active = false; clearInterval(timer) }
+  }, [media])
+  return <figure>{url && (media.type.startsWith('video/') ? <video src={url} controls style={{ maxWidth: '100%', maxHeight: 300 }} /> : <img src={url} alt={media.name} style={{ maxWidth: '100%', maxHeight: 300 }} />)}<figcaption>{media.name}</figcaption>{error && <p role="alert">{error}</p>}</figure>
+}
+
 function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
   return <div className="stat"><div className="stat-icon">{icon}</div><div><strong>{value}</strong><span>{label}</span></div></div>
 }
@@ -199,12 +213,14 @@ function PostDetail({ post, onBack, onEdit, disabled }: { post: Post; onBack: ()
     setEditing(true)
     try {
       await onEdit(post)
+    } catch {
+      // The workspace displays the persistence error; keep this read-only view open.
     } finally {
       setEditing(false)
     }
   }
 
-  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">READ-ONLY CONTENT</span><h2>{post.idea}</h2></div><button className="ghost" onClick={onBack} disabled={editing}>Back</button></div><p><span className={`status ${post.status}`}>{post.status}</span></p><dl><dt>Platform</dt><dd>{post.platform}</dd><dt>Tone</dt><dd>{post.tone}</dd><dt>Created</dt><dd>{new Date(post.createdAt).toLocaleString()}</dd>{post.scheduledFor && <><dt>Scheduled for</dt><dd>{new Date(post.scheduledFor).toLocaleString()}</dd></>}</dl><h3>Caption</h3><p style={{ whiteSpace: 'pre-wrap' }}>{post.caption}</p><h3>Hashtags</h3><p>{post.hashtags.map((tag) => `#${tag}`).join(' ')}</p><button className="primary" onClick={() => { void edit() }} disabled={disabled || editing}>{editing ? 'Preparing draft…' : post.status === 'draft' ? 'Edit draft' : 'Edit'}</button></div></section>
+  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">READ-ONLY CONTENT</span><h2>{post.idea}</h2></div><button className="ghost" onClick={onBack} disabled={editing}>Back</button></div><p><span className={`status ${post.status}`}>{post.status}</span></p><dl><dt>Platform</dt><dd>{post.platform}</dd><dt>Tone</dt><dd>{post.tone}</dd><dt>Created</dt><dd>{new Date(post.createdAt).toLocaleString()}</dd>{post.scheduledFor && <><dt>Scheduled for</dt><dd>{new Date(post.scheduledFor).toLocaleString()}</dd></>}</dl>{post.media && <Attachment media={post.media} />}<h3>Caption</h3><p style={{ whiteSpace: 'pre-wrap' }}>{post.caption}</p><h3>Hashtags</h3><p>{post.hashtags.map((tag) => `#${tag}`).join(' ')}</p><button className="primary" onClick={() => { void edit() }} disabled={disabled || editing}>{editing ? 'Preparing draft…' : post.status === 'draft' ? 'Edit draft' : 'Edit'}</button></div></section>
 }
 
 function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null; onSave: (post: Post) => Promise<void>; disabled: boolean }) {
@@ -216,14 +232,25 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
   const [postId, setPostId] = useState<string | undefined>(initialPost?.id)
   const [createdAt, setCreatedAt] = useState<string | undefined>(initialPost?.createdAt)
   const [saving, setSaving] = useState(false)
+  const [media, setMedia] = useState<PostMedia | undefined>(initialPost?.media)
+  const [uploading, setUploading] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const canGenerate = idea.trim().length >= 10
 
-  function generate() {
-    if (!canGenerate) return
-    setDraft(createDraft(idea, platform, tone))
+  const [generating, setGenerating] = useState(false)
+
+  async function generate() {
+    if (!canGenerate || saving || generating || disabled) return
     setApproved(false)
     setSaveError(null)
+    setGenerating(true)
+    try {
+      setDraft(await generateDraft(idea, platform, tone))
+    } catch (error) {
+      setSaveError(errorMessage(error))
+    } finally {
+      setGenerating(false)
+    }
   }
 
   async function save(status: 'draft' | 'approved') {
@@ -233,7 +260,7 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
     setSaving(true)
     setSaveError(null)
     try {
-      await onSave({ id, idea: idea.trim(), platform, tone, ...draft, status, createdAt: timestamp })
+      await onSave({ id, idea: idea.trim(), platform, tone, ...draft, media, status, createdAt: timestamp })
       setPostId(id)
       setCreatedAt(timestamp)
     } catch (error) {
@@ -243,8 +270,18 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
     }
   }
 
-  const busy = saving || disabled
-  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>1 <b>Brief</b></span><i /><span className={draft ? 'current' : ''}>2 <b>Review</b></span><i /><span>3 <b>Approve</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">STEP 1 — YOUR IDEA</span><h2>What do you want to share?</h2><label>Content idea<textarea value={idea} onChange={(event) => setIdea(event.target.value)} placeholder="Example: Five simple ways small businesses can create better Instagram posts..." maxLength={500} disabled={busy} /><small>{idea.length}/500 · Minimum 10 characters</small></label><div className="field-row"><label>Platform<select value={platform} onChange={(event) => setPlatform(event.target.value as Platform)} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option}>{option}</option>)}</select></label><label>Tone<select value={tone} onChange={(event) => setTone(event.target.value)} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option}>{option}</option>)}</select></label></div><button className="primary wide" disabled={!canGenerate || busy} onClick={generate}><WandSparkles /> Generate draft</button><p className="fineprint">This MVP uses a safe local draft engine. A server-side AI provider can be connected next without exposing API keys.</p></div><div className="panel preview-panel"><span className="eyebrow">STEP 2 — REVIEW & EDIT</span><h2>Your draft</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>Your generated draft will appear here.</p></div> : <><label>Caption<textarea className="caption" value={draft.caption} onChange={(event) => setDraft({ ...draft, caption: event.target.value })} disabled={busy} /></label><label>Hashtags<input value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) })} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{saveError}</p>}<button className="ghost draft-save" disabled={busy} onClick={() => { void save('draft') }}><FileText /> {saving ? 'Saving…' : postId ? 'Update draft' : 'Save draft'}</button><div className="approval"><input id="approve" type="checkbox" checked={approved} onChange={(event) => setApproved(event.target.checked)} disabled={busy} /><label htmlFor="approve"><strong>I reviewed and approve this content</strong><span>Required before saving or scheduling.</span></label></div><button className="primary wide" disabled={!approved || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? 'Saving…' : 'Approve & save'}</button></>}</div></div></section>
+  async function attach(file?: File) {
+    if (!file) return
+    setApproved(false)
+    setSaveError(null)
+    setUploading(true)
+    try { setMedia(await uploadMedia(file)) }
+    catch (error) { setSaveError(errorMessage(error)) }
+    finally { setUploading(false) }
+  }
+
+  const busy = saving || generating || uploading || disabled
+  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>1 <b>Brief</b></span><i /><span className={draft ? 'current' : ''}>2 <b>Review</b></span><i /><span>3 <b>Approve</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">STEP 1 — YOUR IDEA</span><h2>What do you want to share?</h2><label>Content idea<textarea value={idea} onChange={(event) => { setIdea(event.target.value); setApproved(false) }} placeholder="Example: Five simple ways small businesses can create better Instagram posts..." maxLength={500} disabled={busy} /><small>{idea.length}/500 · Minimum 10 characters</small></label><label>Photo or video<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4" disabled={busy || !isSupabaseConfigured} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; void attach(file) }} /><small>{uploading ? 'Uploading…' : 'JPG, PNG, WebP or MP4 · Up to 25 MB · Save the draft to keep its attachment.'}</small></label>{media && <><Attachment media={media} /><button className="ghost" disabled={busy} onClick={() => { setMedia(undefined); setApproved(false) }}>Remove attachment from draft</button></>}<div className="field-row"><label>Platform<select value={platform} onChange={(event) => { setPlatform(event.target.value as Platform); setApproved(false) }} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option}>{option}</option>)}</select></label><label>Tone<select value={tone} onChange={(event) => { setTone(event.target.value); setApproved(false) }} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option}>{option}</option>)}</select></label></div><button className="primary wide" disabled={!canGenerate || busy} onClick={() => { void generate() }}><WandSparkles /> {generating ? 'Generating…' : isSupabaseConfigured ? 'Generate with AI' : 'Generate demo draft'}</button><p className="fineprint">{isSupabaseConfigured ? 'AI drafts need your review. Generation does not publish or schedule content.' : 'Demo mode: this uses a local template, not AI. Posts stay in this browser.'}</p></div><div className="panel preview-panel"><span className="eyebrow">STEP 2 — REVIEW & EDIT</span><h2>Your draft</h2>{saveError && <p className="form-error" role="alert">{saveError}</p>}{!draft ? <div className="preview-empty"><Sparkles /><p>Your generated draft will appear here.</p></div> : <><label>Caption<textarea className="caption" value={draft.caption} onChange={(event) => { setDraft({ ...draft, caption: event.target.value }); setApproved(false) }} disabled={busy} /></label><label>Hashtags<input value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => { setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) }); setApproved(false) }} disabled={busy} /></label><button className="ghost draft-save" disabled={busy} onClick={() => { void save('draft') }}><FileText /> {saving ? 'Saving…' : postId ? 'Update draft' : 'Save draft'}</button><div className="approval"><input id="approve" type="checkbox" checked={approved} onChange={(event) => setApproved(event.target.checked)} disabled={busy} /><label htmlFor="approve"><strong>I reviewed and approve this content</strong><span>Required to approve or schedule. Any edit clears approval.</span></label></div><button className="primary wide" disabled={!approved || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? 'Saving…' : 'Approve & save'}</button></>}</div></div></section>
 }
 
 function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpdate: (post: Post) => Promise<void>; onView: (post: Post) => void; disabled: boolean }) {
@@ -272,8 +309,11 @@ function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpda
   }
 
   function schedule(post: Post) {
-    const scheduledAt = new Date(scheduleTimes[post.id] ?? defaultScheduleTime)
-    if (Number.isNaN(scheduledAt.getTime())) return
+    const scheduledAt = new Date(scheduleTimeFor(post))
+    if (!isFutureDate(scheduledAt)) {
+      setError('Choose a date and time in the future.')
+      return
+    }
     void update({ ...post, status: 'scheduled', scheduledFor: scheduledAt.toISOString() })
   }
 
@@ -285,7 +325,11 @@ function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpda
     return scheduleTimes[post.id] ?? (post.scheduledFor ? toDateTimeInput(new Date(post.scheduledFor)) : defaultScheduleTime)
   }
 
-  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">APPROVED CONTENT ONLY</span><h3>Ready to schedule</h3></div></div>{error && <p className="form-error" role="alert">{error}</p>}{approved.length === 0 ? <div className="empty"><CalendarDays /><h3>No approved content yet</h3><p>Review and approve a draft before it can appear here.</p></div> : <div className="post-list">{approved.map((post) => { const busy = disabled || savingId === post.id; return <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.scheduledFor ? `Scheduled for ${new Date(post.scheduledFor).toLocaleString()}` : 'Approved and ready'}</p></div><div className="schedule-controls"><button className="ghost" disabled={busy} onClick={() => onView(post)}>View</button><input aria-label={`Schedule ${post.idea}`} type="datetime-local" value={scheduleTimeFor(post)} onChange={(event) => setScheduleTimes((times) => ({ ...times, [post.id]: event.target.value }))} disabled={busy} /><div><button className="ghost" disabled={busy} onClick={() => schedule(post)}><CalendarDays /> {busy ? 'Saving…' : post.status === 'approved' ? 'Schedule' : 'Reschedule'}</button>{post.status === 'scheduled' && <button className="ghost unschedule" disabled={busy} onClick={() => unschedule(post)}>Unschedule</button>}</div></div></article> })}</div>}</div></section>
+  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">APPROVED CONTENT ONLY</span><h3>Content reminders</h3><p>Dates are saved in your calendar. Automatic social publishing is not connected yet.</p></div></div>{error && <p className="form-error" role="alert">{error}</p>}{approved.length === 0 ? <div className="empty"><CalendarDays /><h3>No approved content yet</h3><p>Review and approve a draft before it can appear here.</p></div> : <div className="post-list">{approved.map((post) => { const busy = disabled || savingId === post.id; return <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.scheduledFor ? `Scheduled for ${new Date(post.scheduledFor).toLocaleString()}` : 'Approved and ready'}</p></div><div className="schedule-controls"><button className="ghost" disabled={busy} onClick={() => onView(post)}>View</button><input aria-label={`Schedule ${post.idea}`} type="datetime-local" value={scheduleTimeFor(post)} onChange={(event) => setScheduleTimes((times) => ({ ...times, [post.id]: event.target.value }))} disabled={busy} /><div><button className="ghost" disabled={busy} onClick={() => schedule(post)}><CalendarDays /> {busy ? 'Saving…' : post.status === 'approved' ? 'Schedule' : 'Reschedule'}</button>{post.status === 'scheduled' && <button className="ghost unschedule" disabled={busy} onClick={() => unschedule(post)}>Unschedule</button>}</div></div></article> })}</div>}</div></section>
+}
+
+function isFutureDate(date: Date) {
+  return Number.isFinite(date.getTime()) && date.getTime() > Date.now()
 }
 
 function toDateTimeInput(date: Date) {
