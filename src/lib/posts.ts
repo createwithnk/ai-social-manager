@@ -12,6 +12,8 @@ interface PostRow {
   status: PostStatus
   created_at: string
   scheduled_for: string | null
+  media: Post['media'] | null
+  language: string
 }
 
 function toPost(row: PostRow): Post {
@@ -25,6 +27,8 @@ function toPost(row: PostRow): Post {
     status: row.status,
     createdAt: row.created_at,
     scheduledFor: row.scheduled_for ?? undefined,
+    media: row.media ?? undefined,
+    language: row.language,
   }
 }
 
@@ -33,7 +37,7 @@ export async function fetchPosts(): Promise<Post[]> {
 
   const { data, error } = await supabase
     .from('posts')
-    .select('id, user_id, idea, platform, tone, caption, hashtags, status, created_at, scheduled_for')
+    .select('id, user_id, idea, platform, tone, caption, hashtags, status, created_at, scheduled_for, media, language')
     .order('created_at', { ascending: false })
 
   if (error) throw error
@@ -56,8 +60,10 @@ export async function savePostForUser(post: Post, userId: string): Promise<Post>
       status: post.status,
       created_at: post.createdAt,
       scheduled_for: post.scheduledFor ?? null,
+      media: post.media ?? null,
+      language: post.language ?? 'English',
     }, { onConflict: 'id' })
-    .select('id, user_id, idea, platform, tone, caption, hashtags, status, created_at, scheduled_for')
+    .select('id, user_id, idea, platform, tone, caption, hashtags, status, created_at, scheduled_for, media, language')
     .single()
 
   if (error) throw error

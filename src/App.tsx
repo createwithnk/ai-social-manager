@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BarChart3, CalendarDays, CheckCircle2, Clock3, FileText, LayoutDashboard, LoaderCircle, LogOut, Menu, Plus, Sparkles, WandSparkles, X } from 'lucide-react'
 import { useAuth, type AuthState } from './lib/auth'
-import { createDraft } from './lib/content'
+import { MediaInput, MediaPreview } from './components/MediaInput'
+import { validatePost, captionLimits } from './lib/workflow'
+import { createDraft, generateContent } from './lib/content'
 import { fetchPosts, savePostForUser } from './lib/posts'
 import { isSupabaseConfigured } from './lib/supabase'
 import type { Platform, Post } from './types'
 
-type View = 'dashboard' | 'create' | 'calendar' | 'detail'
+type View = 'dashboard' | 'create' | 'calendar' | 'detail' | 'settings'
 
 function loadLocalPosts(): Post[] {
   try {
@@ -34,7 +36,7 @@ function App() {
   if (auth.status === 'error') return <AuthBootstrapError auth={auth} />
   if (isSupabaseConfigured && !auth.user) return <AuthScreen auth={auth} />
 
-  return <Workspace auth={auth} />
+  return <Workspace key={auth.user?.id ?? 'local'} auth={auth} />
 }
 
 function AuthLoading() {
@@ -107,6 +109,8 @@ function Workspace({ auth }: { auth: AuthState }) {
   const persistPost = useCallback(async (post: Post) => {
     setPostsError(null)
     try {
+      validatePost(post)
+      if (!isSupabaseConfigured) localStorage.setItem('aasiflow-posts', JSON.stringify(replacePost(posts, post)))
       const savedPost = isSupabaseConfigured
         ? await savePostForUser(post, userId ?? '')
         : post
@@ -116,7 +120,7 @@ function Workspace({ auth }: { auth: AuthState }) {
       setPostsError(message)
       throw error
     }
-  }, [userId])
+  }, [userId, posts])
 
   function createPost() {
     setEditingPost(null)
@@ -165,11 +169,14 @@ function Workspace({ auth }: { auth: AuthState }) {
         <Nav active={view === 'dashboard'} icon={<LayoutDashboard />} label="Dashboard" onClick={() => { setView('dashboard'); setMobile(false) }} />
         <Nav active={view === 'create'} icon={<Sparkles />} label="Create content" onClick={() => { setView('create'); setMobile(false) }} />
         <Nav active={view === 'calendar'} icon={<CalendarDays />} label="Content calendar" onClick={() => { setView('calendar'); setMobile(false) }} />
+        <Nav active={view === 'settings'} icon={<CheckCircle2 />} label="Connections & setup" onClick={() => { setView('settings'); setMobile(false) }} />
       </nav>
       <div className="guardrail"><CheckCircle2 /><div><strong>Approval protected</strong><span>Nothing is published without your approval.</span></div></div>
     </aside>
     <main>
-      <header><button className="menu" onClick={() => setMobile(true)} aria-label="Open navigation"><Menu /></button><div><small>AI SOCIAL MEDIA WORKSPACE</small><h1>{view === 'dashboard' ? 'Welcome back, Noshad' : view === 'create' ? 'Create new content' : view === 'detail' ? 'Content details' : 'Content calendar'}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut /> Log out</button></div>}<button className="primary compact" onClick={createPost}><Plus /> New post</button></header>
+      <header><button className="menu" onClick={() => setMobile(true)} aria-label="Open navigation"><Menu /></button><div><small>AI SOCIAL MEDIA WORKSPACE</small><h1>{view === 'dashboard' ? 'Your content workspace' : view === 'create' ? 'Create new content' : view === 'detail' ? 'Content details' : view === 'settings' ? 'Connections & setup' : 'Content calendar'}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut /> Log out</button></div>}<button className="primary compact" onClick={createPost}><Plus /> New post</button></header>
+      <p className="workspace-notice">Publishing is disabled. Calendar dates are plans only. {isSupabaseConfigured ? 'Account storage connected.' : 'Local demo: drafts stay in this browser.'}</p>
+      {view === 'settings' && <section className="content"><div className="panel"><h2>Setup before launch</h2><p>Account & draft storage: {isSupabaseConfigured ? 'configured; successful saves confirm availability' : 'not configured'}</p><p>AI: requires the server function, Gemini key and model. Use Generate with AI to check after setup.</p><p>Media: requires private storage migration and a signed-in account.</p><p>Instagram, LinkedIn, Facebook and X: not connected. Publishing is disabled.</p><p>Billing: not connected. No payments are collected.</p><p>Performance analytics and audience-based posting time recommendations need connected social accounts. No engagement figures are simulated.</p><p>API keys are entered in server settings only, never here.</p></div></section>}
       {(postsError ?? auth.error) && <p className="workspace-error" role="alert">{postsError ?? auth.error}</p>}
       {view === 'dashboard' && <Dashboard posts={posts} drafts={posts.filter((post) => post.status === 'draft').length} approved={posts.filter((post) => post.status === 'approved').length} scheduled={posts.filter((post) => post.status === 'scheduled').length} onCreate={createPost} onEdit={editDraft} onView={(post) => viewPost(post, 'dashboard')} loading={postsLoading} />}
       {view === 'create' && <Generator key={editingPost?.id ?? `new-${composerKey}`} initialPost={editingPost} onSave={savePost} disabled={postsLoading} />}
@@ -199,12 +206,14 @@ function PostDetail({ post, onBack, onEdit, disabled }: { post: Post; onBack: ()
     setEditing(true)
     try {
       await onEdit(post)
+    } catch {
+      // Workspace displays the save error and leaves the approved post intact.
     } finally {
       setEditing(false)
     }
   }
 
-  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">READ-ONLY CONTENT</span><h2>{post.idea}</h2></div><button className="ghost" onClick={onBack} disabled={editing}>Back</button></div><p><span className={`status ${post.status}`}>{post.status}</span></p><dl><dt>Platform</dt><dd>{post.platform}</dd><dt>Tone</dt><dd>{post.tone}</dd><dt>Created</dt><dd>{new Date(post.createdAt).toLocaleString()}</dd>{post.scheduledFor && <><dt>Scheduled for</dt><dd>{new Date(post.scheduledFor).toLocaleString()}</dd></>}</dl><h3>Caption</h3><p style={{ whiteSpace: 'pre-wrap' }}>{post.caption}</p><h3>Hashtags</h3><p>{post.hashtags.map((tag) => `#${tag}`).join(' ')}</p><button className="primary" onClick={() => { void edit() }} disabled={disabled || editing}>{editing ? 'Preparing draft…' : post.status === 'draft' ? 'Edit draft' : 'Edit'}</button></div></section>
+  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">READ-ONLY CONTENT</span><h2>{post.idea}</h2></div><button className="ghost" onClick={onBack} disabled={editing}>Back</button></div><p><span className={`status ${post.status}`}>{post.status}</span></p><dl><dt>Platform</dt><dd>{post.platform}</dd><dt>Tone</dt><dd>{post.tone}</dd><dt>Created</dt><dd>{new Date(post.createdAt).toLocaleString()}</dd>{post.scheduledFor && <><dt>Scheduled for</dt><dd>{new Date(post.scheduledFor).toLocaleString()}</dd></>}</dl>{post.media && <MediaPreview media={post.media} />}<h3>Caption</h3><p style={{ whiteSpace: 'pre-wrap' }}>{post.caption}</p><h3>Hashtags</h3><p>{post.hashtags.map((tag) => `#${tag}`).join(' ')}</p><button className="primary" onClick={() => { void edit() }} disabled={disabled || editing}>{editing ? 'Preparing draft…' : post.status === 'draft' ? 'Edit draft' : 'Edit'}</button></div></section>
 }
 
 function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null; onSave: (post: Post) => Promise<void>; disabled: boolean }) {
@@ -217,10 +226,22 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
   const [createdAt, setCreatedAt] = useState<string | undefined>(initialPost?.createdAt)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [language, setLanguage] = useState(initialPost?.language ?? 'English')
+  const [media, setMedia] = useState(initialPost?.media)
+  const [generating, setGenerating] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [saved, setSaved] = useState(false)
   const canGenerate = idea.trim().length >= 10
+  function changed() { setApproved(false); setSaved(false) }
+  async function generateAI() {
+    if (!canGenerate) return
+    setGenerating(true); changed(); setSaveError(null)
+    try { setDraft(await generateContent(idea, platform, tone, language, media)) } catch (error) { setSaveError(errorMessage(error)) } finally { setGenerating(false) }
+  }
 
   function generate() {
     if (!canGenerate) return
+    changed()
     setDraft(createDraft(idea, platform, tone))
     setApproved(false)
     setSaveError(null)
@@ -233,9 +254,10 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
     setSaving(true)
     setSaveError(null)
     try {
-      await onSave({ id, idea: idea.trim(), platform, tone, ...draft, status, createdAt: timestamp })
+      await onSave({ id, idea: idea.trim(), platform, tone, ...draft, media, language, status, createdAt: timestamp })
       setPostId(id)
       setCreatedAt(timestamp)
+      setSaved(true)
     } catch (error) {
       setSaveError(errorMessage(error))
     } finally {
@@ -243,8 +265,8 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
     }
   }
 
-  const busy = saving || disabled
-  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>1 <b>Brief</b></span><i /><span className={draft ? 'current' : ''}>2 <b>Review</b></span><i /><span>3 <b>Approve</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">STEP 1 — YOUR IDEA</span><h2>What do you want to share?</h2><label>Content idea<textarea value={idea} onChange={(event) => setIdea(event.target.value)} placeholder="Example: Five simple ways small businesses can create better Instagram posts..." maxLength={500} disabled={busy} /><small>{idea.length}/500 · Minimum 10 characters</small></label><div className="field-row"><label>Platform<select value={platform} onChange={(event) => setPlatform(event.target.value as Platform)} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option}>{option}</option>)}</select></label><label>Tone<select value={tone} onChange={(event) => setTone(event.target.value)} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option}>{option}</option>)}</select></label></div><button className="primary wide" disabled={!canGenerate || busy} onClick={generate}><WandSparkles /> Generate draft</button><p className="fineprint">This MVP uses a safe local draft engine. A server-side AI provider can be connected next without exposing API keys.</p></div><div className="panel preview-panel"><span className="eyebrow">STEP 2 — REVIEW & EDIT</span><h2>Your draft</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>Your generated draft will appear here.</p></div> : <><label>Caption<textarea className="caption" value={draft.caption} onChange={(event) => setDraft({ ...draft, caption: event.target.value })} disabled={busy} /></label><label>Hashtags<input value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) })} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{saveError}</p>}<button className="ghost draft-save" disabled={busy} onClick={() => { void save('draft') }}><FileText /> {saving ? 'Saving…' : postId ? 'Update draft' : 'Save draft'}</button><div className="approval"><input id="approve" type="checkbox" checked={approved} onChange={(event) => setApproved(event.target.checked)} disabled={busy} /><label htmlFor="approve"><strong>I reviewed and approve this content</strong><span>Required before saving or scheduling.</span></label></div><button className="primary wide" disabled={!approved || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? 'Saving…' : 'Approve & save'}</button></>}</div></div></section>
+  const busy = saving || disabled || generating || uploading
+  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>1 <b>Brief</b></span><i /><span className={draft ? 'current' : ''}>2 <b>Review</b></span><i /><span>3 <b>Approve</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">STEP 1 — YOUR IDEA</span><h2>What do you want to share?</h2><label>Content idea<textarea aria-label="Content idea" dir="auto" value={idea} onChange={(event) => { changed(); setIdea(event.target.value) }} placeholder="Example: Five simple ways small businesses can create better Instagram posts..." maxLength={500} disabled={busy} /><small>{idea.length}/500 · Minimum 10 characters</small></label><div className="field-row"><label>Platform<select value={platform} onChange={(event) => { changed(); setPlatform(event.target.value as Platform) }} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option}>{option}</option>)}</select></label><label>Tone<select value={tone} onChange={(event) => { changed(); setTone(event.target.value) }} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option}>{option}</option>)}</select></label></div><label>Language<select value={language} disabled={busy} onChange={event => { changed(); setLanguage(event.target.value) }}>{['English','Hindi','Urdu','Arabic'].map(value => <option key={value}>{value}</option>)}</select></label><MediaInput media={media} disabled={busy || !isSupabaseConfigured} onBusy={setUploading} onChange={value => { changed(); setMedia(value) }} /><button className="primary wide" disabled={!canGenerate || busy || !isSupabaseConfigured} onClick={() => { void generateAI() }}>{generating ? 'Generating…' : 'Generate with AI'}</button><button className="ghost wide" disabled={!canGenerate || busy} onClick={generate}><WandSparkles /> Use local template</button><p className="fineprint">Local templates use English and your typed idea only. AI uses your selected language and attachment; these are sent to Gemini when you generate.</p>{saveError && <p className="form-error" role="alert">{saveError}</p>}{saved && <p role="status">Draft saved.</p>}</div><div className="panel preview-panel"><span className="eyebrow">STEP 2 — REVIEW & EDIT</span><h2>Your draft</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>Your generated draft will appear here.</p></div> : <><label>Caption<textarea aria-label="Caption" dir="auto" className="caption" value={draft.caption} onChange={(event) => { changed(); setDraft({ ...draft, caption: event.target.value }) }} disabled={busy} /></label><p className="fineprint">Caption + hashtags limit: {captionLimits[platform]} characters.</p><label>Hashtags<input value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => { changed(); setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) }) }} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{saveError}</p>}<button className="ghost draft-save" disabled={busy} onClick={() => { void save('draft') }}><FileText /> {saving ? 'Saving…' : postId ? 'Update draft' : 'Save draft'}</button><div className="approval"><input id="approve" type="checkbox" checked={approved} onChange={(event) => setApproved(event.target.checked)} disabled={busy} /><label htmlFor="approve"><strong>I reviewed and approve this content</strong><span>Required to approve or schedule. Drafts can be saved without approval.</span></label></div><button className="primary wide" disabled={!approved || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? 'Saving…' : 'Approve & save'}</button></>}</div></div></section>
 }
 
 function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpdate: (post: Post) => Promise<void>; onView: (post: Post) => void; disabled: boolean }) {
@@ -273,7 +295,7 @@ function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpda
 
   function schedule(post: Post) {
     const scheduledAt = new Date(scheduleTimes[post.id] ?? defaultScheduleTime)
-    if (Number.isNaN(scheduledAt.getTime())) return
+    if (!Number.isFinite(scheduledAt.getTime()) || scheduledAt.getTime() <= Date.now()) { setError('Choose a future date and time.'); return }
     void update({ ...post, status: 'scheduled', scheduledFor: scheduledAt.toISOString() })
   }
 

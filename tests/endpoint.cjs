@@ -1,0 +1,24 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const ts = require('typescript');
+let handler, providerCalls=0, quotaCalls=0;
+let authenticated=true, quota=true;
+const env={SUPABASE_URL:'https://example.supabase.co', SUPABASE_ANON_KEY:'public-placeholder', GEMINI_API_KEY:'test-only', GEMINI_MODEL:'test-model',ALLOWED_ORIGINS:'https://app.example'};
+const client={auth:{getUser:async()=>({data:{user:authenticated?{id:'user-a'}:null},error:null})},rpc:async()=>{quotaCalls++;return {data:quota,error:null}}};
+const source=fs.readFileSync('supabase/functions/generate-content/index.ts','utf8').replace(/^import .*\n/,'');
+vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText,{Deno:{env:{get:k=>env[k]},serve:f=>{handler=f}},createClient:()=>client,Response,Request,TextDecoder,AbortSignal,Uint8Array,btoa,fetch:async()=>{providerCalls++;return Response.json({candidates:[{content:{parts:[{text:JSON.stringify({caption:'A draft',hashtags:['Example']})}]}}]})}});
+const brief={idea:'A useful small business idea',platform:'Instagram',tone:'Friendly',language:'English'};
+const request=(body=brief, headers={})=>new Request('https://edge.example',{method:'POST',headers:{authorization:'Bearer example',origin:'https://app.example',...headers},body:JSON.stringify(body)});
+(async()=>{
+ assert.equal((await handler(request(brief,{authorization:''}))).status,401);
+ authenticated=false;assert.equal((await handler(request())).status,401);authenticated=true;
+ assert.equal((await handler(request(brief,{origin:'https://evil.example'}))).status,403);
+ assert.equal((await handler(request({...brief,idea:'short'}))).status,400);
+ assert.equal((await handler(request({...brief,media:{path:'user-b/private',type:'image/png'}}))).status,400);
+ assert.equal((await handler(request({...brief,idea:'x'.repeat(9000)}))).status,413);
+ assert.equal(providerCalls,0);assert.equal(quotaCalls,0);
+ quota=false;assert.equal((await handler(request())).status,429);assert.equal(providerCalls,0);quota=true;
+ const response=await handler(request());assert.equal(response.status,200);assert.deepEqual(await response.json(),{caption:'A draft',hashtags:['Example']});assert.equal(providerCalls,1);
+ console.log('PASS: endpoint authentication, origin, validation, cross-user attachment rejection, request size, quota rejection and mocked provider success.');
+})().catch(e=>{console.error(e);process.exit(1)});

@@ -16,7 +16,7 @@ function createSupabaseClient(): { client: SupabaseClient | null; error: string 
 
   try {
     const url = new URL(supabaseUrl!)
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    if (url.pathname !== '/' || (url.protocol !== 'http:' && url.protocol !== 'https:')) {
       throw new Error('Unsupported Supabase URL protocol')
     }
 
