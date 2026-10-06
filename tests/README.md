@@ -16,7 +16,7 @@ python3 tests/live-http.py --credentials /absolute/private/fixtures.json --repor
 
 Omit `--allow-ai` to avoid provider calls. The script uses the local untracked `.env` and requires an already configured project/function. Never commit credentials, sessions or signed URLs. It deletes its test post, retains its tiny private media fixture, and leaves Auth fixture cleanup to the administrator. With `--allow-ai`, non-200 text or image generation makes the script fail even if core storage/quota checks pass.
 
-Both temporary Auth accounts and quota rows were removed after this run; the existing user and post counts remained at 1. A 69-byte private PNG is retained pending authorized administrator cleanup. No Storage DELETE permission was added.
+Both temporary Auth accounts and quota rows were removed after this run; the existing user and post counts remained at 1. The 69-byte private PNG was permanently removed through the Dashboard after explicit user approval. Verified zero matching test images; the Dashboard retains a zero-byte empty-folder placeholder. No Storage DELETE permission was added.
 
 Not run: real-user signup/confirmation email delivery, actual microphone device capture, live video/audio Gemini requests, platform OAuth/publishing or payments. The browser regression intentionally exercises the local demo with mocked cloud APIs and does not claim a full signed-in browser journey.
 

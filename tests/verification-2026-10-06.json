@@ -106,12 +106,17 @@
   },
   "cleanup": {
     "post_deleted": true,
-    "file_retained_privately": true,
+    "file_retained_privately": false,
     "temporary_auth_users_remaining": 0,
     "temporary_quota_rows_remaining": 0,
     "existing_user_count": 1,
     "existing_post_count": 1,
-    "private_test_image_bytes": 69
+    "file_deleted": true,
+    "test_file_remaining": 0,
+    "test_image_fixture_bytes": 69,
+    "empty_folder_placeholder_bytes": 0,
+    "cleanup_method": "Supabase Dashboard after explicit user approval",
+    "storage_delete_policy_added": false
   },
   "not_verified": [
     "Email confirmation delivery and real-user signup",
