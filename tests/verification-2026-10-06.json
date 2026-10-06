@@ -1,0 +1,123 @@
+{
+  "date": "2026-10-06",
+  "core_passed": true,
+  "ai_passed": true,
+  "checks": [
+    {
+      "name": "authenticated user identity",
+      "passed": true
+    },
+    {
+      "name": "authenticated user identity",
+      "passed": true
+    },
+    {
+      "name": "AI rejects unauthenticated caller",
+      "passed": true
+    },
+    {
+      "name": "AI rejects other origins",
+      "passed": true
+    },
+    {
+      "name": "AI rejects invalid brief",
+      "passed": true
+    },
+    {
+      "name": "AI rejects another user attachment",
+      "passed": true
+    },
+    {
+      "name": "live AI JSON and Hindi caption",
+      "passed": true
+    },
+    {
+      "name": "live AI X length",
+      "passed": true
+    },
+    {
+      "name": "private PNG upload",
+      "passed": true
+    },
+    {
+      "name": "private PNG download",
+      "passed": true
+    },
+    {
+      "name": "other user cannot download",
+      "passed": true
+    },
+    {
+      "name": "signed preview creation",
+      "passed": true
+    },
+    {
+      "name": "signed preview opens without session",
+      "passed": true
+    },
+    {
+      "name": "other user cannot create preview",
+      "passed": true
+    },
+    {
+      "name": "post and attachment saved",
+      "passed": true
+    },
+    {
+      "name": "saved post reload",
+      "passed": true
+    },
+    {
+      "name": "other user cannot read post",
+      "passed": true
+    },
+    {
+      "name": "other user cannot edit post",
+      "passed": true
+    },
+    {
+      "name": "21 concurrent quota requests allow exactly 20",
+      "passed": true
+    },
+    {
+      "name": "exhausted app quota rejects AI",
+      "passed": true
+    },
+    {
+      "name": "quota counter stops at 20",
+      "passed": true
+    },
+    {
+      "name": "other user cannot read quota",
+      "passed": true
+    }
+  ],
+  "ai": {
+    "text_status": 200,
+    "text_caption": "क्या आपकी सुबह की शुरुआत एक बेहतरीन कप कॉफी के बिना अधूरी है? ताज़ी बनी कॉफी की खुशबू आपका इंतजार कर रही है। आज ही आइए और हमारे साथ सुकून का एक पल बिताइए।",
+    "hashtags": [
+      "CoffeeLovers",
+      "CafeVibes",
+      "FreshBrew",
+      "CoffeeTime",
+      "Hindi"
+    ],
+    "media_status": 200
+  },
+  "cleanup": {
+    "post_deleted": true,
+    "file_retained_privately": true,
+    "temporary_auth_users_remaining": 0,
+    "temporary_quota_rows_remaining": 0,
+    "existing_user_count": 1,
+    "existing_post_count": 1,
+    "private_test_image_bytes": 69
+  },
+  "not_verified": [
+    "Email confirmation delivery and real-user signup",
+    "Actual microphone capture",
+    "Live video/audio AI requests",
+    "Social account OAuth and publishing",
+    "Payments and paid billing"
+  ]
+}

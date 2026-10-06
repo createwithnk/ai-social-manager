@@ -12,7 +12,9 @@ Deno.serve(async (req: Request) => {
   const authorization = req.headers.get('authorization') ?? ''
   if (!authorization.startsWith('Bearer ')) return reply(401, { error: 'Sign in first.' })
   try {
-    const client = createClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'), { global: { headers: { Authorization: authorization } } })
+    const publishableKeys = JSON.parse(env('SUPABASE_PUBLISHABLE_KEYS') || '{}')
+    const publicKey = publishableKeys.default || env('SUPABASE_ANON_KEY')
+    const client = createClient(env('SUPABASE_URL'), publicKey, { global: { headers: { Authorization: authorization } } })
     const { data: { user }, error } = await client.auth.getUser(authorization.slice(7))
     if (error || !user) return reply(401, { error: 'Your session expired. Sign in again.' })
     // Streamed size limit also covers requests without Content-Length.
