@@ -107,6 +107,14 @@ Deno.test('payment request handlers enforce gates, immutable prices, verified ev
       quota = false; equal((await checkout(request({action:'checkout',planId:'fixture'}))).status,429); quota = true
       equal(orders.length,0); equal(providerCalls,0)
     })
+    await t.step('missing or invalid website configuration stops checkout before creating an order',async()=>{
+      for (const value of ['', 'not a URL']) {
+        Deno.env.set('APP_URL',value)
+        equal((await checkout(request({action:'checkout',planId:'fixture'}))).status,503)
+        equal(orders.length,0); equal(providerCalls,0)
+      }
+      Deno.env.set('APP_URL',values.APP_URL)
+    })
     await t.step('client cannot override price, credits, currency or owner',async()=>{
       const response = await checkout(request({action:'checkout',planId:'fixture',amount:1,credits:999999,currency:'USD',user_id:'other-user'}))
       equal(response.status,200); equal(providerCalls,1)

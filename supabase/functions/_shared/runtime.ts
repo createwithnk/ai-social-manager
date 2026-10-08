@@ -35,7 +35,8 @@ export async function gate(client: SupabaseClient, mode:'publishing'|'billing') 
   if (!controls?.[mode]) throw new RequestError(423,`${mode === 'billing' ? 'Payments' : 'Publishing'} require owner permission.`)
 }
 export function appURL() {
-  const url = secureURL(env('APP_URL'))
+  let url: URL
+  try { url = secureURL(env('APP_URL')) } catch { throw new RequestError(503,'Website URL setup is pending.') }
   if (url.pathname !== '/' || url.search || url.hash) throw new RequestError(503,'Website URL setup is pending.')
   return url
 }
