@@ -12,3 +12,9 @@ verify_jwt = true
 verify_jwt = false
 # JWT-disabled functions implement OAuth state, worker-secret or webhook HMAC
 # authentication internally. This file does not deploy or schedule anything.
+
+[auth]
+# Desired hosted signup/password-reset policy. A config file edit does not apply
+# this to the live Auth service. Review `supabase config diff` before pushing.
+# Do not add a local site_url or unrelated defaults to a hosted config push.
+minimum_password_length = 12
