@@ -1,0 +1,125 @@
+{
+  "verified_at_utc": "2026-10-08T17:06:23.853Z",
+  "scope": "Disposable native PostgreSQL, independent backend connections",
+  "checks": [
+    {
+      "name": "live-database.sql passes against native PostgreSQL",
+      "passed": true
+    },
+    {
+      "name": "live-payment-database.sql passes against native PostgreSQL",
+      "passed": true
+    },
+    {
+      "name": "ordinary user cannot claim a publication",
+      "passed": true
+    },
+    {
+      "name": "closed local publishing gate prevents claims",
+      "passed": true
+    },
+    {
+      "name": "eight overlapping enqueue attempts create exactly one job for one approved revision",
+      "passed": true
+    },
+    {
+      "name": "two workers claim distinct rows while both transactions overlap; third gets no duplicate",
+      "passed": true
+    },
+    {
+      "name": "stale lease cannot finish; a successful requeue invalidates the old lease",
+      "passed": true
+    },
+    {
+      "name": "expired lease becomes uncertain and is not automatically claimed again",
+      "passed": true
+    },
+    {
+      "name": "worker skips an editing post, claims another due post and lets the editor cancel its queued revision",
+      "passed": true
+    },
+    {
+      "name": "two overlapping workers reconcile expired leases without waiting or dispatching them again",
+      "passed": true
+    },
+    {
+      "name": "an orphaned queued job is cancelled without dispatch",
+      "passed": true
+    },
+    {
+      "name": "eight overlapping OAuth takes consume one state exactly once",
+      "passed": true
+    },
+    {
+      "name": "overlapping duplicate payment events grant one credit-ledger entry",
+      "passed": true
+    },
+    {
+      "name": "overlapping identical refund notifications reverse credits only once",
+      "passed": true
+    },
+    {
+      "name": "overlapping distinct partial refunds reconcile exactly the full amount",
+      "passed": true
+    },
+    {
+      "name": "24 overlapping AI quota requests allow exactly 20 free attempts",
+      "passed": true
+    },
+    {
+      "name": "24 overlapping Storage metadata inserts preserve the 20-object owner quota",
+      "passed": true
+    }
+  ],
+  "migrations": [
+    {
+      "filename": "20260901000000_create_posts.sql",
+      "sha256": "72429e79aa77c7d47df76baf1e82a2e8ea370dcc4dc3dad96f37f0fc9368c5fe"
+    },
+    {
+      "filename": "20261003000000_content_system.sql",
+      "sha256": "b5d3b87ef0c025e493ae8751ea7165253df5727ad7547ed9dcbf065a15fd2a8b"
+    },
+    {
+      "filename": "20261007071717_secure_connections_and_publish_queue.sql",
+      "sha256": "4cd66f287b558404ddd999bb6db80b58b21f685e864a78bea75a340606e8557d"
+    },
+    {
+      "filename": "20261008073141_index_payment_events_order.sql",
+      "sha256": "47e60d804fdb12516fc3b9b3b7487a318de013dc0137a9d02de0b29cd88c1f8c"
+    },
+    {
+      "filename": "20261008170431_publication_claim_lock_order.sql",
+      "sha256": "7946e8aa74b3b20ed2f570d100ac0272c7dfbdf881a167088cc6b1932d5acc8c"
+    }
+  ],
+  "cluster_started": true,
+  "cluster_stopped": true,
+  "cluster_removed": true,
+  "live_project_modified": false,
+  "provider_calls": false,
+  "uploads": false,
+  "website_or_social_publication": false,
+  "payment_transaction": false,
+  "limitations": "Auth and Storage catalogs are modeled. Actual provider APIs, hosted worker execution and email delivery are not tested.",
+  "server_version": "postgres (PostgreSQL) 17.10",
+  "listener": "Private Unix socket only; TCP disabled",
+  "independent_worker_connections": 24,
+  "storage_quota": {
+    "accepted": 20,
+    "denied_codes": [
+      "42501",
+      "42501",
+      "42501",
+      "42501"
+    ]
+  },
+  "passed": true,
+  "completed_at_utc": "2026-10-08T17:06:24.901Z",
+  "ci": {
+    "run_id": 37813950320,
+    "job_id": 113437624986,
+    "commit": "3ae3c469b57bd771f6099cfa11f4b46b8059d4b3",
+    "url": "https://github.com/createwithnk/ai-social-manager/actions/runs/37813950320"
+  }
+}

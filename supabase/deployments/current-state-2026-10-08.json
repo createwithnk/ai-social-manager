@@ -220,7 +220,9 @@
     "lint": "passed",
     "network_in_local_handler_tests": "intercepted",
     "ai_entrypoint_typecheck_refreshed": true,
-    "ai_response_hardening_report": "tests/ai-response-hardening-2026-10-08.json"
+    "ai_response_hardening_report": "tests/ai-response-hardening-2026-10-08.json",
+    "sequential_database_checks": 71,
+    "native_database_concurrency_checks": 17
   },
   "security_advisors": [
     {
@@ -277,7 +279,7 @@
     "Existing personal password or DB password change"
   ],
   "rollback_reference": "supabase/deployments/generate-content-v2-backup.json",
-  "updated_at_utc": "2026-10-08T16:44:53.384062+00:00",
+  "updated_at_utc": "2026-10-08T17:10:55.091913+00:00",
   "latest_password_probe_cleanup": {
     "auth_users": 1,
     "posts": 1,
@@ -291,7 +293,13 @@
   "ai_provider_response_limit_bytes": 131072,
   "rollback_history": [
     "supabase/deployments/generate-content-v1-backup.json",
-    "supabase/deployments/generate-content-v2-backup.json"
+    "supabase/deployments/generate-content-v2-backup.json",
+    {
+      "kind": "private publication claim function",
+      "reference": "tests/live-publication-claim-fix-2026-10-08.json",
+      "field": "before.claim_source",
+      "note": "Preserve service-only ACL and closed launch controls in any reviewed rollback."
+    }
   ],
   "fixture_cleanup_pending": true,
   "fixture_retention": {
@@ -300,5 +308,41 @@
     "cleanup_at_assistant_discretion_when_appropriate": true,
     "immediate_deletion_requested": false
   },
-  "fixture_status": "retained_disabled_for_future_testing"
+  "fixture_status": "retained_disabled_for_future_testing",
+  "database_concurrency": {
+    "native_postgres_version": "17.10",
+    "checks_passed": 17,
+    "independent_user_connections": 24,
+    "isolated_socket_only_cluster": true,
+    "cluster_stopped_and_removed": true,
+    "report": "tests/native-postgres-concurrency-2026-10-08.json",
+    "first_run_report": "tests/native-postgres-concurrency-before-2026-10-08.json",
+    "ci": {
+      "run_id": 37813950320,
+      "job_id": 113437624986,
+      "commit": "3ae3c469b57bd771f6099cfa11f4b46b8059d4b3",
+      "url": "https://github.com/createwithnk/ai-social-manager/actions/runs/37813950320"
+    },
+    "auth_storage_catalogs": "modeled",
+    "hosted_worker_provider_execution": "pending separate activation/setup",
+    "provider_calls": false,
+    "payment_transaction": false
+  },
+  "publication_claim_fix": {
+    "repository_path": "supabase/migrations/20261008170431_publication_claim_lock_order.sql",
+    "name": "publication_claim_lock_order",
+    "live_version": "20261008170743",
+    "sha256": "7946e8aa74b3b20ed2f570d100ac0272c7dfbdf881a167088cc6b1932d5acc8c",
+    "code_commit": "3ae3c469b57bd771f6099cfa11f4b46b8059d4b3",
+    "applied": true,
+    "exact_function_body_readback": true,
+    "live_role_checks_passed": 3,
+    "live_report": "tests/live-publication-claim-fix-2026-10-08.json",
+    "launch_controls": {
+      "billing": false,
+      "publishing": false
+    },
+    "worker_deployed": false,
+    "worker_scheduled": false
+  }
 }

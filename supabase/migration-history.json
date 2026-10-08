@@ -28,6 +28,15 @@
       "live_name": "index_payment_events_order",
       "repository_sha256": "47e60d804fdb12516fc3b9b3b7487a318de013dc0137a9d02de0b29cd88c1f8c",
       "reviewed_payload_applied": true
+    },
+    {
+      "repository_path": "supabase/migrations/20261008170431_publication_claim_lock_order.sql",
+      "live_version": "20261008170743",
+      "live_name": "publication_claim_lock_order",
+      "repository_sha256": "7946e8aa74b3b20ed2f570d100ac0272c7dfbdf881a167088cc6b1932d5acc8c",
+      "reviewed_payload_applied": true,
+      "native_concurrency_checks_passed": 17,
+      "exact_function_body_readback": true
     }
   ],
   "warning": "Supabase MCP records execution timestamps rather than the earlier local CLI creation timestamps. Pull/reconcile history before using CLI db push; this manifest does not modify migration history."

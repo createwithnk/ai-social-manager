@@ -1,0 +1,100 @@
+{
+  "verified_at_utc": "2026-10-08 17:08:09.536377+00",
+  "project_ref": "nkfecpdegcmsapvbviky",
+  "migration": {
+    "repository_path": "supabase/migrations/20261008170431_publication_claim_lock_order.sql",
+    "name": "publication_claim_lock_order",
+    "live_version": "20261008170743",
+    "sha256": "7946e8aa74b3b20ed2f570d100ac0272c7dfbdf881a167088cc6b1932d5acc8c",
+    "code_commit": "3ae3c469b57bd771f6099cfa11f4b46b8059d4b3",
+    "applied": true,
+    "exact_function_body_readback": true
+  },
+  "native_concurrency": {
+    "report": "tests/native-postgres-concurrency-2026-10-08.json",
+    "checks_passed": 17,
+    "postgres_version": "postgres (PostgreSQL) 17.10",
+    "ci": {
+      "run_id": 37813950320,
+      "job_id": 113437624986,
+      "commit": "3ae3c469b57bd771f6099cfa11f4b46b8059d4b3",
+      "url": "https://github.com/createwithnk/ai-social-manager/actions/runs/37813950320"
+    }
+  },
+  "local_sequential_checks": 71,
+  "lint_passed": true,
+  "live_role_checks": [
+    {
+      "name": "Anonymous queue claim denied",
+      "passed": true
+    },
+    {
+      "name": "Ordinary user queue claim denied",
+      "passed": true
+    },
+    {
+      "name": "Service queue claim returns null with publication gate closed",
+      "passed": true
+    }
+  ],
+  "before": {
+    "inspected_at_utc": "2026-10-08 17:07:00.719885+00",
+    "claim_source": "CREATE OR REPLACE FUNCTION private.service_claim_publication()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare j public.publication_jobs;\nbegin\n  if not coalesce((select publishing_enabled from private.launch_controls where singleton),false) then return null; end if;\n  -- A lost final response may have published. Never blindly retry a lost lease.\n  update public.publication_jobs set status = 'uncertain', error_code = 'worker_lease_expired', lease_until = null where status = 'processing' and lease_until < now();\n  select * into j from public.publication_jobs where status = 'queued' and due_at <= now() order by due_at,id for update skip locked limit 1;\n  if j.id is null then return null; end if;\n  perform 1 from public.posts where id = j.post_id and revision = j.post_revision and status in ('approved','scheduled') for update;\n  if not found then update public.publication_jobs set status = 'cancelled',error_code = 'approval_changed' where id = j.id; return null; end if;\n  if not exists(select 1 from public.social_connections where id = j.connection_id and user_id = j.user_id and status = 'connected' and expires_at > now()) then\n    update public.publication_jobs set status = 'failed',error_code = 'connection_expired' where id = j.id; return null;\n  end if;\n  update public.publication_jobs set status = 'processing',lease_id = gen_random_uuid(),lease_until = now() + interval '5 minutes',attempts = attempts + 1 where id = j.id returning * into j;\n  return to_jsonb(j);\nend; $function$\n",
+    "private_security_definer": true,
+    "private_settings": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "user_execute": false,
+    "service_execute": true,
+    "launch_controls": {
+      "billing": false,
+      "publishing": false
+    },
+    "auth_users": 2,
+    "posts": 1,
+    "publication_jobs": 0,
+    "payment_orders": 0,
+    "credit_entries": 0,
+    "social_connections": 0,
+    "fixture_sessions": 0,
+    "disabled_fixture_users": 1
+  },
+  "after": {
+    "inspected_at_utc": "2026-10-08 17:08:09.536377+00",
+    "claim_source": "CREATE OR REPLACE FUNCTION private.service_claim_publication()\n RETURNS jsonb\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO ''\nAS $function$\ndeclare j public.publication_jobs;\nbegin\n  if not coalesce((select publishing_enabled from private.launch_controls where singleton),false) then return null; end if;\n  -- Another worker may already be reconciling a lost lease. Do not wait for it.\n  with expired as (\n    select id from public.publication_jobs where status='processing' and lease_until < now()\n    for update skip locked\n  )\n  update public.publication_jobs q set status='uncertain',error_code='worker_lease_expired',lease_until=null\n  from expired e where q.id=e.id;\n  -- A deleted post cannot be dispatched; no post lock exists for an orphan.\n  with orphaned as (\n    select id from public.publication_jobs where status='queued' and post_id is null and due_at <= now()\n    for update skip locked\n  )\n  update public.publication_jobs q set status='cancelled',error_code='approval_changed'\n  from orphaned o where q.id=o.id;\n  -- Lock the post first, and skip a row an editor or another worker holds.\n  select q.* into j from public.publication_jobs q join public.posts p on p.id=q.post_id\n  where q.status='queued' and q.due_at <= now()\n  order by q.due_at,q.id for update of p skip locked limit 1;\n  if j.id is null then return null; end if;\n  -- Cancellation can lock just the job. Recheck its current state without waiting.\n  select q.* into j from public.publication_jobs q\n  where q.id=j.id and q.status='queued' and q.due_at <= now()\n  for update skip locked;\n  if j.id is null then return null; end if;\n  perform 1 from public.posts where id=j.post_id and revision=j.post_revision and status in ('approved','scheduled');\n  if not found then update public.publication_jobs set status='cancelled',error_code='approval_changed' where id=j.id; return null; end if;\n  if not exists(select 1 from public.social_connections where id=j.connection_id and user_id=j.user_id and status='connected' and expires_at > now()) then\n    update public.publication_jobs set status='failed',error_code='connection_expired' where id=j.id; return null;\n  end if;\n  update public.publication_jobs set status='processing',lease_id=gen_random_uuid(),lease_until=now()+interval '5 minutes',attempts=attempts+1\n  where id=j.id returning * into j;\n  return to_jsonb(j);\nend; $function$\n",
+    "private_security_definer": true,
+    "private_settings": [
+      "search_path=\"\""
+    ],
+    "anon_execute": false,
+    "user_execute": false,
+    "service_execute": true,
+    "launch_controls": {
+      "billing": false,
+      "publishing": false
+    },
+    "auth_users": 2,
+    "posts": 1,
+    "publication_jobs": 0,
+    "payment_orders": 0,
+    "credit_entries": 0,
+    "social_connections": 0,
+    "fixture_sessions": 0,
+    "disabled_fixture_users": 1
+  },
+  "fixture_policy": "Retain disabled for future scoped tests; cleanup when no longer needed and before launch.",
+  "holds": {
+    "website_publication": true,
+    "social_publication": true,
+    "real_payment_collection": true,
+    "paid_plan_upgrade": true,
+    "personal_payment_documents": true
+  },
+  "provider_calls": false,
+  "payment_transaction": false,
+  "worker_deployed": false,
+  "worker_scheduled": false,
+  "limitations": "Concurrency verified on disposable native PostgreSQL 17.10 with modeled Auth/Storage catalogs. Hosted project remains PostgreSQL 17.6. Hosted workers, actual Storage bytes, SMTP, social APIs and merchant test-mode integration need their separate setup and tests.",
+  "rollback_note": "The before.claim_source records the previous private function. A reviewed rollback must preserve service-only ACL and closed launch controls."
+}
