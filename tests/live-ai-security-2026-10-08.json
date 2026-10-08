@@ -1,0 +1,116 @@
+{
+  "verified_at_utc": "2026-10-08T10:00:43.642532+00:00",
+  "project_ref": "nkfecpdegcmsapvbviky",
+  "fixture_run": "c67185dc-f06d-4df7-a423-d9f8713073b6",
+  "checks": [
+    {
+      "name": "fixture login 1",
+      "passed": true
+    },
+    {
+      "name": "fixture login 2",
+      "passed": true
+    },
+    {
+      "name": "separate fixture sessions issued",
+      "passed": true
+    },
+    {
+      "name": "verified fixture Auth identity",
+      "passed": true
+    },
+    {
+      "name": "active fixture session 1",
+      "passed": true
+    },
+    {
+      "name": "active fixture session 2",
+      "passed": true
+    },
+    {
+      "name": "publishing and billing both disabled",
+      "passed": true
+    },
+    {
+      "name": "AI denies unauthenticated caller",
+      "passed": true
+    },
+    {
+      "name": "AI denies unapproved origin",
+      "passed": true
+    },
+    {
+      "name": "AI denies invalid brief",
+      "passed": true
+    },
+    {
+      "name": "AI denies foreign-owner attachment",
+      "passed": true
+    },
+    {
+      "name": "AI denies oversize streamed body",
+      "passed": true
+    },
+    {
+      "name": "21 simultaneous quota calls allow exactly 20",
+      "passed": true
+    },
+    {
+      "name": "AI denies exhausted quota without generation",
+      "passed": true
+    },
+    {
+      "name": "fixture quota counter stops at 20",
+      "passed": true
+    },
+    {
+      "name": "actual global fixture logout succeeds",
+      "passed": true
+    },
+    {
+      "name": "ended session cannot regain database access 1",
+      "passed": true
+    },
+    {
+      "name": "old token cannot use AI after global logout 1",
+      "passed": true
+    },
+    {
+      "name": "ended session cannot regain database access 2",
+      "passed": true
+    },
+    {
+      "name": "old token cannot use AI after global logout 2",
+      "passed": true
+    }
+  ],
+  "provider_calls_requested": false,
+  "uploads_requested": false,
+  "email_sent": false,
+  "website_or_social_publication": false,
+  "payment_transaction": false,
+  "cleanup_verified": true,
+  "passed": true,
+  "cleanup": {
+    "fixture_users": 0,
+    "fixture_sessions": 0,
+    "fixture_ai_usage": 0,
+    "original_auth_users": 1,
+    "original_posts": 1,
+    "payment_orders": 0,
+    "credit_entries": 0,
+    "publication_jobs": 0,
+    "publishing_enabled": false,
+    "billing_enabled": false
+  },
+  "completed_at_utc": "2026-10-08T10:06:53.333357+00:00",
+  "deployed_function": {
+    "name": "generate-content",
+    "version": 2,
+    "status": "ACTIVE",
+    "verify_jwt": true,
+    "source_readback_exact_match": true
+  },
+  "limits": "Confirmed fixture accounts were provisioned administratively; this does not verify signup/confirmation/recovery email delivery. No Gemini request or Storage upload was made.",
+  "temporary_credentials_removed": true
+}
