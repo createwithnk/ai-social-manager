@@ -9,8 +9,11 @@ const { test } = require('node:test');
 const compilerOptions = { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS };
 const signatureExports = {};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('supabase/functions/_shared/media-signature.ts', 'utf8'), { compilerOptions }).outputText, { exports: signatureExports });
+const securityExports = {};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('supabase/functions/_shared/security.ts', 'utf8'), { compilerOptions }).outputText, { exports: securityExports, TextEncoder, TextDecoder, Uint8Array });
 let handler, providerCalls, quotaCalls, downloadCalls, clientOptions, providerRequest;
 let authenticated, active, sessionError, quota, quotaError, downloadError, mediaFile, providerStatus, providerDraft, providerFailure;
+let providerResponse, providerCancelled, providerChunksRead;
 const env = { SUPABASE_URL: 'https://example.supabase.co', SUPABASE_ANON_KEY: 'public-placeholder', GEMINI_API_KEY: 'test-only', GEMINI_MODEL: 'test-model', ALLOWED_ORIGINS: 'https://app.example' };
 const pngHeader = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
 const client = {
@@ -33,10 +36,12 @@ vm.runInNewContext(ts.transpileModule(source, { compilerOptions }).outputText, {
   Deno: { env: { get: key => env[key] }, serve: fn => { handler = fn; } },
   createClient: (_url, _key, options) => { clientOptions = options; return client; },
   mediaSignatureMatches: signatureExports.mediaSignatureMatches,
+  readBody: securityExports.readBody,
   Response, Request, TextDecoder, AbortSignal, Uint8Array, btoa,
   fetch: async (url, options) => {
     providerCalls++; providerRequest = { url, options };
     if (providerFailure) throw new Error('Simulated provider timeout; must not appear in the response.');
+    if (providerResponse) return providerResponse;
     return Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify(providerDraft) }] } }] }, { status: providerStatus });
   },
 });
@@ -49,8 +54,27 @@ function reset() {
   sessionError = null; quotaError = null; downloadError = null;
   mediaFile = new Blob([pngHeader], { type: 'image/png' });
   providerStatus = 200; providerDraft = { caption: 'A draft', hashtags: ['Example'] }; providerFailure = false;
+  providerResponse = null; providerCancelled = false; providerChunksRead = 0;
 }
 function untouched() { assert.equal(providerCalls, 0); assert.equal(quotaCalls, 0); assert.equal(downloadCalls, 0); }
+const providerLimit = 128 * 1024;
+const providerPayload = () => JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(providerDraft) }] } }] });
+function streamProvider(chunks, headers = {}, status = 200) {
+  let next = 0;
+  providerResponse = new Response(new ReadableStream({
+    pull(controller) {
+      if (next === chunks.length) { controller.close(); return; }
+      providerChunksRead++;
+      controller.enqueue(chunks[next++]);
+    },
+    cancel() { providerCancelled = true; },
+  }, { highWaterMark: 0 }), { status, headers });
+}
+async function rejectsProvider(response) {
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), { error: 'AI did not return a usable draft. Retry.' });
+  assert.equal(providerCalls, 1); assert.equal(quotaCalls, 1);
+}
 
 test('AI entrypoint security and request flow (intercepted HTTP)', async t => {
   const check = (name, fn) => t.test(name, async () => { reset(); await fn(); });
@@ -121,6 +145,47 @@ test('AI entrypoint security and request flow (intercepted HTTP)', async t => {
   });
   await check('provider rate limit produces one failed attempt without automatic retry', async () => {
     providerStatus = 429; assert.equal((await handler(request())).status, 429); assert.equal(providerCalls, 1); assert.equal(quotaCalls, 1);
+  });
+  await check('provider JSON within the byte limit works without Content-Length', async () => {
+    const text = providerPayload();
+    streamProvider([Buffer.from(text), Buffer.alloc(providerLimit - Buffer.byteLength(text), 32)]);
+    assert.equal((await handler(request())).status, 200); assert.equal(providerChunksRead, 2);
+  });
+  await check('oversize streamed provider JSON is cancelled before unread tail without retry', async () => {
+    streamProvider([Buffer.from(providerPayload()), Buffer.alloc(providerLimit, 32), Buffer.from(' ')]);
+    await rejectsProvider(await handler(request())); assert.equal(providerCancelled, true); assert.equal(providerChunksRead, 2);
+  });
+  await check('a false small Content-Length cannot bypass the streamed provider limit', async () => {
+    streamProvider([Buffer.from(providerPayload()), Buffer.alloc(providerLimit, 32), Buffer.from(' ')], { 'content-length': '1' });
+    await rejectsProvider(await handler(request())); assert.equal(providerCancelled, true); assert.equal(providerChunksRead, 2);
+  });
+  await check('declared oversize provider body is cancelled before any body read', async () => {
+    streamProvider([Buffer.from(providerPayload())], { 'content-length': String(providerLimit + 1) });
+    await rejectsProvider(await handler(request())); assert.equal(providerCancelled, true); assert.equal(providerChunksRead, 0);
+  });
+  await check('malformed provider JSON returns a safe upstream error', async () => {
+    providerResponse = new Response('{invalid provider JSON');
+    await rejectsProvider(await handler(request()));
+  });
+  await check('missing or malformed provider text parts return a safe upstream error', async () => {
+    for (const payload of [null, {}, { candidates: [{ content: { parts: {} } }] }, { candidates: [{ content: { parts: [] } }] }, { candidates: [{ content: { parts: [{ text: 123 }] } }] }]) {
+      providerCalls = 0; quotaCalls = 0; providerResponse = Response.json(payload);
+      await rejectsProvider(await handler(request()));
+    }
+  });
+  await check('UTF-8 provider text split inside a multibyte character remains valid', async () => {
+    providerDraft = { caption: 'नौशाद के लिए नया विचार', hashtags: ['हिन्दी'] };
+    const bytes = Buffer.from(providerPayload()), split = bytes.indexOf(Buffer.from('न')) + 1;
+    streamProvider([bytes.subarray(0, split), bytes.subarray(split)]);
+    const response = await handler(request()); assert.equal(response.status, 200); assert.deepEqual(await response.json(), providerDraft);
+  });
+  await check('HTTP provider errors cancel the response without reading its body', async () => {
+    streamProvider([Buffer.from('private upstream error')], {}, 429);
+    assert.equal((await handler(request())).status, 429); assert.equal(providerCancelled, true); assert.equal(providerChunksRead, 0); assert.equal(providerCalls, 1);
+  });
+  await check('interrupted provider body is a safe upstream error without retry or leaked details', async () => {
+    providerResponse = new Response(new ReadableStream({ pull(controller) { controller.error(new Error('Private transport detail')); } }, { highWaterMark: 0 }));
+    await rejectsProvider(await handler(request()));
   });
   await check('provider timeout produces a safe error without automatic retry', async () => {
     providerFailure = true; const response = await handler(request()); assert.equal(response.status, 500); assert.equal(providerCalls, 1); assert.equal(quotaCalls, 1);

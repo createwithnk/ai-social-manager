@@ -1,0 +1,35 @@
+{
+  "verified_at_utc": "2026-10-08T16:07:01.806052+00:00",
+  "scope": "Actual generate-content handler with intercepted Auth, RPC, Storage and Gemini HTTP",
+  "provider_response_limit_bytes": 131072,
+  "ai_handler_scenarios": 30,
+  "node_test_count_including_parent": 31,
+  "passed": true,
+  "new_scenarios": [
+    "Valid JSON at byte limit without Content-Length",
+    "Streamed overflow cancels before unread tail",
+    "False small Content-Length cannot bypass byte limit",
+    "Declared overflow cancels before body read",
+    "Malformed JSON returns sanitized 502",
+    "Malformed or empty provider parts return sanitized 502",
+    "UTF-8 split inside multibyte character stays valid",
+    "Non-OK HTTP response is cancelled without reading",
+    "Interrupted body returns sanitized 502 without retry"
+  ],
+  "regression_evidence": {
+    "before_fix": "7 of the new scenarios failed against the original entrypoint; oversize valid JSON returned 200 and malformed provider input returned 500.",
+    "after_fix": "All 30 scenarios passed; no provider retry or detail leak."
+  },
+  "verification": {
+    "generate_content_deno_typecheck": "passed",
+    "eslint": "passed",
+    "git_diff_check": "passed",
+    "existing_21_scenarios": "passed"
+  },
+  "rollback": "supabase/deployments/generate-content-v2-backup.json",
+  "external_provider_calls_in_test": false,
+  "uploads": false,
+  "website_or_social_publication": false,
+  "payment_transaction": false,
+  "limits": "Provider HTTP was intercepted. This report does not claim a new real Gemini request, final-domain email delivery, platform posting, or merchant integration."
+}
