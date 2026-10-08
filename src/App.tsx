@@ -158,6 +158,10 @@ function Workspace({ auth }: { auth: AuthState }) {
 
   async function signOut() {
     await auth.signOut()
+    setPosts([])
+    setEditingPost(null)
+    setViewingPost(null)
+    setView('dashboard')
   }
 
   return <div className="app-shell">
