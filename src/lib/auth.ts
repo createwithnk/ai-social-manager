@@ -15,6 +15,7 @@ export interface AuthState {
   error: string | null
   signIn: (email: string, password: string) => Promise<AuthActionResult>
   signUp: (email: string, password: string) => Promise<AuthActionResult>
+  requestPasswordReset: (email: string) => Promise<AuthActionResult>
   signOut: () => Promise<AuthActionResult>
   retrySession: () => void
 }
@@ -162,6 +163,27 @@ export function useAuth(): AuthState {
     }
   }, [])
 
+  const requestPasswordReset = useCallback(async (email: string): Promise<AuthActionResult> => {
+    if (!supabase) return { notice: 'Supabase is not configured for this app.' }
+    const normalizedEmail = email.trim()
+    if (!normalizedEmail) return { notice: 'Enter your email address first.' }
+    setLoading(true)
+    setError(null)
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail)
+      if (resetError) {
+        setError(resetError.message)
+        return {}
+      }
+      return { notice: 'If an account exists for this email, a password reset link will be sent.' }
+    } catch (resetError) {
+      setError(messageFor(resetError))
+      return {}
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   const signOut = useCallback(async (): Promise<AuthActionResult> => {
     if (!supabase) return {}
 
@@ -184,5 +206,5 @@ export function useAuth(): AuthState {
     }
   }, [])
 
-  return { user, status, loading, error, signIn, signUp, signOut, retrySession }
+  return { user, status, loading, error, signIn, signUp, requestPasswordReset, signOut, retrySession }
 }
