@@ -220,13 +220,13 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
   const [createdAt, setCreatedAt] = useState<string | undefined>(initialPost?.createdAt)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const canGenerate = idea.trim().length >= 10
+  const canGenerate = idea.trim().length >= 10 && idea.trim().length <= 500
   const [generatedBrief, setGeneratedBrief] = useState<string | null>(initialPost ? JSON.stringify([initialPost.idea, initialPost.platform, initialPost.tone]) : null)
   const currentBrief = JSON.stringify([idea.trim(), platform, tone])
   const draftMatchesBrief = generatedBrief === currentBrief
   const [reviewedFingerprint, setReviewedFingerprint] = useState<string | null>(null)
   const fingerprint = JSON.stringify([idea.trim(), platform, tone, draft?.caption, draft?.hashtags])
-  const isApproved = approved && reviewedFingerprint === fingerprint
+  const isApproved = approved && reviewedFingerprint === fingerprint && draftMatchesBrief
 
   function generate() {
     if (!canGenerate) return
