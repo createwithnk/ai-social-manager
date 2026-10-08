@@ -179,7 +179,7 @@
     "billing": false,
     "original_user_count": 1,
     "cleanup_completed": false,
-    "cleanup_blocker": "Supabase MCP delete request expired twice. Dashboard sign-in and specific permanent-fixture removal confirmation required.",
+    "cleanup_blocker": "The owner chose retention for further tests. Earlier plugin DELETE attempts expired; the record remains disabled and has no active sessions.",
     "temporary_credentials_removed": true
   },
   "live_http_regression": {
@@ -254,7 +254,7 @@
     "visual_proof_retention": "Owner-private screenshot; excluded from the GitHub repository."
   },
   "pending_configuration": [
-    "Remove the single disabled version 3 test Auth account and its exhausted quota row; plugin DELETE request expired twice. Dashboard sign-in and permanent-delete confirmation required.",
+    "Remove the retained disabled test Auth account and exhausted quota row when no longer needed and before public launch; local testing can continue without its removal.",
     "Final HTTPS APP_URL and origin/redirect allowlists.",
     "Verified SMTP/CAPTCHA and actual confirmation/recovery delivery.",
     "Official platform apps, credentials, permissions and test-account integration.",
@@ -277,7 +277,7 @@
     "Existing personal password or DB password change"
   ],
   "rollback_reference": "supabase/deployments/generate-content-v2-backup.json",
-  "updated_at_utc": "2026-10-08T16:26:28.484732+00:00",
+  "updated_at_utc": "2026-10-08T16:44:53.384062+00:00",
   "latest_password_probe_cleanup": {
     "auth_users": 1,
     "posts": 1,
@@ -293,5 +293,12 @@
     "supabase/deployments/generate-content-v1-backup.json",
     "supabase/deployments/generate-content-v2-backup.json"
   ],
-  "fixture_cleanup_pending": true
+  "fixture_cleanup_pending": true,
+  "fixture_retention": {
+    "recorded_at_utc": "2026-10-08T16:44:53.384062+00:00",
+    "retain_for_further_tests": true,
+    "cleanup_at_assistant_discretion_when_appropriate": true,
+    "immediate_deletion_requested": false
+  },
+  "fixture_status": "retained_disabled_for_future_testing"
 }

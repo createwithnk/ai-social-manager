@@ -1,0 +1,50 @@
+name: Isolated database concurrency
+
+on:
+  push:
+    branches: [work/content-system-2026-10-03]
+    paths:
+      - .github/workflows/database-concurrency.yml
+      - tests/native-postgres-concurrency.mjs
+      - tests/prepare-native-postgres.mjs
+      - tests/local-bootstrap.sql
+      - tests/live-database.sql
+      - tests/live-payment-database.sql
+      - supabase/migrations/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: isolated-database-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Prepare disposable PostgreSQL 17.10 runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          pg_runtime="$(mktemp -d "$RUNNER_TEMP/aasiflow-pg-runtime-XXXXXX")"
+          npm install --ignore-scripts --no-audit --no-fund --prefix "$pg_runtime" @embedded-postgres/linux-x64@17.10.0-beta.17 pg@8.23.1
+          node tests/prepare-native-postgres.mjs "$pg_runtime"
+          echo "AASIFLOW_TEST_PG_BIN=$pg_runtime/node_modules/@embedded-postgres/linux-x64/native/bin" >> "$GITHUB_ENV"
+          echo "AASIFLOW_TEST_PG_DRIVER=$pg_runtime/node_modules/pg/lib/index.js" >> "$GITHUB_ENV"
+      - name: Test overlapping transactions with TCP disabled
+        run: node tests/native-postgres-concurrency.mjs tests/native-postgres-concurrency-ci.json
+      - name: Print complete evidence and cleanup status
+        if: always()
+        shell: bash
+        run: |
+          if [ -f tests/native-postgres-concurrency-ci.json ]; then
+            cat tests/native-postgres-concurrency-ci.json
+          fi

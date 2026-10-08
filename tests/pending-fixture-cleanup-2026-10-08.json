@@ -1,7 +1,7 @@
 {
   "prepared_at_utc": "2026-10-08T16:26:26.310Z",
   "project_ref": "nkfecpdegcmsapvbviky",
-  "purpose": "Remove only the disposable Auth account created for the version 3 live security test.",
+  "purpose": "Retain the single disabled disposable Auth fixture for later tests; remove when no longer needed and before public launch.",
   "target": {
     "id": "bfd1281d-a80d-4eec-913a-e210549e61f7",
     "email": "aasiflow-v3-ae1e716e-49fb-4e35-a45d-2b8bf1560a8a@example.invalid",
@@ -54,7 +54,14 @@
     "sign_in_required": true,
     "permanent_delete_not_performed": true,
     "action_time_confirmation_required": true,
-    "reason": "Browser guidance: \"Permanently delete data: Confirm before any deletion the user cannot reverse through the product’s normal recovery flow.\""
+    "reason": "Browser guidance: \"Permanently delete data: Confirm before any deletion the user cannot reverse through the product\u2019s normal recovery flow.\""
   },
-  "limits": "The account is disabled and has no active sessions. It and one exhausted AI quota row still exist. Do not create more live fixtures until this cleanup is complete."
+  "limits": "Keep this fixture disabled outside a specifically scoped live test. Reuse it through an authorized ephemeral test-credential flow rather than accumulate more live test accounts. Local tests do not require it. Remove when no longer needed and before public launch.",
+  "status": "retained_disabled_for_future_testing",
+  "owner_decision": {
+    "recorded_at_utc": "2026-10-08T16:44:53.384062+00:00",
+    "retain_for_further_tests": true,
+    "cleanup_at_assistant_discretion_when_appropriate": true,
+    "immediate_deletion_requested": false
+  }
 }
