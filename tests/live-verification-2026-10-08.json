@@ -1,0 +1,254 @@
+{
+  "date": "2026-10-08",
+  "timezone": "Asia/Kolkata",
+  "verified_at_utc": "2026-10-08T07:42:07.951Z",
+  "owner_authorization": "Explicit approval for the full payment/Auth-security/media-draft/social-publication database scope; publishing and real-money collection stay disabled.",
+  "applied_migrations": [
+    {
+      "version": "20261008072754",
+      "name": "secure_connections_and_publish_queue"
+    },
+    {
+      "version": "20261008073442",
+      "name": "index_payment_events_order"
+    }
+  ],
+  "schema_payload_sha256": "4cd66f287b558404ddd999bb6db80b58b21f685e864a78bea75a340606e8557d",
+  "index_payload_sha256": "47e60d804fdb12516fc3b9b3b7487a318de013dc0137a9d02de0b29cd88c1f8c",
+  "live_rollback_tests": [
+    {
+      "path": "tests/live-database.sql",
+      "sha256": "8694ed4e658d43bcbb9b755d9c9fd16168168046a83b09a70e51343e9493a3ba",
+      "passed": true,
+      "result": "PASS: save/update, approval reset, future schedules, post/storage/usage ownership, quota limit and anonymous denial; all test data rolled back."
+    },
+    {
+      "path": "tests/live-payment-database.sql",
+      "sha256": "92562d1f9f31ca412609c91c9d04f2b00d0115055bae0b66efe3dcf766271899",
+      "passed": true,
+      "result": "PASS: live payment gates, amount/currency/null checks, replay, credit debits/refunds, cross-user/anonymous denial and revoked-session rejection; all fixture data and temporary gate changes rolled back."
+    }
+  ],
+  "local_regression": {
+    "command": "npm test",
+    "passed": true,
+    "client_tests": 10,
+    "mocked_generation_endpoint_passed": true,
+    "postgres_checks": 71
+  },
+  "final_live_state": {
+    "gates": {
+      "billing": false,
+      "publishing": false
+    },
+    "posts": 1,
+    "auth_users": 1,
+    "auth_sessions": 4,
+    "credit_entries": 0,
+    "payment_events": 0,
+    "payment_orders": 0,
+    "payment_refunds": 0,
+    "publication_jobs": 0,
+    "social_connections": 0,
+    "remaining_fixture_users": 0,
+    "payment_event_index_valid": true
+  },
+  "security_advisories": [
+    {
+      "name": "rls_enabled_no_policy",
+      "title": "RLS Enabled No Policy",
+      "level": "INFO",
+      "facing": "EXTERNAL",
+      "categories": [
+        "SECURITY"
+      ],
+      "description": "Detects cases where row level security (RLS) has been enabled on a table but no RLS policies have been created.",
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+      "count": 6,
+      "findings": [
+        {
+          "detail": "Table \\`private.action_usage\\` has RLS enabled, but no policies exist",
+          "metadata": {
+            "name": "action_usage",
+            "type": "table",
+            "schema": "private"
+          },
+          "observed_at": "2026-10-08T07:37:04.682Z"
+        },
+        {
+          "detail": "Table \\`private.launch_controls\\` has RLS enabled, but no policies exist",
+          "metadata": {
+            "name": "launch_controls",
+            "type": "table",
+            "schema": "private"
+          },
+          "observed_at": "2026-10-08T07:37:04.682Z"
+        },
+        {
+          "detail": "Table \\`private.oauth_states\\` has RLS enabled, but no policies exist",
+          "metadata": {
+            "name": "oauth_states",
+            "type": "table",
+            "schema": "private"
+          },
+          "observed_at": "2026-10-08T07:37:04.682Z"
+        },
+        {
+          "detail": "Table \\`private.payment_events\\` has RLS enabled, but no policies exist",
+          "metadata": {
+            "name": "payment_events",
+            "type": "table",
+            "schema": "private"
+          },
+          "observed_at": "2026-10-08T07:37:04.682Z"
+        },
+        {
+          "detail": "Table \\`private.payment_refunds\\` has RLS enabled, but no policies exist",
+          "metadata": {
+            "name": "payment_refunds",
+            "type": "table",
+            "schema": "private"
+          },
+          "observed_at": "2026-10-08T07:37:04.682Z"
+        },
+        {
+          "detail": "Table \\`private.social_credentials\\` has RLS enabled, but no policies exist",
+          "metadata": {
+            "name": "social_credentials",
+            "type": "table",
+            "schema": "private"
+          },
+          "observed_at": "2026-10-08T07:37:04.682Z"
+        }
+      ]
+    },
+    {
+      "name": "auth_leaked_password_protection",
+      "title": "Leaked Password Protection Disabled",
+      "level": "WARN",
+      "facing": "EXTERNAL",
+      "categories": [
+        "SECURITY"
+      ],
+      "description": "Leaked password protection is currently disabled.",
+      "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection",
+      "count": 1,
+      "findings": [
+        {
+          "detail": "Supabase Auth prevents the use of compromised passwords by checking against HaveIBeenPwned.org. Enable this feature to enhance security.",
+          "metadata": {
+            "type": "auth",
+            "entity": "Auth"
+          }
+        }
+      ]
+    }
+  ],
+  "performance_advisories": [
+    {
+      "name": "unused_index",
+      "title": "Unused Index",
+      "level": "INFO",
+      "facing": "EXTERNAL",
+      "categories": [
+        "PERFORMANCE"
+      ],
+      "description": "Detects if an index has never been used and may be a candidate for removal.",
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index",
+      "count": 7,
+      "findings": [
+        {
+          "detail": "Index \\`oauth_states_user_idx\\` on table \\`private.oauth_states\\` has not been used",
+          "metadata": {
+            "name": "oauth_states",
+            "type": "table",
+            "schema": "private"
+          },
+          "observed_at": "2026-10-08T07:37:04.654Z"
+        },
+        {
+          "detail": "Index \\`publication_jobs_user_idx\\` on table \\`public.publication_jobs\\` has not been used",
+          "metadata": {
+            "name": "publication_jobs",
+            "type": "table",
+            "schema": "public"
+          },
+          "observed_at": "2026-10-08T07:37:04.654Z"
+        },
+        {
+          "detail": "Index \\`publication_jobs_connection_idx\\` on table \\`public.publication_jobs\\` has not been used",
+          "metadata": {
+            "name": "publication_jobs",
+            "type": "table",
+            "schema": "public"
+          },
+          "observed_at": "2026-10-08T07:37:04.654Z"
+        },
+        {
+          "detail": "Index \\`post_metrics_user_idx\\` on table \\`public.post_metrics\\` has not been used",
+          "metadata": {
+            "name": "post_metrics",
+            "type": "table",
+            "schema": "public"
+          },
+          "observed_at": "2026-10-08T07:37:04.654Z"
+        },
+        {
+          "detail": "Index \\`post_metrics_job_idx\\` on table \\`public.post_metrics\\` has not been used",
+          "metadata": {
+            "name": "post_metrics",
+            "type": "table",
+            "schema": "public"
+          },
+          "observed_at": "2026-10-08T07:37:04.654Z"
+        },
+        {
+          "detail": "Index \\`payment_refunds_order_idx\\` on table \\`private.payment_refunds\\` has not been used",
+          "metadata": {
+            "name": "payment_refunds",
+            "type": "table",
+            "schema": "private"
+          },
+          "observed_at": "2026-10-08T07:37:04.654Z"
+        },
+        {
+          "detail": "Index \\`payment_events_order_idx\\` on table \\`private.payment_events\\` has not been used",
+          "metadata": {
+            "name": "payment_events",
+            "type": "table",
+            "schema": "private"
+          },
+          "observed_at": "2026-10-08T07:37:04.654Z"
+        }
+      ]
+    }
+  ],
+  "advisory_interpretation": {
+    "rls_enabled_no_policy": "Intentional default-deny private tables; direct privileges revoked, narrow private definer RPCs only.",
+    "unused_index": "New/inactive feature indexes retained; no removal solely to silence the notice.",
+    "auth_leaked_password_protection": "Existing unresolved warning; no paid plan or Auth setting changed.",
+    "unindexed_foreign_keys": "Missing payment-event FK index fixed and no longer reported."
+  },
+  "actions_not_performed": [
+    "New Edge Function deployment",
+    "New AI version deployment",
+    "Merchant account creation or login",
+    "Merchant/API/webhook keys added",
+    "Provider test-mode transaction",
+    "Real charge or refund",
+    "Website/social publication",
+    "Worker/Cron activation",
+    "Paid-plan or DB engine change"
+  ],
+  "limitations": [
+    "Role-based SQL tests simulate request claims; they do not verify user JWT signatures, real login or actual global logout.",
+    "Storage SQL checks cover metadata/policies, not actual uploaded bytes.",
+    "Both rollback suites use sequential single-connection execution; live concurrent-worker races remain unverified.",
+    "Merchant account, isolated test environment/credits, price selection, callback/origin configuration and provider testing remain pending."
+  ],
+  "history_manifest": "supabase/migration-history.json",
+  "supersedes_for_current_live_state": [
+    "tests/verification-2026-10-08.json",
+    "tests/payment-readiness-2026-10-08.json"
+  ]
+}

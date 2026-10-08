@@ -1,10 +1,6 @@
 # Payment setup and test-mode handoff
 
-Status: 8 October 2026. Payment development has been authorized. The combined
-production migration is still blocked by automatic approval review: payment
-work alone did not explicitly approve its wider Auth/RLS, trigger, OAuth and
-publication-schema changes. No live migration, function deployment, merchant
-credential, checkout, charge or refund was performed.
+Status: 8 October 2026. The owner explicitly approved the complete database scope. The combined update and missing payment-event FK index were applied; live baseline and payment/session rollback suites passed. Both launch gates remain false. No new function deployment, merchant credential, checkout, charge, refund or website/social publication was performed.
 
 ## Reviewed database update
 
@@ -13,7 +9,7 @@ The concrete update is
 and saved in GitHub with SHA-256
 `4cd66f287b558404ddd999bb6db80b58b21f685e864a78bea75a340606e8557d`.
 
-Approval needs to cover the whole database update:
+The applied database update covers:
 
 - Session checks on post/media/usage access; storage/draft quotas and post revisions.
 - Private encrypted social credentials, single-use OAuth state, account metadata,
@@ -22,10 +18,9 @@ Approval needs to cover the whole database update:
 
 Both payment and publication controls default to **false**. The migration adds
 no merchant keys, charge, public hosting, social post, worker schedule or Storage
-DELETE grant. It changes access policies and write triggers, so existing client
-sessions and post edits need live regression testing after application.
+DELETE grant. It changes access policies and write triggers. Role-based live rollback checks passed; actual client JWT/login/global-signout and concurrent-worker regression remain pending.
 Reconcile the existing migration history before a CLI push; do not rerun the
-old schema files or bypass the rejected action with another tool.
+old schema files. Recorded versions and repository paths are in `migration-history.json`.
 
 ## Merchant account
 
@@ -69,7 +64,7 @@ The current implementation supports one-off INR credit purchases. Currency,
 international-payment eligibility, product terms and refund policy need owner
 and provider review before an international launch.
 
-After the database update is explicitly approved and verified, deploy
+The database update is approved/applied and SQL rollback checks passed. Next, deploy
 `payment-checkout` with gateway JWT verification enabled. Deploy
 `payment-webhook` with gateway JWT verification disabled only because its
 handler verifies the raw-body provider HMAC. Keep both billing controls off
@@ -94,8 +89,7 @@ credits were touched. Only after this evidence is reviewed should the owner
 approve live keys and collection. Never retry an uncertain checkout blindly.
 
 Local handler tests intercept every Auth, database and provider request.
-Separate local PostgreSQL tests verify duplicate accounting and credit
-balances. These do not establish a live provider integration.
+Local and live PostgreSQL rollback suites verify duplicate accounting and credit balances. These do not establish a live provider integration.
 
 References: [Test and Live Modes](https://razorpay.com/docs/payments/dashboard/test-live-modes),
 [API Keys](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/),

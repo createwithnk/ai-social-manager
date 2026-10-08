@@ -1,0 +1,34 @@
+{
+  "project_ref": "nkfecpdegcmsapvbviky",
+  "inspected_on": "2026-10-08",
+  "history_reconciliation_required_before_cli_push": true,
+  "initial_schema": {
+    "repository_path": "supabase/migrations/20260901000000_create_posts.sql",
+    "live_history_version": null,
+    "note": "Posts schema existed before tracked migration history. Do not replay or mark history without review."
+  },
+  "mappings": [
+    {
+      "repository_path": "supabase/migrations/20261003000000_content_system.sql",
+      "live_version": "20261006090620",
+      "live_name": "content_system_private_media_and_quota",
+      "repository_sha256": "b5d3b87ef0c025e493ae8751ea7165253df5727ad7547ed9dcbf065a15fd2a8b",
+      "note": "Earlier applied migration; repository/local generation timestamp differs."
+    },
+    {
+      "repository_path": "supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql",
+      "live_version": "20261008072754",
+      "live_name": "secure_connections_and_publish_queue",
+      "repository_sha256": "4cd66f287b558404ddd999bb6db80b58b21f685e864a78bea75a340606e8557d",
+      "reviewed_payload_applied": true
+    },
+    {
+      "repository_path": "supabase/migrations/20261008073141_index_payment_events_order.sql",
+      "live_version": "20261008073442",
+      "live_name": "index_payment_events_order",
+      "repository_sha256": "47e60d804fdb12516fc3b9b3b7487a318de013dc0137a9d02de0b29cd88c1f8c",
+      "reviewed_payload_applied": true
+    }
+  ],
+  "warning": "Supabase MCP records execution timestamps rather than the earlier local CLI creation timestamps. Pull/reconcile history before using CLI db push; this manifest does not modify migration history."
+}

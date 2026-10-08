@@ -6,20 +6,20 @@ A review-first social content workspace. **Website/social publication and paymen
 | --- | --- |
 | Supabase email login, drafts, private media and text/image Gemini backend | Existing live setup; 22 HTTP checks passed on 6 October |
 | Password confirmation/recovery, PKCE and global logout UI | Implemented; browser tested with mocked Auth |
-| Active-session RLS, storage/draft quotas and post revisions | Prepared and locally tested; live migration not applied |
+| Active-session RLS, storage/draft quotas and post revisions | Applied; live ownership/session rollback checks passed |
 | Instagram/LinkedIn connections, encrypted tokens and approval-bound publishing queue | Implemented and mock tested; official app settings and live activation pending |
 | Real metrics and observed posting-time suggestions | Implemented; no fabricated data; live platform checks pending |
-| Hosted payment links, verified events, credit accounting and refund reconciliation | Prepared and tested locally; no merchant credentials, payment mode or collecting enabled |
+| Hosted payment links, verified events, credit accounting and refund reconciliation | Schema applied; live rollback accounting passed; merchant/provider integration still pending |
 | Production security headers | Generated; hosting/domain configuration and deployment still pending |
 
-The live `generate-content` function is still the previously verified version. The new version requires the prepared session-security migration and has **not** been deployed. The new social/payment functions have **not** been deployed or scheduled. The live project still has its original 1 Auth user and 1 post; payment/queue tables do not exist there.
+The live `generate-content` function is still the previously verified version. The new version requires the prepared session-security migration and has **not** been deployed. The new social/payment functions have **not** been deployed or scheduled. The live project still has its original 1 Auth user and 1 post. Payment/queue tables now exist but are empty; both DB launch gates are false.
 
 ## Workspace
 
 - Responsive dashboard, drafts, editable content, explicit approval and a planning calendar.
 - English/Hindi/Urdu/Arabic AI briefs; clearly labelled English local templates.
 - Private image/video/audio uploads, signed previews and browser recording with a 60-second cap. File signatures/MIME/size/owner paths are checked; recorder multipart MIME is normalized.
-- Saved post revisions prevent lost updates after the new migration. Editing approved/scheduled content clears approval and its plan.
+- Saved post revisions prevent lost updates through the applied migration. Editing approved/scheduled content clears approval and its plan.
 - The Connections & setup screen displays actual configuration and gates. No API secret is entered in the browser.
 - Instagram adapter: official Meta/Facebook Login, exactly one authorized Facebook Page linked to a professional Instagram account, JPEG photo/MP4 Reel publishing.
 - LinkedIn adapter: personal-profile OAuth, text/JPEG/PNG/MP4 posts using the modern Posts, Images and Videos APIs; chunk ranges/ETags are handled for video upload.
@@ -54,7 +54,7 @@ For the connected setup, only `VITE_SUPABASE_URL` and its public publishable/ano
 
 ## Verification
 
-- `tests/database.mjs`: 70 local PostgreSQL checks, including the baseline rollback suite, cross-user/anonymous denial, signed-out session rejection, immutable ownership/revisions, approval changes, dual-gate DB checks, job leases, OAuth replay/expiry, read-only metadata, payment replay/amount verification, credit debits/refunds and storage/draft quotas.
+- `tests/database.mjs`: 71 local PostgreSQL checks, including the baseline rollback suite, cross-user/anonymous denial, signed-out session rejection, immutable ownership/revisions, approval changes, dual-gate DB checks, job leases, OAuth replay/expiry, read-only metadata, payment replay/amount verification, credit debits/refunds and storage/draft quotas.
 - `tests/security.test.ts`: 23 Deno tests covering encryption/tampering, request limits, redirect/host validation, OAuth scopes/identity, provider publish/upload flows, uncertain outcomes, null analytics, hosted checkout, raw-byte HMAC, merchant/captured-payment/refund validation, and fail-closed launch gates.
 - `tests/payment-endpoints.test.ts`: actual checkout/webhook handlers with intercepted Auth/database/provider HTTP; 14 request-flow checks cover closed gates, revoked sessions, client price/credit/owner tampering, forged events, verified refund routing and uncertain provider responses.
 - 10 client/workflow unit tests plus the mocked generation endpoint suite passed.
@@ -62,20 +62,20 @@ For the connected setup, only `VITE_SUPABASE_URL` and its public publishable/ano
 - TypeScript production build, lint and all six Edge entrypoint type checks passed. Dependency audit was patched to `source-map-js` 1.2.2 and returned zero known vulnerabilities.
 - Local PostgreSQL uses PGlite's single connection and modeled Auth/Storage catalogs. These checks do not prove live Auth/Storage behavior or multiworker concurrency. Real user email delivery, real microphone behavior, actual Gemini video/audio, official social posting/analytics and provider test-mode payments remain unverified.
 
-See `tests/verification-2026-10-06.json` for the earlier live HTTP result and `tests/verification-2026-10-08.json` for the current scope. See `SECURITY.md` for the actual remaining launch checks and operator handling.
+The latest live state is in `tests/live-verification-2026-10-08.json`. Earlier snapshots are `tests/verification-2026-10-06.json` (live HTTP), `tests/verification-2026-10-08.json` (local preparation) and `tests/payment-readiness-2026-10-08.json` (payment preparation before database approval). See `SECURITY.md` for the actual remaining launch checks and operator handling.
 
 ## Live state and next activation step
 
 Applied on 6 October: `20261006090620_content_system_private_media_and_quota`. The database and private bucket are live; `generate-content` has gateway JWT verification plus `auth.getUser`, uses the existing server Gemini key, and passed real Hindi/text and image generation. Only two provider calls were made in those live tests. The synthetic users/posts/quota were cleaned up. The 69-byte test PNG was deleted after specific owner approval; only a zero-byte folder placeholder remains. No Storage DELETE policy was introduced.
 
-Prepared next migration: `supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql`. The owner authorized starting payment work on 8 October. **Automatic approval review still rejected this combined update because payment-work approval did not explicitly cover its broader Auth/RLS, trigger, OAuth and publication-schema changes. No part has been applied.** Obtain explicit permission for the whole reviewed update before running it. Both DB launch controls and both environment gates default to false even after application.
+Applied on 8 October after explicit owner approval: `secure_connections_and_publish_queue` (live version `20261008072754`) and the missing payment-event FK index (live version `20261008073442`). Both baseline and payment/session SQL rollback suites passed against the actual database. The tests simulated request claims using database roles; they do not prove an HTTP login/global-signout or live provider flow. All synthetic users, sessions, post/media metadata, orders, events, refunds, credits and temporary gate changes were rolled back. Verified 1 original user, 1 original post, zero payment/queue data and both launch controls false.
 
-See `supabase/PAYMENT_SETUP.md` and `tests/payment-readiness-2026-10-08.json` for the merchant test-mode handoff and latest blocked status. Razorpay account status is unknown; no merchant credentials, production prices or provider test transaction have been configured.
+See `supabase/PAYMENT_SETUP.md` for merchant Test Mode setup. Razorpay account status is unknown; no merchant credentials, production prices or provider test transaction have been configured. The earlier automatic approval blocks were resolved for this database update by explicit owner permission. Website/social publication and real payment collection remain disabled.
 
-The initial posts schema predates migration tracking, and the applied content migration has a different timestamp from the prepared repository file. Reconcile/pull the existing history before any CLI `db push`; do not blindly replay old files.
+The initial posts schema predates migration tracking, and the applied content migration has a different timestamp from the prepared repository file. Recorded live versions differ from the locally generated filenames; see `supabase/migration-history.json`. Reconcile/pull the existing history before any CLI `db push`; do not blindly replay old files.
 
-After authorized application, deploy only the needed server functions with the JWT/custom authentication settings in `supabase/config.toml`, and perform live isolation/session tests. Payment collectors and the publication worker remain subject to their separate activation permissions. No Cron schedule is created by these files.
+The schema is ready. Next, deploy only the needed server functions with the JWT/custom authentication settings in `supabase/config.toml`, and perform live isolation/session tests. Payment collectors and the publication worker remain subject to their separate activation permissions. No Cron schedule is created by these files.
 
-The live security advisor still reports disabled leaked-password protection; performance advisors have no findings. Server password policy, verified SMTP/CAPTCHA, final redirect/origin allowlists, DB patch review, safe media retention, official platform app approval and merchant test configuration remain launch requirements. No billing plan, payment method or DB engine upgrade has been changed.
+The live security advisor still reports disabled leaked-password protection and six informational default-deny private tables. The missing FK index was fixed; seven informational unused-index notices concern new/inactive features. See `SECURITY.md` for reasons and remediation links. Server password policy, verified SMTP/CAPTCHA, final redirect/origin allowlists, DB patch review, safe media retention, official platform app approval and merchant test configuration remain launch requirements. No billing plan, payment method or DB engine upgrade has been changed.
 
-Limits in the prepared migration: 20 free AI attempts/user/UTC day, up to 100 total using paid credits only after billing approval; failed attempts count. Media <=10 MB/file, 20 objects/user and 80/bucket; drafts <=200/user and 1,000 total. These are conservative abuse limits, not provider spending guarantees. Replaced/detached files remain private until authorized cleanup.
+Limits in the applied migration: 20 free AI attempts/user/UTC day, up to 100 total using paid credits only after billing approval; failed attempts count. Media <=10 MB/file, 20 objects/user and 80/bucket; drafts <=200/user and 1,000 total. These are conservative abuse limits, not provider spending guarantees. Replaced/detached files remain private until authorized cleanup.

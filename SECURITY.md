@@ -1,8 +1,8 @@
 # Security and activation review
 
-The owner authorized development/testing and starting payment work, while reserving website/social publication and live collection. Both launch gates remain false. Automatic approval review rejected the combined migration again on 8 October: payment-work approval did not explicitly authorize its broader production Auth/RLS, trigger, OAuth and publication-schema changes. **It has not been applied to the live project.** Do not use another tool or split execution to bypass that rejection. Obtain explicit permission for the whole reviewed database update.
+The owner explicitly approved the whole reviewed database update on 8 October. The session/security/social/payment schema and payment-event FK index have been applied. Website/social publication and real payment collection remain disabled; both DB launch gates are false. New provider/worker/payment functions and the prepared AI function version have not been deployed. The earlier automatic approval rejection was resolved for this specific database update; it is not authorization for live collection or publication.
 
-## Implemented in the prepared update
+## Implemented in the applied schema and prepared server code
 
 - Every public application table has RLS. User-visible metadata is owner-readable only; publication jobs, prices, credentials, metrics, payment outcomes and credits cannot be written by clients.
 - User-owned requests check both the verified user and existence of the JWT's session in `auth.sessions`. New policies reject signed-out/expired sessions even while the old access token has time remaining. No mutable `user_metadata` is used for authorization.
@@ -22,8 +22,8 @@ The owner authorized development/testing and starting payment work, while reserv
 
 ## Remaining launch checks
 
-1. Review the prepared migration and approve applying it. Reconcile existing migration history first: the original schema predates tracking and the content-system live version differs from its repository name. Do not run a blind `db push`.
-2. Apply the approved migration atomically, run live rollback/HTTP isolation and global-signout checks, and inspect security/performance advisors. Local PGlite tests use one connection and model Auth/Storage catalogs; they do not establish live API behavior or concurrent-worker correctness.
+1. Reconcile existing migration history before a CLI push: the original schema predates tracking and recorded timestamps differ from repository filenames. The database update is approved/applied; see `supabase/migration-history.json`. Do not run a blind `db push`.
+2. Live baseline and payment/session SQL rollback suites passed, including role isolation, deleted-session rejection, immutable amount/currency, duplicate grants and refunds. Finish HTTP session/global-signout and simultaneous-worker checks after deploying the needed functions. SQL tests simulate request claims and run sequentially; they do not establish JWT verification, actual Auth logout, Storage byte handling or concurrent-worker correctness.
 3. Set server minimum password length to 12 or more; the frontend already requires 12 for signup/reset. Add CAPTCHA/rate controls and a verified SMTP sender before public signup. Test real email delivery and PKCE confirmation/recovery on the final allowlisted HTTPS domain.
 4. The live project currently runs PostgreSQL 17.6. Supabase's September patch announcement describes 17.11 security fixes. Review the project's available upgrade and the provider's extension/reindex instructions before a maintenance change. No DB engine upgrade has been made.
 5. The live Auth advisor still reports disabled leaked-password protection. Review the feature/plan requirements with the owner; do not enable a paid plan implicitly. No MFA or leaked-password screening is claimed by this implementation.
@@ -33,6 +33,13 @@ The owner authorized development/testing and starting payment work, while reserv
 8. Test a real microphone plus actual Gemini video/audio requests; only text/image AI were live-tested on 6 October. Browser recording now passes with a simulated microphone and mocked Storage.
 9. Approve and implement safe private-media cleanup before public signup. Current quotas prevent unbounded growth but eventually require manual retention review.
 10. Publication needs a separate owner approval. Only then configure the worker secret, enable both publishing gates and activate a schedule. Website deployment remains a separate approval as well.
+
+## Advisor interpretation after live verification
+
+- [RLS enabled without a policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy): six private tables intentionally deny direct access. Privileges are revoked and RLS has no allow policy; trusted private definer functions provide narrow server operations. Do not add client policies to silence this informational notice.
+- [Unused indexes](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index): seven new/inactive-feature indexes have not yet been used. Retain required FK/ownership/queue indexes.
+- [Leaked-password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection): the existing Auth warning remains unresolved. Review feature/plan requirements before enabling it; no paid-plan change was made.
+- The [unindexed FK](https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys) on private payment events was fixed and no longer appears. The index was verified valid/ready.
 
 ## Operator handling
 
