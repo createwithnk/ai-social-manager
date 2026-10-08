@@ -1,0 +1,175 @@
+{
+  "verified_at_utc": "2026-10-08T10:21:44.239231+00:00",
+  "project_ref": "nkfecpdegcmsapvbviky",
+  "fixture_run": "84ecdcad-96e4-4974-846a-ea8a0e8a3e13",
+  "checks": [
+    {
+      "name": "confirmed service fixture login",
+      "passed": true
+    },
+    {
+      "name": "social-account denies anonymous caller",
+      "passed": true
+    },
+    {
+      "name": "payment-checkout denies anonymous caller",
+      "passed": true
+    },
+    {
+      "name": "account status safely reports pending setup and publishing disabled",
+      "passed": true
+    },
+    {
+      "name": "instagram cannot connect before setup",
+      "passed": true
+    },
+    {
+      "name": "linkedin cannot connect before setup",
+      "passed": true
+    },
+    {
+      "name": "disabled billing blocks plans",
+      "passed": true
+    },
+    {
+      "name": "disabled billing blocks checkout",
+      "passed": true
+    },
+    {
+      "name": "disabled webhook rejects event without creating credits",
+      "passed": true
+    },
+    {
+      "name": "OAuth callback without state/code cannot connect an account",
+      "passed": true
+    },
+    {
+      "name": "service fixture global logout succeeds",
+      "passed": true
+    },
+    {
+      "name": "social metadata denies old token after logout",
+      "passed": true
+    }
+  ],
+  "provider_calls_requested": false,
+  "uploads_requested": false,
+  "email_sent": false,
+  "website_or_social_publication": false,
+  "payment_transaction": false,
+  "cleanup_verified": true,
+  "scope": "closed account/payment services",
+  "passed": true,
+  "temporary_credentials_removed": true,
+  "completed_at_utc": "2026-10-08T10:31:53.625063+00:00",
+  "cleanup": {
+    "auth_users": 1,
+    "posts": 1,
+    "publishing": false,
+    "billing": false,
+    "payment_orders": 0,
+    "credit_entries": 0,
+    "publication_jobs": 0,
+    "social_connections": 0,
+    "oauth_states": 0,
+    "social_credentials": 0,
+    "fixture_users": 0,
+    "fixture_sessions": 0,
+    "fixture_usage": 0
+  },
+  "deployed_functions": [
+    {
+      "name": "social-account",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "source_readback_exact_match": true,
+      "required_files": [
+        "social-account/index.ts",
+        "social-account/deno.json",
+        "_shared/runtime.ts",
+        "_shared/security.ts",
+        "_shared/providers.ts",
+        "_shared/config.ts"
+      ],
+      "file_sha256": {
+        "social-account/index.ts": "854417e59cc406d78719b8986d48178e0b07c833e585912a2aff459e7815222f",
+        "social-account/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
+        "_shared/runtime.ts": "59aa956022248622eaf7a182137a4b7f142bc34516c0f23f87a2b705d88fcbfc",
+        "_shared/security.ts": "5e35f539160f9405502634bb070e12c72a48e514c13ed3388adb4bf335abfc98",
+        "_shared/providers.ts": "17af8c5a3fa089bd22bf9fb563f127f1e12efb7599ccd0f9f4cb8f12e328407f",
+        "_shared/config.ts": "025b2fbd0fc6d45c9442cbd0902da4e49366a6130d63f683c7d1a65915d02d9a"
+      }
+    },
+    {
+      "name": "social-callback",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "source_readback_exact_match": true,
+      "required_files": [
+        "social-callback/index.ts",
+        "social-callback/deno.json",
+        "_shared/runtime.ts",
+        "_shared/security.ts",
+        "_shared/providers.ts",
+        "_shared/config.ts"
+      ],
+      "file_sha256": {
+        "social-callback/index.ts": "d0cbbdbea4a87e05bf62a5c5b59995f40d2704e4154d2bec3ba07efa9ddf88fc",
+        "social-callback/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
+        "_shared/runtime.ts": "59aa956022248622eaf7a182137a4b7f142bc34516c0f23f87a2b705d88fcbfc",
+        "_shared/security.ts": "5e35f539160f9405502634bb070e12c72a48e514c13ed3388adb4bf335abfc98",
+        "_shared/providers.ts": "17af8c5a3fa089bd22bf9fb563f127f1e12efb7599ccd0f9f4cb8f12e328407f",
+        "_shared/config.ts": "025b2fbd0fc6d45c9442cbd0902da4e49366a6130d63f683c7d1a65915d02d9a"
+      }
+    },
+    {
+      "name": "payment-checkout",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "source_readback_exact_match": true,
+      "required_files": [
+        "payment-checkout/index.ts",
+        "payment-checkout/deno.json",
+        "_shared/runtime.ts",
+        "_shared/security.ts",
+        "_shared/payments.ts",
+        "_shared/providers.ts"
+      ],
+      "file_sha256": {
+        "payment-checkout/index.ts": "4086c0cacb87668b9aec2e8a37d62137f140b7f20db6bb24d430407b236c4656",
+        "payment-checkout/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
+        "_shared/runtime.ts": "59aa956022248622eaf7a182137a4b7f142bc34516c0f23f87a2b705d88fcbfc",
+        "_shared/security.ts": "5e35f539160f9405502634bb070e12c72a48e514c13ed3388adb4bf335abfc98",
+        "_shared/payments.ts": "2b984c0a7f2d123e43ebb80bd4a21e171a95fbb2e39cc8b657d0581c11904d09",
+        "_shared/providers.ts": "17af8c5a3fa089bd22bf9fb563f127f1e12efb7599ccd0f9f4cb8f12e328407f"
+      }
+    },
+    {
+      "name": "payment-webhook",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "source_readback_exact_match": true,
+      "required_files": [
+        "payment-webhook/index.ts",
+        "payment-webhook/deno.json",
+        "_shared/runtime.ts",
+        "_shared/security.ts",
+        "_shared/payments.ts",
+        "_shared/providers.ts"
+      ],
+      "file_sha256": {
+        "payment-webhook/index.ts": "2b1bd6fd94a0bf78cde604069224800646b62e1007372d6ebb782b1917f00fde",
+        "payment-webhook/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
+        "_shared/runtime.ts": "59aa956022248622eaf7a182137a4b7f142bc34516c0f23f87a2b705d88fcbfc",
+        "_shared/security.ts": "5e35f539160f9405502634bb070e12c72a48e514c13ed3388adb4bf335abfc98",
+        "_shared/payments.ts": "2b984c0a7f2d123e43ebb80bd4a21e171a95fbb2e39cc8b657d0581c11904d09",
+        "_shared/providers.ts": "17af8c5a3fa089bd22bf9fb563f127f1e12efb7599ccd0f9f4cb8f12e328407f"
+      }
+    }
+  ],
+  "limits": "Real HTTP checks exercised closed gates, configuration errors, verified login and global logout. No configured platform OAuth, provider HMAC, merchant transaction, email or publication was exercised; isolated provider integration remains pending."
+}

@@ -1,0 +1,249 @@
+{
+  "verified_at_utc": "2026-10-08T10:34:58.900496+00:00",
+  "project_ref": "nkfecpdegcmsapvbviky",
+  "functions": [
+    {
+      "name": "generate-content",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "bundle_sha256": "94c2fa0fe1a81d2fdbbff61ca1a5472d5470d967abc7fce334af29edd0c23fab"
+    },
+    {
+      "name": "social-account",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "bundle_sha256": "0abd052d898c231674ab7fcff58741b529eec6cf018d23707ad526287889d2aa"
+    },
+    {
+      "name": "social-callback",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "bundle_sha256": "a0dbf76c1d0ae900c30cce7facd9b8138fe905ef4703d6d50463f88129b578a6"
+    },
+    {
+      "name": "payment-checkout",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "bundle_sha256": "2510c4288562eb36e7ecd1336ef860f04710860a1fac76c75e030e9df372837c"
+    },
+    {
+      "name": "payment-webhook",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "bundle_sha256": "f4f9ab7627b688058993150a9695f053c3b44536bf4a0f2da956b8718c16e29c"
+    }
+  ],
+  "deployed_dependency_readback": [
+    {
+      "name": "generate-content",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "source_readback_exact_match": true,
+      "required_files": [
+        "generate-content/index.ts",
+        "generate-content/deno.json",
+        "_shared/media-signature.ts"
+      ],
+      "file_sha256": {
+        "generate-content/index.ts": "b63fa02fd9ae54a662dee0312a76950c211a80b43514d377899336df9f777d3e",
+        "generate-content/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
+        "_shared/media-signature.ts": "d87681b51df20def3c139d32a687c24d04ccd5e1be4339674f4904ecfc48dd6d"
+      }
+    },
+    {
+      "name": "social-account",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "source_readback_exact_match": true,
+      "required_files": [
+        "social-account/index.ts",
+        "social-account/deno.json",
+        "_shared/runtime.ts",
+        "_shared/security.ts",
+        "_shared/providers.ts",
+        "_shared/config.ts"
+      ],
+      "file_sha256": {
+        "social-account/index.ts": "854417e59cc406d78719b8986d48178e0b07c833e585912a2aff459e7815222f",
+        "social-account/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
+        "_shared/runtime.ts": "59aa956022248622eaf7a182137a4b7f142bc34516c0f23f87a2b705d88fcbfc",
+        "_shared/security.ts": "5e35f539160f9405502634bb070e12c72a48e514c13ed3388adb4bf335abfc98",
+        "_shared/providers.ts": "17af8c5a3fa089bd22bf9fb563f127f1e12efb7599ccd0f9f4cb8f12e328407f",
+        "_shared/config.ts": "025b2fbd0fc6d45c9442cbd0902da4e49366a6130d63f683c7d1a65915d02d9a"
+      }
+    },
+    {
+      "name": "social-callback",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "source_readback_exact_match": true,
+      "required_files": [
+        "social-callback/index.ts",
+        "social-callback/deno.json",
+        "_shared/runtime.ts",
+        "_shared/security.ts",
+        "_shared/providers.ts",
+        "_shared/config.ts"
+      ],
+      "file_sha256": {
+        "social-callback/index.ts": "d0cbbdbea4a87e05bf62a5c5b59995f40d2704e4154d2bec3ba07efa9ddf88fc",
+        "social-callback/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
+        "_shared/runtime.ts": "59aa956022248622eaf7a182137a4b7f142bc34516c0f23f87a2b705d88fcbfc",
+        "_shared/security.ts": "5e35f539160f9405502634bb070e12c72a48e514c13ed3388adb4bf335abfc98",
+        "_shared/providers.ts": "17af8c5a3fa089bd22bf9fb563f127f1e12efb7599ccd0f9f4cb8f12e328407f",
+        "_shared/config.ts": "025b2fbd0fc6d45c9442cbd0902da4e49366a6130d63f683c7d1a65915d02d9a"
+      }
+    },
+    {
+      "name": "payment-checkout",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": true,
+      "source_readback_exact_match": true,
+      "required_files": [
+        "payment-checkout/index.ts",
+        "payment-checkout/deno.json",
+        "_shared/runtime.ts",
+        "_shared/security.ts",
+        "_shared/payments.ts",
+        "_shared/providers.ts"
+      ],
+      "file_sha256": {
+        "payment-checkout/index.ts": "4086c0cacb87668b9aec2e8a37d62137f140b7f20db6bb24d430407b236c4656",
+        "payment-checkout/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
+        "_shared/runtime.ts": "59aa956022248622eaf7a182137a4b7f142bc34516c0f23f87a2b705d88fcbfc",
+        "_shared/security.ts": "5e35f539160f9405502634bb070e12c72a48e514c13ed3388adb4bf335abfc98",
+        "_shared/payments.ts": "2b984c0a7f2d123e43ebb80bd4a21e171a95fbb2e39cc8b657d0581c11904d09",
+        "_shared/providers.ts": "17af8c5a3fa089bd22bf9fb563f127f1e12efb7599ccd0f9f4cb8f12e328407f"
+      }
+    },
+    {
+      "name": "payment-webhook",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false,
+      "source_readback_exact_match": true,
+      "required_files": [
+        "payment-webhook/index.ts",
+        "payment-webhook/deno.json",
+        "_shared/runtime.ts",
+        "_shared/security.ts",
+        "_shared/payments.ts",
+        "_shared/providers.ts"
+      ],
+      "file_sha256": {
+        "payment-webhook/index.ts": "2b1bd6fd94a0bf78cde604069224800646b62e1007372d6ebb782b1917f00fde",
+        "payment-webhook/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
+        "_shared/runtime.ts": "59aa956022248622eaf7a182137a4b7f142bc34516c0f23f87a2b705d88fcbfc",
+        "_shared/security.ts": "5e35f539160f9405502634bb070e12c72a48e514c13ed3388adb4bf335abfc98",
+        "_shared/payments.ts": "2b984c0a7f2d123e43ebb80bd4a21e171a95fbb2e39cc8b657d0581c11904d09",
+        "_shared/providers.ts": "17af8c5a3fa089bd22bf9fb563f127f1e12efb7599ccd0f9f4cb8f12e328407f"
+      }
+    }
+  ],
+  "unused_uploaded_shared_files": "Supabase returns the import dependency closure; unused uploaded helpers are excluded from the runtime bundle.",
+  "publication_worker": {
+    "deployed": false,
+    "schedule_created_by_this_work": false
+  },
+  "launch_controls": {
+    "publishing": false,
+    "billing": false
+  },
+  "preserved_baseline_and_cleanup": {
+    "auth_users": 1,
+    "posts": 1,
+    "publishing": false,
+    "billing": false,
+    "payment_orders": 0,
+    "credit_entries": 0,
+    "publication_jobs": 0,
+    "social_connections": 0,
+    "oauth_states": 0,
+    "social_credentials": 0,
+    "fixture_users": 0,
+    "fixture_sessions": 0,
+    "fixture_usage": 0
+  },
+  "live_http_regression": {
+    "ai_auth": {
+      "checks": 20,
+      "passed": true,
+      "report": "tests/live-ai-security-2026-10-08.json"
+    },
+    "closed_services": {
+      "checks": 12,
+      "passed": true,
+      "report": "tests/live-services-safety-2026-10-08.json"
+    },
+    "quota_concurrency": "21 simultaneous real RPC requests allowed exactly 20.",
+    "fixture_cleanup_verified": true,
+    "temporary_credentials_removed": true,
+    "provider_requests_or_uploads": false
+  },
+  "local_verification": {
+    "ai_handler_scenarios": 21,
+    "deno_parent_tests": 24,
+    "payment_handler_steps": 15,
+    "edge_entrypoint_typechecks": 6,
+    "lint": "passed",
+    "network_in_local_handler_tests": "intercepted"
+  },
+  "security_advisors": [
+    {
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "count": 6,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+    },
+    {
+      "name": "auth_leaked_password_protection",
+      "level": "WARN",
+      "count": 1,
+      "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+    }
+  ],
+  "password_policy": {
+    "client_minimum_characters": 12,
+    "desired_hosted_minimum_characters": 12,
+    "hosted_policy_applied": false,
+    "hosted_current_value": null,
+    "dashboard_change_authorized": true,
+    "dashboard_sign_in_required": true,
+    "leaked_password_protection_enabled": false,
+    "paid_upgrade_performed": false,
+    "report": "tests/password-settings-review-2026-10-08.json"
+  },
+  "pending_configuration": [
+    "Authorized Dashboard password policy change and server rejection check.",
+    "Final HTTPS APP_URL and origin/redirect allowlists.",
+    "Verified SMTP/CAPTCHA and actual confirmation/recovery delivery.",
+    "Official platform apps, credentials, permissions and test-account integration.",
+    "Isolated merchant Test Mode, owner-selected prices and provider payment/refund tests.",
+    "Real device recording and actual Gemini video/audio.",
+    "DB patch/maintenance review and private-media retention."
+  ],
+  "owner_approval_holds": {
+    "website_or_social_publication": true,
+    "personal_payment_documents": true,
+    "real_payment_collection": true,
+    "paid_upgrade_or_charge": true
+  },
+  "actions_not_performed": [
+    "Website or social publication",
+    "Merchant credentials or personal payment documents added",
+    "Payment transaction, charge or refund",
+    "Paid plan upgrade",
+    "DB engine upgrade",
+    "Existing personal password or DB password change"
+  ],
+  "rollback_reference": "supabase/deployments/generate-content-v1-backup.json"
+}

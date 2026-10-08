@@ -1,6 +1,6 @@
 # Payment setup and test-mode handoff
 
-Status: 8 October 2026. The owner explicitly approved the complete database scope. The combined update and missing payment-event FK index were applied; live baseline and payment/session rollback suites passed. Both launch gates remain false. No new function deployment, merchant credential, checkout, charge, refund or website/social publication was performed.
+Status: 8 October 2026. The owner explicitly approved the complete database scope and continued free development/testing. The combined update and missing payment-event FK index were applied; live baseline and payment/session rollback suites passed. Checkout and webhook functions version 2 are deployed and readback verified. Both launch gates remain false. No merchant credential, checkout transaction, charge, refund, payment document use or website/social publication was performed.
 
 ## Reviewed database update
 
@@ -18,7 +18,7 @@ The applied database update covers:
 
 Both payment and publication controls default to **false**. The migration adds
 no merchant keys, charge, public hosting, social post, worker schedule or Storage
-DELETE grant. It changes access policies and write triggers. Role-based live rollback checks passed; actual client JWT/login/global-signout and concurrent-worker regression remain pending.
+DELETE grant. It changes access policies and write triggers. Role-based live rollback checks and actual HTTP login/global-signout checks passed. Concurrent publication-worker regression remains pending.
 Reconcile the existing migration history before a CLI push; do not rerun the
 old schema files. Recorded versions and repository paths are in `migration-history.json`.
 
@@ -64,17 +64,21 @@ The current implementation supports one-off INR credit purchases. Currency,
 international-payment eligibility, product terms and refund policy need owner
 and provider review before an international launch.
 
-The database update is approved/applied and SQL rollback checks passed. Next, deploy
-`payment-checkout` with gateway JWT verification enabled. Deploy
-`payment-webhook` with gateway JWT verification disabled only because its
-handler verifies the raw-body provider HMAC. Keep both billing controls off
-until the isolated provider test environment is ready. Keep publication off.
+The database update is approved/applied and SQL rollback checks passed.
+`payment-checkout` version 2 is deployed with gateway JWT verification enabled.
+`payment-webhook` version 2 has gateway JWT verification disabled because its
+handler verifies the raw-body provider HMAC. Actual HTTP checks confirmed
+closed billing blocks plans, checkout and webhook processing. Missing/invalid
+`APP_URL` returns a setup-pending error before an order or provider request.
+Keep both billing controls off until the isolated provider test environment
+is ready. Keep publication off.
 
 For the current project the eventual webhook URL is:
 
 `https://nkfecpdegcmsapvbviky.supabase.co/functions/v1/payment-webhook`
 
-This endpoint has **not** been deployed. Do not register an active webhook yet.
+This endpoint is deployed but rejects events while billing is disabled. Do not
+register an active production webhook or enable collection yet.
 The required events are `payment_link.paid` and `refund.processed`. Set the
 same secret on the provider and server and configure an owner-approved alert
 address. A browser return URL does not grant credits.
@@ -89,7 +93,11 @@ credits were touched. Only after this evidence is reviewed should the owner
 approve live keys and collection. Never retry an uncertain checkout blindly.
 
 Local handler tests intercept every Auth, database and provider request.
-Local and live PostgreSQL rollback suites verify duplicate accounting and credit balances. These do not establish a live provider integration.
+All 15 payment-handler steps passed, including configuration failure before a
+provider call. Local and live PostgreSQL rollback suites verify duplicate
+accounting and credit balances. The 12 deployed service safety checks exercise
+closed gates, missing configuration and revoked sessions. These do not establish
+a live provider integration or validate a configured live webhook signature.
 
 References: [Test and Live Modes](https://razorpay.com/docs/payments/dashboard/test-live-modes),
 [API Keys](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/),

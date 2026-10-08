@@ -1,8 +1,9 @@
-"""Live AI/Auth regression using one disposable confirmed fixture account.
+"""Live AI/Auth or closed-service regression using a disposable fixture account.
 
 The caller provisions and removes the fixture through an authorized admin flow.
-This script logs in twice, tests validation/quota/revocation, and never uploads
-media, sends email, reaches Gemini successfully, takes payment or publishes.
+Default mode logs in twice and tests AI validation/quota/revocation. The
+services-only mode checks closed account/payment gates and revoked sessions.
+Neither mode uploads media, sends email, requests Gemini, takes payment or publishes.
 Only status/check names enter the report; passwords and JWTs stay in memory.
 """
 import argparse
@@ -23,6 +24,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--credentials', required=True)
     parser.add_argument('--report', required=True)
+    parser.add_argument('--services-only', action='store_true')
     args = parser.parse_args()
     fixture = json.loads(Path(args.credentials).read_text())
     user = fixture['user']
@@ -38,7 +40,8 @@ def main():
               'project_ref': 'nkfecpdegcmsapvbviky', 'fixture_run': fixture['run'],
               'checks': [], 'provider_calls_requested': False, 'uploads_requested': False,
               'email_sent': False, 'website_or_social_publication': False,
-              'payment_transaction': False, 'cleanup_verified': False}
+              'payment_transaction': False, 'cleanup_verified': False,
+              'scope': 'closed account/payment services' if args.services_only else 'AI/Auth regression'}
 
     def call(path, method='POST', body=None, token=None, origin=None):
         headers = {'apikey': key}
@@ -70,6 +73,33 @@ def main():
              'platform': 'Instagram', 'tone': 'Friendly', 'language': 'Hindi'}
     tokens = []
     try:
+        if args.services_only:
+            status, data = call('/auth/v1/token?grant_type=password', body={'email': user['email'], 'password': user['password']})
+            check('confirmed service fixture login', status == 200 and isinstance(data, dict) and data.get('user', {}).get('id') == user['id'])
+            token = data['access_token']
+            for name in ['social-account', 'payment-checkout']:
+                status, _ = call('/functions/v1/' + name, body={'action': 'status'})
+                # A closed billing gate returns 423 before inspecting login;
+                # when billing is enabled, the actual handler tests require 401.
+                denied = status == 401 or (name == 'payment-checkout' and status == 423)
+                check(name + ' denies anonymous caller', denied)
+            status, data = call('/functions/v1/social-account', body={'action': 'status'}, token=token, origin='http://localhost:5173')
+            check('account status safely reports pending setup and publishing disabled', status == 200 and data == {'instagram': False, 'linkedin': False, 'publishing': False})
+            for provider in ['instagram', 'linkedin']:
+                status, _ = call('/functions/v1/social-account', body={'action': 'start', 'provider': provider}, token=token, origin='http://localhost:5173')
+                check(provider + ' cannot connect before setup', status == 503)
+            for action in ['plans', 'checkout']:
+                status, _ = call('/functions/v1/payment-checkout', body={'action': action, 'planId': 'fixture'}, token=token, origin='http://localhost:5173')
+                check('disabled billing blocks ' + action, status == 423)
+            status, _ = call('/functions/v1/payment-webhook', body={'event': 'payment_link.paid'})
+            check('disabled webhook rejects event without creating credits', status == 423)
+            status, _ = call('/functions/v1/social-callback', 'GET')
+            check('OAuth callback without state/code cannot connect an account', status in (303, 503))
+            status, _ = call('/auth/v1/logout?scope=global', token=token)
+            check('service fixture global logout succeeds', status == 204)
+            status, _ = call('/functions/v1/social-account', body={'action': 'status'}, token=token, origin='http://localhost:5173')
+            check('social metadata denies old token after logout', status == 401)
+            return 0
         for index in range(2):
             status, data = call('/auth/v1/token?grant_type=password', body={'email': user['email'], 'password': user['password']})
             check('fixture login ' + str(index + 1), status == 200 and isinstance(data, dict) and data.get('user', {}).get('id') == user['id'])
