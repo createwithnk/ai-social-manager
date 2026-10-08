@@ -163,7 +163,7 @@ function Workspace({ auth }: { auth: AuthState }) {
       <button className="close" onClick={() => setMobile(false)} aria-label="Close navigation"><X /></button>
       <nav>
         <Nav active={view === 'dashboard'} icon={<LayoutDashboard />} label="Dashboard" onClick={() => { setView('dashboard'); setMobile(false) }} />
-        <Nav active={view === 'create'} icon={<Sparkles />} label="Create content" onClick={() => { setView('create'); setMobile(false) }} />
+        <Nav active={view === 'create'} icon={<Sparkles />} label="Create content" onClick={() => { createPost(); setMobile(false) }} />
         <Nav active={view === 'calendar'} icon={<CalendarDays />} label="Content calendar" onClick={() => { setView('calendar'); setMobile(false) }} />
       </nav>
       <div className="guardrail"><CheckCircle2 /><div><strong>Approval protected</strong><span>Nothing is published without your approval.</span></div></div>
@@ -230,7 +230,7 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
   }
 
   async function save(status: 'draft' | 'approved') {
-    if (!draft || (status === 'approved' && !isApproved)) return
+    if (!draft || !idea.trim() || idea.trim().length > 500 || (status === 'approved' && !isApproved)) return
     const id = postId ?? crypto.randomUUID()
     const timestamp = createdAt ?? new Date().toISOString()
     setSaving(true)
@@ -275,6 +275,7 @@ function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpda
   }
 
   function schedule(post: Post) {
+    if (post.status !== 'approved' && post.status !== 'scheduled') { setError('Approve the content before scheduling.'); return }
     const scheduledAt = new Date(scheduleTimes[post.id] ?? defaultScheduleTime)
     if (Number.isNaN(scheduledAt.getTime()) || scheduledAt.getTime() <= Date.now()) { setError('Choose a future scheduling time.'); return }
     void update({ ...post, status: 'scheduled', scheduledFor: scheduledAt.toISOString() })
