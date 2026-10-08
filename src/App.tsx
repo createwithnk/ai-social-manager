@@ -31,6 +31,7 @@ function App() {
   const auth = useAuth()
 
   if (auth.status === 'loading') return <AuthLoading />
+  if (auth.recoveryMode) return <PasswordRecovery auth={auth} />
   if (auth.status === 'error') return <AuthBootstrapError auth={auth} />
   if (isSupabaseConfigured && !auth.user) return <AuthScreen auth={auth} />
 
@@ -43,6 +44,43 @@ function AuthLoading() {
 
 function AuthBootstrapError({ auth }: { auth: AuthState }) {
   return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-error-title"><span className="eyebrow">CONNECTION ISSUE</span><h1 id="auth-error-title">We couldn’t start your secure session</h1><p>{auth.error ?? 'Check your connection and Supabase configuration, then retry.'}</p><button className="primary wide" type="button" onClick={auth.retrySession}>Retry session check</button></section></main>
+}
+
+function PasswordRecovery({ auth }: { auth: AuthState }) {
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [notice, setNotice] = useState<string | null>(null)
+  const [finished, setFinished] = useState(false)
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (password !== confirm) {
+      setNotice('Passwords do not match.')
+      return
+    }
+    setNotice(null)
+    const result = await auth.updatePassword(password)
+    if (result.notice) {
+      setFinished(true)
+      setNotice(result.notice)
+      setPassword('')
+      setConfirm('')
+    }
+  }
+
+  return <main className="auth-shell"><section className="auth-card" aria-labelledby="recovery-title">
+    <span className="eyebrow">ACCOUNT RECOVERY</span>
+    <h1 id="recovery-title">Set a new password</h1>
+    <p>Choose a new password of at least 12 characters.</p>
+    {!finished ? <form onSubmit={(event) => { void submit(event) }}>
+      <label>New password<input type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={auth.loading} /></label>
+      <label>Confirm new password<input type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={confirm} onChange={(event) => setConfirm(event.target.value)} disabled={auth.loading} /></label>
+      {auth.error && <p className="form-error" role="alert">{auth.error}</p>}
+      {notice && <p className="form-notice" role="status">{notice}</p>}
+      <button className="primary wide" type="submit" disabled={auth.loading || password !== confirm}>{auth.loading ? 'Updating…' : 'Update password'}</button>
+    </form> : <p className="form-notice" role="status">{notice}</p>}
+    {finished && <button className="primary wide" type="button" onClick={auth.exitRecovery}>Continue</button>}
+  </section></main>
 }
 
 function AuthScreen({ auth }: { auth: AuthState }) {
