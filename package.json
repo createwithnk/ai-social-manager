@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node --experimental-strip-types --test tests/workflow.test.ts tests/client-flows.test.ts && node tests/endpoint.cjs && node tests/database.mjs",
-    "test:edge": "npx --yes --package=deno@2.9.6 deno test --allow-env tests/security.test.ts",
+    "test:edge": "npx --yes --package=deno@2.9.6 deno test --allow-env tests/security.test.ts tests/payment-endpoints.test.ts",
     "check:edge": "npx --yes --package=deno@2.9.6 deno check supabase/functions/generate-content/index.ts supabase/functions/social-account/index.ts supabase/functions/social-callback/index.ts supabase/functions/publish-worker/index.ts supabase/functions/payment-checkout/index.ts supabase/functions/payment-webhook/index.ts",
     "test:browser": "node scripts/test-browser.mjs"
   },

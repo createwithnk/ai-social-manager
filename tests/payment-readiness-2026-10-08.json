@@ -1,0 +1,65 @@
+{
+  "date": "2026-10-08",
+  "timezone": "Asia/Kolkata",
+  "verified_at_utc": "2026-10-08T07:21:18.812009+00:00",
+  "scope": "Payment readiness after owner authorized starting payment work; local actual-handler tests and read-only live inspection.",
+  "payment_endpoint_tests": {
+    "command": "npm run test:edge",
+    "passed": true,
+    "total_parent_tests": 24,
+    "existing_security_tests": 23,
+    "new_payment_parent_tests": 1,
+    "new_payment_request_flow_steps": 14,
+    "external_network_permission": false,
+    "server_started": false,
+    "actual_entrypoints_loaded": true,
+    "auth_database_provider_http": "intercepted fixtures",
+    "database_accounting": "mocked in this suite; 70 local PostgreSQL checks separately recorded in verification-2026-10-08.json"
+  },
+  "migration": {
+    "path": "supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql",
+    "sha256": "4cd66f287b558404ddd999bb6db80b58b21f685e864a78bea75a340606e8557d",
+    "matches_reviewed_github_file": true,
+    "applied": false,
+    "approval_review": "rejected",
+    "reason": "Live migration makes broad, difficult-to-reverse schema, RLS, trigger, OAuth, publishing and payment-infrastructure changes. Authorization to start payment work did not clearly approve the entire production migration and its wide blast radius.",
+    "workaround_used": false,
+    "permission_needed": "Explicit approval for the whole reviewed database update covering Auth/RLS, post lifecycle, social/OAuth/publication schema and payment/credit/refund infrastructure; gates remain disabled."
+  },
+  "live_after_rejection": {
+    "auth_users": 1,
+    "posts": 1,
+    "recorded_migrations": 1,
+    "payment_tables_exist": false,
+    "publication_queue_exists": false,
+    "inspected_on": "2026-10-08"
+  },
+  "merchant": {
+    "provider_prepared": "Razorpay",
+    "owner_reported_account_status": "unknown",
+    "account_session_inspected": false,
+    "credentials_added": false,
+    "production_prices_selected": false,
+    "provider_test_mode_transaction_verified": false,
+    "live_collection_enabled": false,
+    "required_next_steps": [
+      "Owner sign-in/signup and Test Mode confirmation",
+      "Secure test-key/server-secret setup after approved environment is ready",
+      "Isolated test database and credit ledger",
+      "Actual provider checkout, webhook, replay/refund and timeout verification"
+    ]
+  },
+  "external_writes": {
+    "database_migration": false,
+    "edge_deployment": false,
+    "merchant_account_creation": false,
+    "api_key_generation": false,
+    "payment_charge": false,
+    "refund_initiation": false,
+    "website_or_social_publication": false
+  },
+  "publishing_enabled": false,
+  "billing_enabled": false,
+  "guide": "supabase/PAYMENT_SETUP.md",
+  "limitation": "Passing intercepted handler checks does not establish a live merchant integration or a completed payment setup."
+}

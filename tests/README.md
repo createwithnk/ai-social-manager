@@ -1,6 +1,8 @@
 # Verification
 
-`npm test` runs 10 client/workflow tests, the mocked generation endpoint and 70 checks against an isolated local PostgreSQL instance. `npm run test:edge` runs 23 Deno security/provider tests with environment permission only; network access is not granted. `npm run check:edge`, `npm run build` and `npm run lint` verify the complete prepared source.
+`npm test` runs 10 client/workflow tests, the mocked generation endpoint and 70 checks against an isolated local PostgreSQL instance. `npm run test:edge` runs 23 Deno security/provider tests plus the actual payment endpoint suite with 14 request-flow steps. Only environment permission is granted; no server or external network is started. `npm run check:edge`, `npm run build` and `npm run lint` verify the complete prepared source.
+
+`payment-endpoints.test.ts` captures the actual entrypoint handlers and intercepts Supabase Auth/RPC/order and Razorpay HTTP. It verifies request routing, authentication, input tampering, gates, uncertain outcomes and webhook validation. Its mocked RPC responses do not establish ledger balances or database idempotency; those are checked separately by `database.mjs`.
 
 `npm run test:browser` starts local demo and mocked-cloud servers on 5177/5178. Install Playwright Chromium first or supply `CHROMIUM_EXECUTABLE`. Every nonlocal application request is intercepted. Signup/reset/resend, private uploads, provider functions and logout are fixtures: no email, credentials, social post, or payment reaches an external account. Microphone capture uses Chromium's simulated device and the real MediaRecorder. Screenshots in `/tmp/aasiflow-qa` are intermediate layout checks, not a published site.
 
@@ -11,5 +13,7 @@
 `tests/live-http.py` is the earlier two-user HTTP harness. Supply only isolated confirmed test accounts, never the real user's password. The `--allow-ai` option authorizes two actual model calls. Without it, provider calls are skipped. Storage object deletion is a separate authorized cleanup; removing a user/post does not delete uploaded bytes. The live image fixture from 6 October has already been removed after approval; do not rerun cloud uploads without a safe cleanup plan.
 
 Current results: `verification-2026-10-06.json` records 22 actual HTTP checks, including real Hindi text and PNG-assisted generation. `verification-2026-10-08.json` records local/mock validation of the prepared update and the exact live state inspected afterward. No new social/payment credentials, deployment, public hosting, engine upgrade or worker schedule was performed.
+
+`payment-readiness-2026-10-08.json` records the extra payment-handler validation and repeat automatic approval rejection after the owner authorized payment work. Live inspection still found 1 Auth user, 1 post, one original migration and no payment/queue tables. Account status is unknown; provider test-mode account/login/keys and isolated integration tests remain pending.
 
 Production checks still needed are recorded in `SECURITY.md`: live migration/Edge session isolation, simultaneous workers, actual confirmation/recovery delivery, real device recording, Gemini video/audio, platform app/test-account calls and merchant test-mode payment/refund/replay checks. The combined live migration was blocked by automatic approval review pending owner permission for payment infrastructure; local tests do not bypass this boundary.

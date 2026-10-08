@@ -1,6 +1,6 @@
 # Security and activation review
 
-The owner has authorized development and testing, but reserved website/social publication and connecting payment mode for separate permission. Both launch gates remain false. The 7 October migration was rejected by automatic approval review because it includes payment infrastructure; **it has not been applied to the live project**. Do not use another tool or split execution to bypass that rejection. Obtain explicit permission for the reviewed database update.
+The owner authorized development/testing and starting payment work, while reserving website/social publication and live collection. Both launch gates remain false. Automatic approval review rejected the combined migration again on 8 October: payment-work approval did not explicitly authorize its broader production Auth/RLS, trigger, OAuth and publication-schema changes. **It has not been applied to the live project.** Do not use another tool or split execution to bypass that rejection. Obtain explicit permission for the whole reviewed database update.
 
 ## Implemented in the prepared update
 
@@ -29,6 +29,7 @@ The owner has authorized development and testing, but reserved website/social pu
 5. The live Auth advisor still reports disabled leaked-password protection. Review the feature/plan requirements with the owner; do not enable a paid plan implicitly. No MFA or leaked-password screening is claimed by this implementation.
 6. Configure the official Meta/LinkedIn apps, permissions, exact callbacks, privacy/deletion URLs and platform review. Perform sandbox/test-account login, upload, publish, expiration/reconnect and metrics tests after publication permission. LinkedIn analytics needs separately approved `r_member_postAnalytics`; unavailable metrics remain null.
 7. Approve the payment mode, provider account/KYC, plan prices, failed-attempt/refund terms and merchant notifications. Add test credentials and the paid/refund webhooks only after approval. Verify provider test-mode payment, replay, partial/full refund, timeout reconciliation and operator alerts before live credentials. No test/live merchant credentials have been added.
+   Keep provider test credentials and application test credits in an isolated environment/database. Razorpay's test/live separation does not automatically separate this application's credit ledger. See `supabase/PAYMENT_SETUP.md`.
 8. Test a real microphone plus actual Gemini video/audio requests; only text/image AI were live-tested on 6 October. Browser recording now passes with a simulated microphone and mocked Storage.
 9. Approve and implement safe private-media cleanup before public signup. Current quotas prevent unbounded growth but eventually require manual retention review.
 10. Publication needs a separate owner approval. Only then configure the worker secret, enable both publishing gates and activate a schedule. Website deployment remains a separate approval as well.

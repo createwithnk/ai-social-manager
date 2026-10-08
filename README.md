@@ -56,6 +56,7 @@ For the connected setup, only `VITE_SUPABASE_URL` and its public publishable/ano
 
 - `tests/database.mjs`: 70 local PostgreSQL checks, including the baseline rollback suite, cross-user/anonymous denial, signed-out session rejection, immutable ownership/revisions, approval changes, dual-gate DB checks, job leases, OAuth replay/expiry, read-only metadata, payment replay/amount verification, credit debits/refunds and storage/draft quotas.
 - `tests/security.test.ts`: 23 Deno tests covering encryption/tampering, request limits, redirect/host validation, OAuth scopes/identity, provider publish/upload flows, uncertain outcomes, null analytics, hosted checkout, raw-byte HMAC, merchant/captured-payment/refund validation, and fail-closed launch gates.
+- `tests/payment-endpoints.test.ts`: actual checkout/webhook handlers with intercepted Auth/database/provider HTTP; 14 request-flow checks cover closed gates, revoked sessions, client price/credit/owner tampering, forged events, verified refund routing and uncertain provider responses.
 - 10 client/workflow unit tests plus the mocked generation endpoint suite passed.
 - Mobile/desktop browser regression passed: persisted draft editing, approval reset, calendar validation, disabled publication/payments, PKCE signup/reset requests, resend, recovery/global logout, 5-minute previews, and native MediaRecorder using a simulated microphone with mocked Storage.
 - TypeScript production build, lint and all six Edge entrypoint type checks passed. Dependency audit was patched to `source-map-js` 1.2.2 and returned zero known vulnerabilities.
@@ -67,7 +68,9 @@ See `tests/verification-2026-10-06.json` for the earlier live HTTP result and `t
 
 Applied on 6 October: `20261006090620_content_system_private_media_and_quota`. The database and private bucket are live; `generate-content` has gateway JWT verification plus `auth.getUser`, uses the existing server Gemini key, and passed real Hindi/text and image generation. Only two provider calls were made in those live tests. The synthetic users/posts/quota were cleaned up. The 69-byte test PNG was deleted after specific owner approval; only a zero-byte folder placeholder remains. No Storage DELETE policy was introduced.
 
-Prepared next migration: `supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql`. **Automatic approval review rejected applying it because it includes payment infrastructure, for which the owner reserved permission. No part of this migration has been applied.** Obtain permission for this reviewed update before running it. Both DB launch controls and both environment gates default to false even after application.
+Prepared next migration: `supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql`. The owner authorized starting payment work on 8 October. **Automatic approval review still rejected this combined update because payment-work approval did not explicitly cover its broader Auth/RLS, trigger, OAuth and publication-schema changes. No part has been applied.** Obtain explicit permission for the whole reviewed update before running it. Both DB launch controls and both environment gates default to false even after application.
+
+See `supabase/PAYMENT_SETUP.md` and `tests/payment-readiness-2026-10-08.json` for the merchant test-mode handoff and latest blocked status. Razorpay account status is unknown; no merchant credentials, production prices or provider test transaction have been configured.
 
 The initial posts schema predates migration tracking, and the applied content migration has a different timestamp from the prepared repository file. Reconcile/pull the existing history before any CLI `db push`; do not blindly replay old files.
 
