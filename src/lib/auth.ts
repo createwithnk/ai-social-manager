@@ -15,6 +15,10 @@ export interface AuthState {
   error: string | null
   signIn: (email: string, password: string) => Promise<AuthActionResult>
   signUp: (email: string, password: string) => Promise<AuthActionResult>
+  requestPasswordReset: (email: string) => Promise<AuthActionResult>
+  updatePassword: (password: string) => Promise<AuthActionResult>
+  recoveryMode: boolean
+  exitRecovery: () => void
   signOut: () => Promise<AuthActionResult>
   retrySession: () => void
 }
@@ -39,6 +43,7 @@ export function useAuth(): AuthState {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(supabaseConfigurationError)
   const [sessionAttempt, setSessionAttempt] = useState(0)
+  const [recoveryMode, setRecoveryMode] = useState(false)
 
   useEffect(() => {
     if (!supabase) return
@@ -80,7 +85,8 @@ export function useAuth(): AuthState {
 
     let unsubscribe: (() => void) | undefined
     try {
-      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true)
         if (!active) return
         settled = true
         window.clearTimeout(timeoutId)
@@ -162,6 +168,53 @@ export function useAuth(): AuthState {
     }
   }, [])
 
+  const requestPasswordReset = useCallback(async (email: string): Promise<AuthActionResult> => {
+    if (!supabase) return { notice: 'Supabase is not configured for this app.' }
+    const normalizedEmail = email.trim()
+    if (!normalizedEmail) return { notice: 'Enter your email address first.' }
+    setLoading(true)
+    setError(null)
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo: window.location.origin + window.location.pathname })
+      if (resetError) {
+        setError(resetError.message)
+        return {}
+      }
+      return { notice: 'If an account exists for this email, a password reset link will be sent.' }
+    } catch (resetError) {
+      setError(messageFor(resetError))
+      return {}
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const updatePassword = useCallback(async (password: string): Promise<AuthActionResult> => {
+    if (!supabase) return { notice: 'Supabase is not configured for this app.' }
+    if (password.length < 12 || password.length > 128) {
+      setError('Use a password between 12 and 128 characters.')
+      return {}
+    }
+    setLoading(true)
+    setError(null)
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+      if (updateError) {
+        setError(updateError.message)
+        return {}
+      }
+      setRecoveryMode(false)
+      return { notice: 'Your password has been updated successfully.' }
+    } catch (updateError) {
+      setError(messageFor(updateError))
+      return {}
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const exitRecovery = useCallback(() => setRecoveryMode(false), [])
+
   const signOut = useCallback(async (): Promise<AuthActionResult> => {
     if (!supabase) return {}
 
@@ -184,5 +237,5 @@ export function useAuth(): AuthState {
     }
   }, [])
 
-  return { user, status, loading, error, signIn, signUp, signOut, retrySession }
+  return { user, status, loading, error, signIn, signUp, requestPasswordReset, updatePassword, recoveryMode, exitRecovery, signOut, retrySession }
 }

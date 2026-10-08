@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BarChart3, CalendarDays, CheckCircle2, Clock3, FileText, LayoutDashboard, LoaderCircle, LogOut, Menu, Plus, Sparkles, WandSparkles, X } from 'lucide-react'
 import { useAuth, type AuthState } from './lib/auth'
 import { createDraft } from './lib/content'
+import { generateAiDraft } from './lib/ai'
 import { fetchPosts, savePostForUser } from './lib/posts'
 import { isSupabaseConfigured } from './lib/supabase'
 import type { Platform, Post } from './types'
@@ -31,6 +32,7 @@ function App() {
   const auth = useAuth()
 
   if (auth.status === 'loading') return <AuthLoading />
+  if (auth.recoveryMode) return <PasswordRecovery auth={auth} />
   if (auth.status === 'error') return <AuthBootstrapError auth={auth} />
   if (isSupabaseConfigured && !auth.user) return <AuthScreen auth={auth} />
 
@@ -43,6 +45,43 @@ function AuthLoading() {
 
 function AuthBootstrapError({ auth }: { auth: AuthState }) {
   return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-error-title"><span className="eyebrow">CONNECTION ISSUE</span><h1 id="auth-error-title">We couldn’t start your secure session</h1><p>{auth.error ?? 'Check your connection and Supabase configuration, then retry.'}</p><button className="primary wide" type="button" onClick={auth.retrySession}>Retry session check</button></section></main>
+}
+
+function PasswordRecovery({ auth }: { auth: AuthState }) {
+  const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [notice, setNotice] = useState<string | null>(null)
+  const [finished, setFinished] = useState(false)
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (password !== confirm) {
+      setNotice('Passwords do not match.')
+      return
+    }
+    setNotice(null)
+    const result = await auth.updatePassword(password)
+    if (result.notice) {
+      setFinished(true)
+      setNotice(result.notice)
+      setPassword('')
+      setConfirm('')
+    }
+  }
+
+  return <main className="auth-shell"><section className="auth-card" aria-labelledby="recovery-title">
+    <span className="eyebrow">ACCOUNT RECOVERY</span>
+    <h1 id="recovery-title">Set a new password</h1>
+    <p>Choose a new password of at least 12 characters.</p>
+    {!finished ? <form onSubmit={(event) => { void submit(event) }}>
+      <label>New password<input type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={auth.loading} /></label>
+      <label>Confirm new password<input type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={confirm} onChange={(event) => setConfirm(event.target.value)} disabled={auth.loading} /></label>
+      {auth.error && <p className="form-error" role="alert">{auth.error}</p>}
+      {notice && <p className="form-notice" role="status">{notice}</p>}
+      <button className="primary wide" type="submit" disabled={auth.loading || password !== confirm}>{auth.loading ? 'Updating…' : 'Update password'}</button>
+    </form> : <p className="form-notice" role="status">{notice}</p>}
+    {finished && <button className="primary wide" type="button" onClick={auth.exitRecovery}>Continue</button>}
+  </section></main>
 }
 
 function AuthScreen({ auth }: { auth: AuthState }) {
@@ -60,7 +99,7 @@ function AuthScreen({ auth }: { auth: AuthState }) {
     setNotice(result.notice ?? null)
   }
 
-  return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-title"><div className="brand auth-brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>AasiFlowAI</strong><small>Content workspace</small></div></div><span className="eyebrow">SECURE WORKSPACE</span><h1 id="auth-title">{mode === 'login' ? 'Welcome back' : 'Create your account'}</h1><p>{mode === 'login' ? 'Sign in to access your content workspace.' : 'Use your email to create a protected workspace.'}</p><form onSubmit={submit}><label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required disabled={auth.loading} /></label><label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={6} required disabled={auth.loading} /></label>{auth.error && <p className="form-error" role="alert">{auth.error}</p>}{notice && <p className="form-notice" role="status">{notice}</p>}<button className="primary wide" disabled={auth.loading}>{auth.loading ? <><LoaderCircle className="spinner" /> Please wait</> : mode === 'login' ? 'Log in' : 'Sign up'}</button></form><button className="auth-switch" type="button" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setNotice(null) }} disabled={auth.loading}>{mode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Log in'}</button></section></main>
+  return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-title"><div className="brand auth-brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>AasiFlowAI</strong><small>Content workspace</small></div></div><span className="eyebrow">SECURE WORKSPACE</span><h1 id="auth-title">{mode === 'login' ? 'Welcome back' : 'Create your account'}</h1><p>{mode === 'login' ? 'Sign in to access your content workspace.' : 'Use your email to create a protected workspace.'}</p><form onSubmit={submit}><label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required disabled={auth.loading} /></label><label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'signup' ? 12 : undefined} maxLength={128} required disabled={auth.loading} /></label>{auth.error && <p className="form-error" role="alert">{auth.error}</p>}{notice && <p className="form-notice" role="status">{notice}</p>}<button className="primary wide" disabled={auth.loading}>{auth.loading ? <><LoaderCircle className="spinner" /> Please wait</> : mode === 'login' ? 'Log in' : 'Sign up'}</button></form><button className="auth-switch" type="button" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setNotice(null) }} disabled={auth.loading}>{mode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Log in'}</button>{mode === 'login' && <button className="auth-switch" type="button" onClick={() => { setNotice(null); void auth.requestPasswordReset(email).then((result) => setNotice(result.notice ?? null)) }} disabled={auth.loading}>Forgot password?</button>}</section></main>
 }
 
 function Workspace({ auth }: { auth: AuthState }) {
@@ -88,7 +127,10 @@ function Workspace({ auth }: { auth: AuthState }) {
     if (!isSupabaseConfigured || !userId) return
 
     let active = true
-    void fetchPosts()
+    setPostsLoading(true)
+    setPostsError(null)
+    setPosts([])
+    void fetchPosts(userId)
       .then((remotePosts) => {
         if (active) setPosts(remotePosts)
       })
@@ -155,6 +197,10 @@ function Workspace({ auth }: { auth: AuthState }) {
 
   async function signOut() {
     await auth.signOut()
+    setPosts([])
+    setEditingPost(null)
+    setViewingPost(null)
+    setView('dashboard')
   }
 
   return <div className="app-shell">
@@ -163,7 +209,7 @@ function Workspace({ auth }: { auth: AuthState }) {
       <button className="close" onClick={() => setMobile(false)} aria-label="Close navigation"><X /></button>
       <nav>
         <Nav active={view === 'dashboard'} icon={<LayoutDashboard />} label="Dashboard" onClick={() => { setView('dashboard'); setMobile(false) }} />
-        <Nav active={view === 'create'} icon={<Sparkles />} label="Create content" onClick={() => { setView('create'); setMobile(false) }} />
+        <Nav active={view === 'create'} icon={<Sparkles />} label="Create content" onClick={() => { createPost(); setMobile(false) }} />
         <Nav active={view === 'calendar'} icon={<CalendarDays />} label="Content calendar" onClick={() => { setView('calendar'); setMobile(false) }} />
       </nav>
       <div className="guardrail"><CheckCircle2 /><div><strong>Approval protected</strong><span>Nothing is published without your approval.</span></div></div>
@@ -216,18 +262,40 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
   const [postId, setPostId] = useState<string | undefined>(initialPost?.id)
   const [createdAt, setCreatedAt] = useState<string | undefined>(initialPost?.createdAt)
   const [saving, setSaving] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const canGenerate = idea.trim().length >= 10
+  const canGenerate = idea.trim().length >= 10 && idea.trim().length <= 500
+  const [generatedBrief, setGeneratedBrief] = useState<string | null>(initialPost ? JSON.stringify([initialPost.idea, initialPost.platform, initialPost.tone]) : null)
+  const currentBrief = JSON.stringify([idea.trim(), platform, tone])
+  const draftMatchesBrief = generatedBrief === currentBrief
+  const [reviewedFingerprint, setReviewedFingerprint] = useState<string | null>(null)
+  const fingerprint = JSON.stringify([idea.trim(), platform, tone, draft?.caption, draft?.hashtags])
+  const isApproved = approved && reviewedFingerprint === fingerprint && draftMatchesBrief
 
-  function generate() {
-    if (!canGenerate) return
-    setDraft(createDraft(idea, platform, tone))
-    setApproved(false)
+  async function generate() {
+    if (!canGenerate || generating) return
+    const requestedBrief = currentBrief
+    setGenerating(true)
     setSaveError(null)
+    setApproved(false)
+    setReviewedFingerprint(null)
+    setGeneratedBrief(null)
+    setDraft(null)
+    try {
+      const result = isSupabaseConfigured
+        ? await generateAiDraft(idea, platform, tone)
+        : createDraft(idea, platform, tone)
+      setDraft(result)
+      setGeneratedBrief(requestedBrief)
+    } catch (error) {
+      setSaveError(errorMessage(error))
+    } finally {
+      setGenerating(false)
+    }
   }
 
   async function save(status: 'draft' | 'approved') {
-    if (!draft || (status === 'approved' && !approved)) return
+    if (!draft || !draftMatchesBrief || !idea.trim() || idea.trim().length > 500 || (status === 'approved' && !isApproved)) return
     const id = postId ?? crypto.randomUUID()
     const timestamp = createdAt ?? new Date().toISOString()
     setSaving(true)
@@ -243,8 +311,8 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
     }
   }
 
-  const busy = saving || disabled
-  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>1 <b>Brief</b></span><i /><span className={draft ? 'current' : ''}>2 <b>Review</b></span><i /><span>3 <b>Approve</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">STEP 1 — YOUR IDEA</span><h2>What do you want to share?</h2><label>Content idea<textarea value={idea} onChange={(event) => setIdea(event.target.value)} placeholder="Example: Five simple ways small businesses can create better Instagram posts..." maxLength={500} disabled={busy} /><small>{idea.length}/500 · Minimum 10 characters</small></label><div className="field-row"><label>Platform<select value={platform} onChange={(event) => setPlatform(event.target.value as Platform)} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option}>{option}</option>)}</select></label><label>Tone<select value={tone} onChange={(event) => setTone(event.target.value)} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option}>{option}</option>)}</select></label></div><button className="primary wide" disabled={!canGenerate || busy} onClick={generate}><WandSparkles /> Generate draft</button><p className="fineprint">This MVP uses a safe local draft engine. A server-side AI provider can be connected next without exposing API keys.</p></div><div className="panel preview-panel"><span className="eyebrow">STEP 2 — REVIEW & EDIT</span><h2>Your draft</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>Your generated draft will appear here.</p></div> : <><label>Caption<textarea className="caption" value={draft.caption} onChange={(event) => setDraft({ ...draft, caption: event.target.value })} disabled={busy} /></label><label>Hashtags<input value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) })} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{saveError}</p>}<button className="ghost draft-save" disabled={busy} onClick={() => { void save('draft') }}><FileText /> {saving ? 'Saving…' : postId ? 'Update draft' : 'Save draft'}</button><div className="approval"><input id="approve" type="checkbox" checked={approved} onChange={(event) => setApproved(event.target.checked)} disabled={busy} /><label htmlFor="approve"><strong>I reviewed and approve this content</strong><span>Required before saving or scheduling.</span></label></div><button className="primary wide" disabled={!approved || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? 'Saving…' : 'Approve & save'}</button></>}</div></div></section>
+  const busy = saving || generating || disabled
+  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>1 <b>Brief</b></span><i /><span className={draft ? 'current' : ''}>2 <b>Review</b></span><i /><span>3 <b>Approve</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">STEP 1 — YOUR IDEA</span><h2>What do you want to share?</h2><label>Content idea<textarea value={idea} onChange={(event) => setIdea(event.target.value)} placeholder="Example: Five simple ways small businesses can create better Instagram posts..." maxLength={500} disabled={busy} /><small>{idea.length}/500 · Minimum 10 characters</small></label><div className="field-row"><label>Platform<select value={platform} onChange={(event) => setPlatform(event.target.value as Platform)} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option}>{option}</option>)}</select></label><label>Tone<select value={tone} onChange={(event) => setTone(event.target.value)} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option}>{option}</option>)}</select></label></div><button className="primary wide" disabled={!canGenerate || busy} onClick={() => { void generate() }}><WandSparkles /> {generating ? 'Generating…' : 'Generate draft'}</button><p className="fineprint">AI drafts use a secure server-side provider when signed in. Local preview mode uses templates. Every post still requires your approval.</p>{saveError && !draft && <p className="form-error" role="alert">{saveError}</p>}</div><div className="panel preview-panel"><span className="eyebrow">STEP 2 — REVIEW & EDIT</span><h2>Your draft</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>Your generated draft will appear here.</p></div> : <><label>Caption<textarea className="caption" value={draft.caption} onChange={(event) => setDraft({ ...draft, caption: event.target.value })} disabled={busy} /></label><label>Hashtags<input value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) })} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{saveError}</p>}<button className="ghost draft-save" disabled={busy || !draftMatchesBrief} onClick={() => { void save('draft') }}><FileText /> {saving ? 'Saving…' : postId ? 'Update draft' : 'Save draft'}</button><div className="approval"><input id="approve" type="checkbox" checked={isApproved && draftMatchesBrief} onChange={(event) => { setApproved(event.target.checked); setReviewedFingerprint(event.target.checked ? fingerprint : null) }} disabled={busy || !draftMatchesBrief} /><label htmlFor="approve"><strong>I reviewed and approve this content</strong><span>Required before saving or scheduling.</span></label></div><button className="primary wide" disabled={!isApproved || !draftMatchesBrief || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? 'Saving…' : 'Approve & save'}</button></>}</div></div></section>
 }
 
 function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpdate: (post: Post) => Promise<void>; onView: (post: Post) => void; disabled: boolean }) {
@@ -272,8 +340,9 @@ function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpda
   }
 
   function schedule(post: Post) {
+    if (post.status !== 'approved' && post.status !== 'scheduled') { setError('Approve the content before scheduling.'); return }
     const scheduledAt = new Date(scheduleTimes[post.id] ?? defaultScheduleTime)
-    if (Number.isNaN(scheduledAt.getTime())) return
+    if (Number.isNaN(scheduledAt.getTime()) || scheduledAt.getTime() <= Date.now()) { setError('Choose a future scheduling time.'); return }
     void update({ ...post, status: 'scheduled', scheduledFor: scheduledAt.toISOString() })
   }
 
