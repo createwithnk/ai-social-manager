@@ -31,5 +31,14 @@
   "uploads": false,
   "website_or_social_publication": false,
   "payment_transaction": false,
-  "limits": "Provider HTTP was intercepted. This report does not claim a new real Gemini request, final-domain email delivery, platform posting, or merchant integration."
+  "limits": "Provider HTTP was intercepted. This report does not claim a new real Gemini request, final-domain email delivery, platform posting, or merchant integration.",
+  "deployed_function_version": 3,
+  "deployed_source_readback_exact_match": true,
+  "live_regression": {
+    "checks": 21,
+    "passed": true,
+    "report": "tests/live-ai-v3-security-2026-10-08.json",
+    "fixture_cleanup_completed": false,
+    "fixture_login_disabled_verified": true
+  }
 }

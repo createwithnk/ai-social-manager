@@ -1,0 +1,60 @@
+{
+  "prepared_at_utc": "2026-10-08T16:26:26.310Z",
+  "project_ref": "nkfecpdegcmsapvbviky",
+  "purpose": "Remove only the disposable Auth account created for the version 3 live security test.",
+  "target": {
+    "id": "bfd1281d-a80d-4eec-913a-e210549e61f7",
+    "email": "aasiflow-v3-ae1e716e-49fb-4e35-a45d-2b8bf1560a8a@example.invalid",
+    "fixture_run": "ae1e716e-49fb-4e35-a45d-2b8bf1560a8a",
+    "created_by_this_test": true
+  },
+  "current_state": {
+    "auth_users": 2,
+    "posts": 1,
+    "fixture_users": 1,
+    "fixture_sessions": 0,
+    "fixture_ai_usage": 1,
+    "disabled_fixture_users": 1,
+    "public_tables_with_rls": 7,
+    "payment_orders": 0,
+    "credit_entries": 0,
+    "publication_jobs": 0,
+    "social_connections": 0,
+    "oauth_states": 0,
+    "social_credentials": 0,
+    "publishing": false,
+    "billing": false
+  },
+  "fixture_login_disabled_verified": true,
+  "temporary_credentials_removed": true,
+  "expected_effect": {
+    "auth_users_after": 1,
+    "posts_preserved": 1,
+    "fixture_users_after": 0,
+    "fixture_sessions_after": 0,
+    "fixture_ai_usage_after": 0,
+    "publishing": false,
+    "billing": false
+  },
+  "strictly_scoped_cleanup_query": "delete from auth.users where id='bfd1281d-a80d-4eec-913a-e210549e61f7'::uuid and email='aasiflow-v3-ae1e716e-49fb-4e35-a45d-2b8bf1560a8a@example.invalid' and raw_user_meta_data->>'fixture_run'='ae1e716e-49fb-4e35-a45d-2b8bf1560a8a' returning id;",
+  "verification_query": "select (select count(*) from auth.users) as auth_users, (select count(*) from public.posts) as posts, (select count(*) from auth.users where id='bfd1281d-a80d-4eec-913a-e210549e61f7'::uuid or raw_user_meta_data->>'fixture_run'='ae1e716e-49fb-4e35-a45d-2b8bf1560a8a') as fixture_users, (select count(*) from auth.sessions where user_id='bfd1281d-a80d-4eec-913a-e210549e61f7'::uuid) as fixture_sessions, (select count(*) from public.ai_usage where user_id='bfd1281d-a80d-4eec-913a-e210549e61f7'::uuid) as fixture_ai_usage, (select count(*) from public.payment_orders) as payment_orders, (select count(*) from public.credit_ledger) as credit_entries, (select count(*) from public.publication_jobs) as publication_jobs, (select count(*) from public.social_connections) as social_connections, (select count(*) from private.oauth_states) as oauth_states, (select count(*) from private.social_credentials) as social_credentials, publishing_enabled as publishing, billing_enabled as billing from private.launch_controls where singleton=true;",
+  "attempts": [
+    {
+      "route": "Supabase plugin execute_sql",
+      "error": "Invalid or expired requestState",
+      "action_confirmed": false
+    },
+    {
+      "route": "Supabase plugin execute_sql",
+      "error": "Invalid or expired requestState",
+      "action_confirmed": false
+    }
+  ],
+  "dashboard_cleanup": {
+    "sign_in_required": true,
+    "permanent_delete_not_performed": true,
+    "action_time_confirmation_required": true,
+    "reason": "Browser guidance: \"Permanently delete data: Confirm before any deletion the user cannot reverse through the product’s normal recovery flow.\""
+  },
+  "limits": "The account is disabled and has no active sessions. It and one exhausted AI quota row still exist. Do not create more live fixtures until this cleanup is complete."
+}
