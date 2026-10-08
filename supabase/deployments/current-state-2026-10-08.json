@@ -187,7 +187,12 @@
     "quota_concurrency": "21 simultaneous real RPC requests allowed exactly 20.",
     "fixture_cleanup_verified": true,
     "temporary_credentials_removed": true,
-    "provider_requests_or_uploads": false
+    "provider_requests_or_uploads": false,
+    "password_policy": {
+      "checks": 2,
+      "passed": true,
+      "report": "tests/live-password-policy-2026-10-08.json"
+    }
   },
   "local_verification": {
     "ai_handler_scenarios": 21,
@@ -214,16 +219,21 @@
   "password_policy": {
     "client_minimum_characters": 12,
     "desired_hosted_minimum_characters": 12,
-    "hosted_policy_applied": false,
-    "hosted_current_value": null,
+    "hosted_policy_applied": true,
+    "hosted_current_value": 12,
     "dashboard_change_authorized": true,
-    "dashboard_sign_in_required": true,
+    "dashboard_sign_in_required": false,
     "leaked_password_protection_enabled": false,
     "paid_upgrade_performed": false,
-    "report": "tests/password-settings-review-2026-10-08.json"
+    "report": "tests/password-settings-review-2026-10-08.json",
+    "hosted_previous_value": 6,
+    "dashboard_sign_in_method": "chatgpt",
+    "verified_at_utc": "2026-10-08T11:10:31.327218+00:00",
+    "live_verification_report": "tests/live-password-policy-2026-10-08.json",
+    "dashboard_reopen_verified": true,
+    "visual_proof_retention": "Owner-private screenshot; excluded from the GitHub repository."
   },
   "pending_configuration": [
-    "Authorized Dashboard password policy change and server rejection check.",
     "Final HTTPS APP_URL and origin/redirect allowlists.",
     "Verified SMTP/CAPTCHA and actual confirmation/recovery delivery.",
     "Official platform apps, credentials, permissions and test-account integration.",
@@ -245,5 +255,16 @@
     "DB engine upgrade",
     "Existing personal password or DB password change"
   ],
-  "rollback_reference": "supabase/deployments/generate-content-v1-backup.json"
+  "rollback_reference": "supabase/deployments/generate-content-v1-backup.json",
+  "updated_at_utc": "2026-10-08T11:10:31.327218+00:00",
+  "latest_password_probe_cleanup": {
+    "auth_users": 1,
+    "posts": 1,
+    "policy_fixture_users": 0,
+    "publishing": false,
+    "billing": false,
+    "payment_orders": 0,
+    "credit_entries": 0,
+    "publication_jobs": 0
+  }
 }
