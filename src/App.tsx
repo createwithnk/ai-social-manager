@@ -88,6 +88,9 @@ function Workspace({ auth }: { auth: AuthState }) {
     if (!isSupabaseConfigured || !userId) return
 
     let active = true
+    setPostsLoading(true)
+    setPostsError(null)
+    setPosts([])
     void fetchPosts(userId)
       .then((remotePosts) => {
         if (active) setPosts(remotePosts)
