@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase, supabaseConfigurationError } from './supabase'
+import { authRedirect, recoveryMarker, validateNewPassword } from './auth-flows'
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'unconfigured' | 'error'
 
 export interface AuthActionResult {
   notice?: string
+  ok?: boolean
 }
 
 export interface AuthState {
@@ -13,9 +15,14 @@ export interface AuthState {
   status: AuthStatus
   loading: boolean
   error: string | null
+  notice: string | null
+  recovering: boolean
   signIn: (email: string, password: string) => Promise<AuthActionResult>
   signUp: (email: string, password: string) => Promise<AuthActionResult>
   signOut: () => Promise<AuthActionResult>
+  resetPassword: (email: string) => Promise<AuthActionResult>
+  resendConfirmation: (email: string) => Promise<AuthActionResult>
+  updatePassword: (password: string) => Promise<AuthActionResult>
   retrySession: () => void
 }
 
@@ -38,7 +45,9 @@ export function useAuth(): AuthState {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(supabaseConfigurationError)
+  const [notice, setNotice] = useState<string | null>(null)
   const [sessionAttempt, setSessionAttempt] = useState(0)
+  const [recovering, setRecovering] = useState(false)
 
   useEffect(() => {
     if (!supabase) return
@@ -80,13 +89,20 @@ export function useAuth(): AuthState {
 
     let unsubscribe: (() => void) | undefined
     try {
-      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
         if (!active) return
         settled = true
         window.clearTimeout(timeoutId)
         setError(null)
         setUser(session?.user ?? null)
         setStatus(session ? 'authenticated' : 'unauthenticated')
+        if (!session) setRecovering(false)
+        else {
+          if (event === 'PASSWORD_RECOVERY') {
+            recoveryMarker(session.user.id,Date.now() + 10 * 60_000)
+            setRecovering(true)
+          } else setRecovering(recoveryMarker(session.user.id))
+        }
       })
       unsubscribe = () => listener.subscription.unsubscribe()
     } catch (sessionError) {
@@ -120,7 +136,7 @@ export function useAuth(): AuthState {
     setLoading(true)
     setError(null)
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
       if (signInError) {
         setError(signInError.message)
         return {}
@@ -142,7 +158,10 @@ export function useAuth(): AuthState {
     setLoading(true)
     setError(null)
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
+      validateNewPassword(password)
+      const { data, error: signUpError } = await supabase.auth.signUp({ email: email.trim(), password,
+        options: { emailRedirectTo: authRedirect('confirmed') },
+      })
       if (signUpError) {
         setError(signUpError.message)
         return {}
@@ -168,11 +187,13 @@ export function useAuth(): AuthState {
     setLoading(true)
     setError(null)
     try {
-      const { error: signOutError } = await supabase.auth.signOut()
+      const { error: signOutError } = await supabase.auth.signOut({ scope: 'global' })
       if (signOutError) {
         setError(signOutError.message)
         return {}
       }
+      if (user) recoveryMarker(user.id,null)
+      setRecovering(false)
       setUser(null)
       setStatus('unauthenticated')
       return {}
@@ -182,7 +203,41 @@ export function useAuth(): AuthState {
     } finally {
       setLoading(false)
     }
+  }, [user])
+
+  const emailAction = useCallback(async (email: string, action: 'reset' | 'confirm'): Promise<AuthActionResult> => {
+    if (!supabase) return { notice: 'Account service is not configured.' }
+    setLoading(true); setError(null)
+    try {
+      const response = action === 'reset'
+        ? await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: authRedirect('recovery') })
+        : await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: authRedirect('confirmed') } })
+      if (response.error) throw response.error
+      return { ok: true, notice: 'If this account can receive the email, a link has been sent. Open it in this browser. Check spam too.' }
+    } catch {
+      return { notice: 'The email request could not be completed. Wait before retrying. Contact the site owner if it continues.' }
+    } finally { setLoading(false) }
   }, [])
 
-  return { user, status, loading, error, signIn, signUp, signOut, retrySession }
+  const resetPassword = useCallback((email: string) => emailAction(email, 'reset'), [emailAction])
+  const resendConfirmation = useCallback((email: string) => emailAction(email, 'confirm'), [emailAction])
+  const updatePassword = useCallback(async (password: string): Promise<AuthActionResult> => {
+    if (!supabase || !user || !recovering) return { notice: 'Open a new password reset link first.' }
+    setLoading(true); setError(null)
+    try {
+      validateNewPassword(password)
+      const { error: updateError } = await supabase.auth.updateUser({ password })
+      if (updateError) throw updateError
+      const { error: revokeError } = await supabase.auth.signOut({ scope: 'global' })
+      if (revokeError) return { ok: true, notice: 'Password updated, but signing out other devices failed. Choose Cancel and log out to retry.' }
+      recoveryMarker(user.id,null)
+      setRecovering(false); setUser(null); setStatus('unauthenticated')
+      setNotice('Password updated. Sign in again with your new password.')
+      return { ok: true, notice: 'Password updated. Sign in again with your new password.' }
+    } catch (updateError) {
+      setError(messageFor(updateError)); return {}
+    } finally { setLoading(false) }
+  }, [user, recovering])
+
+  return { user, status, loading, error, notice, recovering, signIn, signUp, signOut, resetPassword, resendConfirmation, updatePassword, retrySession }
 }

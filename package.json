@@ -1,1 +1,37 @@
-{"name":"aasiflowai","private":true,"version":"0.1.0","type":"module","scripts":{"dev":"vite","build":"tsc -b && vite build","lint":"eslint .","preview":"vite preview"},"dependencies":{"@supabase/supabase-js":"^2.112.4","@vitejs/plugin-react":"6.1.1","lucide-react":"1.35.0","react":"19.2.8","react-dom":"19.2.8","typescript":"6.0.3","vite":"8.2.2"},"devDependencies":{"@eslint/js":"10.0.1","@types/react":"19.2.18","@types/react-dom":"19.2.5","eslint":"10.9.1","eslint-plugin-react-hooks":"7.1.1","eslint-plugin-react-refresh":"0.5.5","globals":"17.11.0","typescript-eslint":"8.68.0"}}
+{
+  "name": "aasiflowai",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/security-headers.mjs && tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test": "node --experimental-strip-types --test tests/workflow.test.ts tests/client-flows.test.ts && node tests/endpoint.cjs && node tests/database.mjs",
+    "test:edge": "npx --yes --package=deno@2.9.6 deno test --allow-env tests/security.test.ts",
+    "check:edge": "npx --yes --package=deno@2.9.6 deno check supabase/functions/generate-content/index.ts supabase/functions/social-account/index.ts supabase/functions/social-callback/index.ts supabase/functions/publish-worker/index.ts supabase/functions/payment-checkout/index.ts supabase/functions/payment-webhook/index.ts",
+    "test:browser": "node scripts/test-browser.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.112.4",
+    "@vitejs/plugin-react": "6.1.1",
+    "lucide-react": "1.35.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "6.0.3",
+    "vite": "8.2.2"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@eslint/js": "10.0.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "eslint": "10.9.1",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.5",
+    "globals": "17.11.0",
+    "playwright": "1.63.0",
+    "typescript-eslint": "8.68.0"
+  }
+}

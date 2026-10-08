@@ -1,0 +1,14 @@
+[functions.generate-content]
+verify_jwt = true
+[functions.social-account]
+verify_jwt = true
+[functions.social-callback]
+verify_jwt = false
+[functions.publish-worker]
+verify_jwt = false
+[functions.payment-checkout]
+verify_jwt = true
+[functions.payment-webhook]
+verify_jwt = false
+# JWT-disabled functions implement OAuth state, worker-secret or webhook HMAC
+# authentication internally. This file does not deploy or schedule anything.

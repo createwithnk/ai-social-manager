@@ -14,6 +14,7 @@ interface PostRow {
   scheduled_for: string | null
   media: Post['media'] | null
   language: string
+  revision?:number
 }
 
 function toPost(row: PostRow): Post {
@@ -29,6 +30,7 @@ function toPost(row: PostRow): Post {
     scheduledFor: row.scheduled_for ?? undefined,
     media: row.media ?? undefined,
     language: row.language,
+    revision:row.revision,
   }
 }
 
@@ -37,7 +39,7 @@ export async function fetchPosts(): Promise<Post[]> {
 
   const { data, error } = await supabase
     .from('posts')
-    .select('id, user_id, idea, platform, tone, caption, hashtags, status, created_at, scheduled_for, media, language')
+    .select('*')
     .order('created_at', { ascending: false })
 
   if (error) throw error
@@ -47,9 +49,7 @@ export async function fetchPosts(): Promise<Post[]> {
 export async function savePostForUser(post: Post, userId: string): Promise<Post> {
   if (!supabase) return post
 
-  const { data, error } = await supabase
-    .from('posts')
-    .upsert({
+  const values = {
       id: post.id,
       user_id: userId,
       idea: post.idea,
@@ -62,10 +62,13 @@ export async function savePostForUser(post: Post, userId: string): Promise<Post>
       scheduled_for: post.scheduledFor ?? null,
       media: post.media ?? null,
       language: post.language ?? 'English',
-    }, { onConflict: 'id' })
-    .select('id, user_id, idea, platform, tone, caption, hashtags, status, created_at, scheduled_for, media, language')
-    .single()
+    }
+  const query = Number.isInteger(post.revision)
+    ? supabase.from('posts').update(values).eq('id',post.id).eq('revision',post.revision!).eq('user_id',userId)
+    : supabase.from('posts').upsert(values,{onConflict:'id'})
+  const {data,error} = await query.select('*').maybeSingle()
 
   if (error) throw error
+  if (!data) throw new Error('This post changed on another device. Refresh and review the latest version before saving.')
   return toPost(data as PostRow)
 }

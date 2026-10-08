@@ -1,23 +1,15 @@
-Verification run in the implementation workspace:
+# Verification
 
-- Frontend TypeScript + Vite production build: passed.
-- ESLint: passed.
-- Six workflow validation tests: passed (empty captions, platform limits including hashtags, missing/invalid/past schedules, draft schedule clearing, valid future planning).
-- Browser regression: passed on a 390 × 844 mobile viewport using Chromium. Covered persistence after reload, content-change approval reset, approved/scheduled read-only editing, past-date rejection, future scheduling, schedule clearing on edit, no horizontal overflow and no runtime exceptions.
-- Mocked Edge Function tests: passed authentication, origin, brief validation, cross-user attachment rejection, request size, daily quota rejection and provider success. Run `node tests/endpoint.cjs`.
+`npm test` runs 10 client/workflow tests, the mocked generation endpoint and 70 checks against an isolated local PostgreSQL instance. `npm run test:edge` runs 23 Deno security/provider tests with environment permission only; network access is not granted. `npm run check:edge`, `npm run build` and `npm run lint` verify the complete prepared source.
 
-Live HTTP verification (2026-10-06): two disposable confirmed accounts passed password login. `live-http.py --allow-ai` passed 22 authenticated HTTP checks covering actual text/image Gemini calls, private file upload/download/signed previews, saved-post reload, per-user isolation and 21 concurrent quota requests allowing exactly 20. Both Gemini calls returned 200. See `verification-2026-10-06.json`.
+`npm run test:browser` starts local demo and mocked-cloud servers on 5177/5178. Install Playwright Chromium first or supply `CHROMIUM_EXECUTABLE`. Every nonlocal application request is intercepted. Signup/reset/resend, private uploads, provider functions and logout are fixtures: no email, credentials, social post, or payment reaches an external account. Microphone capture uses Chromium's simulated device and the real MediaRecorder. Screenshots in `/tmp/aasiflow-qa` are intermediate layout checks, not a published site.
 
-For an explicitly authorized live run, provide two isolated confirmed `@example.invalid` accounts in a private credentials JSON as described in the script, then run:
+`tests/local-bootstrap.sql` models the Auth/Storage catalog contracts used by the migrations. It is a test fixture, never a production schema. PGlite has one connection, so this is not a concurrent-worker integration test.
 
-```bash
-python3 tests/live-http.py --credentials /absolute/private/fixtures.json --report /absolute/private/results.json --allow-ai
-```
+`tests/live-database.sql` is an admin rollback test of baseline ownership/quota/media/scheduling. It creates synthetic users and session rows in a transaction and rolls them all back. It was run against live Supabase on 6 October before the new prepared migration; updated session fixtures were only run locally on 7–8 October. Do not imply the new migration passed live testing.
 
-Omit `--allow-ai` to avoid provider calls. The script uses the local untracked `.env` and requires an already configured project/function. Never commit credentials, sessions or signed URLs. It deletes its test post, retains its tiny private media fixture, and leaves Auth fixture cleanup to the administrator. With `--allow-ai`, non-200 text or image generation makes the script fail even if core storage/quota checks pass.
+`tests/live-http.py` is the earlier two-user HTTP harness. Supply only isolated confirmed test accounts, never the real user's password. The `--allow-ai` option authorizes two actual model calls. Without it, provider calls are skipped. Storage object deletion is a separate authorized cleanup; removing a user/post does not delete uploaded bytes. The live image fixture from 6 October has already been removed after approval; do not rerun cloud uploads without a safe cleanup plan.
 
-Both temporary Auth accounts and quota rows were removed after this run; the existing user and post counts remained at 1. The 69-byte private PNG was permanently removed through the Dashboard after explicit user approval. Verified zero matching test images; the Dashboard retains a zero-byte empty-folder placeholder. No Storage DELETE permission was added.
+Current results: `verification-2026-10-06.json` records 22 actual HTTP checks, including real Hindi text and PNG-assisted generation. `verification-2026-10-08.json` records local/mock validation of the prepared update and the exact live state inspected afterward. No new social/payment credentials, deployment, public hosting, engine upgrade or worker schedule was performed.
 
-Not run: real-user signup/confirmation email delivery, actual microphone device capture, live video/audio Gemini requests, platform OAuth/publishing or payments. The browser regression intentionally exercises the local demo with mocked cloud APIs and does not claim a full signed-in browser journey.
-
-Live database verification (2026-10-06): `live-database.sql` passed in a rollback transaction on the connected project. It verifies post CRUD/ownership, approval reset, schedules, storage metadata access policies and quota. This transaction left no fixtures. HTTP checks above separately verify file bytes, provider responses and concurrency.
+Production checks still needed are recorded in `SECURITY.md`: live migration/Edge session isolation, simultaneous workers, actual confirmation/recovery delivery, real device recording, Gemini video/audio, platform app/test-account calls and merchant test-mode payment/refund/replay checks. The combined live migration was blocked by automatic approval review pending owner permission for payment infrastructure; local tests do not bypass this boundary.

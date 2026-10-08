@@ -16,11 +16,14 @@ function createSupabaseClient(): { client: SupabaseClient | null; error: string 
 
   try {
     const url = new URL(supabaseUrl!)
-    if (url.pathname !== '/' || (url.protocol !== 'http:' && url.protocol !== 'https:')) {
+    if (url.pathname !== '/' || url.username || url.password || url.search || url.hash ||
+        (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname)))) {
       throw new Error('Unsupported Supabase URL protocol')
     }
 
-    return { client: createClient(supabaseUrl!, supabaseAnonKey!), error: null }
+    return { client: createClient(supabaseUrl!, supabaseAnonKey!, {
+      auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+    }), error: null }
   } catch {
     return {
       client: null,

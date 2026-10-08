@@ -2,9 +2,19 @@ import { useEffect, useRef, useState } from 'react'
 import { uploadMedia, mediaUrl, mediaTypes } from '../lib/media'
 import type { Media } from '../types'
 export function MediaPreview({ media }: { media: Media }) {
-  const [url, setUrl] = useState('')
-  const [error, setError] = useState('')
-  useEffect(() => { let active = true; mediaUrl(media).then(value => { if (active) setUrl(value) }).catch(() => { if (active) setError('Preview unavailable. Reopen this post to retry.') }); return () => { active = false } }, [media])
+  const [preview,setPreview] = useState<{path:string;url:string;error:string}>({path:'',url:'',error:''})
+  useEffect(() => {
+    let active = true
+    const load = async () => {
+      try { const url = await mediaUrl(media); if (active) setPreview({path:media.path,url,error:''}) }
+      catch { if (active) setPreview({path:media.path,url:'',error:'Preview unavailable. Reopen this post to retry.'}) }
+    }
+    void load()
+    const timer = setInterval(() => {if (document.visibilityState === 'visible') void load()},240_000)
+    return () => {active = false;clearInterval(timer)}
+  },[media])
+  const url = preview.path === media.path ? preview.url : ''
+  const error = preview.path === media.path ? preview.error : ''
   return <div className="media-preview"><p>{media.name}</p>{error && <p role="alert">{error}</p>}{url && (media.type.startsWith('image/') ? <img src={url} alt={media.name} /> : media.type.startsWith('video/') ? <video src={url} controls /> : <audio src={url} controls />)}</div>
 }
 export function MediaInput({ media, onChange, disabled, onBusy }: { media?: Media; onChange: (value?: Media) => void; disabled: boolean; onBusy: (busy: boolean) => void }) {
@@ -27,6 +37,7 @@ export function MediaInput({ media, onChange, disabled, onBusy }: { media?: Medi
       stream.current = input
       const rec = new MediaRecorder(input); recorder.current = rec
       const chunks: Blob[] = []
+      rec.onerror = () => {clearTimeout(timer.current);input.getTracks().forEach(t => t.stop());rec.onstop = null;if (active.current) {setRecording(false);setError('Recording failed. Try a supported audio upload.');onBusy(false)}}
       rec.ondataavailable = event => { if (event.data.size) chunks.push(event.data) }
       rec.onstop = () => { clearTimeout(timer.current); input.getTracks().forEach(t => t.stop()); if (!active.current) return; setRecording(false); void upload(new File(chunks, 'voice-note', { type: rec.mimeType })) }
       rec.start(); setRecording(true); timer.current = setTimeout(() => { if (rec.state === 'recording') rec.stop() }, 60000)

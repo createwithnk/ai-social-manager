@@ -1,74 +1,78 @@
 # AasiFlowAI
 
-Review-first social content workspace. **The database, private storage and authenticated AI backend are live in the connected Supabase project. The website, social publisher and payment collector have not been published.**
+A review-first social content workspace. **Website/social publication and payment activation remain blocked pending owner permission.**
 
-## Implemented
+| Area | Status on 8 October 2026 |
+| --- | --- |
+| Supabase email login, drafts, private media and text/image Gemini backend | Existing live setup; 22 HTTP checks passed on 6 October |
+| Password confirmation/recovery, PKCE and global logout UI | Implemented; browser tested with mocked Auth |
+| Active-session RLS, storage/draft quotas and post revisions | Prepared and locally tested; live migration not applied |
+| Instagram/LinkedIn connections, encrypted tokens and approval-bound publishing queue | Implemented and mock tested; official app settings and live activation pending |
+| Real metrics and observed posting-time suggestions | Implemented; no fabricated data; live platform checks pending |
+| Hosted payment links, verified events, credit accounting and refund reconciliation | Prepared and tested locally; no merchant credentials, payment mode or collecting enabled |
+| Production security headers | Generated; hosting/domain configuration and deployment still pending |
 
-- Responsive dashboard, read-only details, draft editing and planning calendar.
-- Supabase email authentication and per-user database access; local browser demo without configuration.
-- Explicit AI action through an authenticated server endpoint, with English, Hindi, Urdu and Arabic briefs.
-- Separate, clearly labelled English local templates (no AI call).
-- Image, video and audio uploads to a private bucket, signed previews, and browser voice recording (60 seconds maximum).
-- Media and voice attachments included in the Gemini request only when Generate with AI is selected.
-- Editable captions/hashtags; any brief, attachment, language or content change clears the approval checkbox.
-- Editing an approved/scheduled post first saves a draft and removes its schedule.
-- Future-date and caption-length checks; calendar entries are plans, never automatic publishing jobs.
-- Atomic limit of 20 AI attempts per user per UTC day, including failed attempts. This is an abuse limit, not a prepaid credit balance or guaranteed spending cap.
-- Honest connection/setup status; no fabricated engagement metrics or best-time predictions.
+The live `generate-content` function is still the previously verified version. The new version requires the prepared session-security migration and has **not** been deployed. The new social/payment functions have **not** been deployed or scheduled. The live project still has its original 1 Auth user and 1 post; payment/queue tables do not exist there.
 
-## Local development
+## Workspace
 
-Node 24 recommended:
+- Responsive dashboard, drafts, editable content, explicit approval and a planning calendar.
+- English/Hindi/Urdu/Arabic AI briefs; clearly labelled English local templates.
+- Private image/video/audio uploads, signed previews and browser recording with a 60-second cap. File signatures/MIME/size/owner paths are checked; recorder multipart MIME is normalized.
+- Saved post revisions prevent lost updates after the new migration. Editing approved/scheduled content clears approval and its plan.
+- The Connections & setup screen displays actual configuration and gates. No API secret is entered in the browser.
+- Instagram adapter: official Meta/Facebook Login, exactly one authorized Facebook Page linked to a professional Instagram account, JPEG photo/MP4 Reel publishing.
+- LinkedIn adapter: personal-profile OAuth, text/JPEG/PNG/MP4 posts using the modern Posts, Images and Videos APIs; chunk ranges/ETags are handled for video upload.
+- OAuth state is single-use and session-bound; credentials use authenticated AES-256-GCM encryption on the server. Expiration fails closed and requires reconnect.
+- A publication is a separate explicit action from calendar planning. The queued snapshot must match the approved revision/account. Editing cancels queued work. Processing content is locked against edits.
+- Worker claims have leases; final-request ambiguity and lost leases require human reconciliation. No automatic retry can duplicate an uncertain publication.
+- Metrics come from official APIs. Instagram currently supplies likes/comments; unavailable impressions/shares remain null. LinkedIn requires approved `r_member_postAnalytics` for its metrics.
+- Posting-time observations require at least 10 comparable posts measured near 24 hours, with 3 samples in each compared hour. They describe past results, not a guarantee.
+- Billing is prepared for one-off, owner-priced AI-attempt credit purchases using hosted Razorpay payment links. No subscription/autopay, card/UPI storage or automatic refund initiation is implemented.
+
+## Run and test locally
+
+Node 24 and npm are used. The local template demo needs no environment values:
 
 ```bash
 npm ci
 npm run dev
 npm run build
 npm run lint
-node --experimental-strip-types tests/workflow.test.ts
+npm test
+npm run check:edge
+npm run test:edge
+npx playwright install chromium
+npm run test:browser
 ```
 
-No environment variables are required for the local template demo. Local drafts remain only in the current browser. Attachments and AI require an account-backed setup.
+Edge checks use pinned Deno 2.9.6; the server Supabase client is pinned to 2.112.4. Browser tests start isolated local servers on ports 5177/5178 and intercept every nonlocal application request. They send no real email, social API request or payment. If Chromium is installed separately, set `CHROMIUM_EXECUTABLE` for the browser test.
 
-Optional browser regression test: install Playwright in your development environment, install its Chromium browser, start Vite on port 5173, then run `node tests/browser.cjs`. No real credentials or paid API calls are used by that test.
+For the connected setup, only `VITE_SUPABASE_URL` and its public publishable/anon key belong in an untracked frontend `.env`; see `.env.example`. Provider credentials, token encryption and worker/payment keys are **server-only**; the empty configuration reference is `supabase/server-env.example`.
 
-## Account setup reference
+`npm run build` prepares `public/_headers` and `deployment/security-headers.json` for the configured HTTPS Supabase origin. The eventual host must apply the headers and serve SPA routes; this script does not configure hosting or deploy anything. System fonts avoid external font requests.
 
-1. For a new project only, apply the original posts migration, then `supabase/migrations/20261003000000_content_system.sql`. This setup is already applied to the connected project; see the live verification section before using the CLI.
-2. Set only `VITE_SUPABASE_URL` (project root, no `/rest/v1`) and the public publishable/anon key in an untracked local `.env` using `.env.example`.
-3. Set **server-side** secrets: `GEMINI_API_KEY`, `GEMINI_MODEL` (a currently available multimodal Gemini model), and `ALLOWED_ORIGINS` (comma-separated exact origins; include the local development origin when testing). The function uses Supabase's built-in `SUPABASE_PUBLISHABLE_KEYS.default`, with `SUPABASE_ANON_KEY` as a fallback. Never use VITE-prefixed provider secrets.
-4. Deploy the `generate-content` Edge Function only when deployment is authorized. Keep gateway JWT verification enabled and validate the bearer token with `auth.getUser`; no service-role key is used. The connected project is already deployed and verified with both checks enabled.
-5. Confirm real-user email signup/confirmation before launch. Confirmed synthetic accounts have passed password login, actual AI generation, saved-post reload and uploaded-media preview checks.
-6. Test isolation with two users: one must not read another's posts/media, attach another user's path, or use AI without authentication. Send 21 concurrent quota RPC requests: exactly 20 should succeed, followed by an AI request rejected for exhausted app quota. These HTTP checks passed on the connected project without making 21 provider calls.
-7. Set provider-side spend limits/alerts before using paid generation. No payment details are stored in this repository.
+## Verification
 
-## Boundaries and remaining work
+- `tests/database.mjs`: 70 local PostgreSQL checks, including the baseline rollback suite, cross-user/anonymous denial, signed-out session rejection, immutable ownership/revisions, approval changes, dual-gate DB checks, job leases, OAuth replay/expiry, read-only metadata, payment replay/amount verification, credit debits/refunds and storage/draft quotas.
+- `tests/security.test.ts`: 23 Deno tests covering encryption/tampering, request limits, redirect/host validation, OAuth scopes/identity, provider publish/upload flows, uncertain outcomes, null analytics, hosted checkout, raw-byte HMAC, merchant/captured-payment/refund validation, and fail-closed launch gates.
+- 10 client/workflow unit tests plus the mocked generation endpoint suite passed.
+- Mobile/desktop browser regression passed: persisted draft editing, approval reset, calendar validation, disabled publication/payments, PKCE signup/reset requests, resend, recovery/global logout, 5-minute previews, and native MediaRecorder using a simulated microphone with mocked Storage.
+- TypeScript production build, lint and all six Edge entrypoint type checks passed. Dependency audit was patched to `source-map-js` 1.2.2 and returned zero known vulnerabilities.
+- Local PostgreSQL uses PGlite's single connection and modeled Auth/Storage catalogs. These checks do not prove live Auth/Storage behavior or multiworker concurrency. Real user email delivery, real microphone behavior, actual Gemini video/audio, official social posting/analytics and provider test-mode payments remain unverified.
 
-- Instagram/LinkedIn OAuth, token lifecycle, official publishing APIs, background dispatch, webhooks, and real analytics are **not implemented**. They need a separately authorized integration phase and platform app configuration/review.
-- X/Facebook are drafting destinations only. No social API calls are made.
-- Billing/subscriptions, credit purchases and production hosting are not configured.
-- Database, private bucket and authenticated AI setup are live. Signed-in HTTP upload/download/previews, draft save/reload, actual text/image AI generation and concurrent quota checks passed. Real-user email confirmation delivery, actual microphone capture and live video/audio generation remain unverified.
-- Each draft has one attachment. Replace/remove detaches the file; old uploads are retained privately (no delete policy yet, to avoid breaking shared draft references). Add a retention/cleanup job before opening public signup.
-- Preview URLs expire after one hour; reopen the post to refresh. Recording depends on HTTPS/localhost and microphone support. Large videos need a future resumable upload pipeline.
-- AI can be wrong: users must review claims and content. Platform-specific URL weighting and publishing validations belong in the future platform adapters.
-- The database resets modified approved content to draft. It cannot prove that a human actually reviewed content; the approval UI records the user's deliberate action.
+See `tests/verification-2026-10-06.json` for the earlier live HTTP result and `tests/verification-2026-10-08.json` for the current scope. See `SECURITY.md` for the actual remaining launch checks and operator handling.
 
-Official API references: https://ai.google.dev/api/generate-content and https://supabase.com/docs/guides/functions/auth.
+## Live state and next activation step
 
-## Live verification — 6 October 2026
+Applied on 6 October: `20261006090620_content_system_private_media_and_quota`. The database and private bucket are live; `generate-content` has gateway JWT verification plus `auth.getUser`, uses the existing server Gemini key, and passed real Hindi/text and image generation. Only two provider calls were made in those live tests. The synthetic users/posts/quota were cleaned up. The 69-byte test PNG was deleted after specific owner approval; only a zero-byte folder placeholder remains. No Storage DELETE policy was introduced.
 
-The existing project was resumed on its Free plan. Applied live migration `20261006090620_content_system_private_media_and_quota`: media/language fields, private 10 MB storage, ownership constraints, approval reset trigger, and a private privileged quota routine behind an unprivileged RPC wrapper. Anonymous table grants and client TRUNCATE/REFERENCES/TRIGGER privileges were removed. The existing user and post remain intact; counts were 1 before and after testing.
+Prepared next migration: `supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql`. **Automatic approval review rejected applying it because it includes payment infrastructure, for which the owner reserved permission. No part of this migration has been applied.** Obtain permission for this reviewed update before running it. Both DB launch controls and both environment gates default to false even after application.
 
-`tests/live-database.sql` passed against the actual database: synthetic users verified post save/update, scheduled-content edit resets, past-schedule rejection, cross-user read/write and attachment denial, storage folder policies, usage isolation, a 20-attempt limit, quota tamper denial and anonymous access denial. This SQL transaction rolled back all its fixtures.
+The initial posts schema predates migration tracking, and the applied content migration has a different timestamp from the prepared repository file. Reconcile/pull the existing history before any CLI `db push`; do not blindly replay old files.
 
-The Supabase Dashboard is authenticated. Its existing `GEMINI_API_KEY` was used without revealing or copying it. Added `GEMINI_MODEL=gemini-3.5-flash-lite` and `ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173`. Deployed `generate-content` with `verify_jwt=true`; the pinned Supabase client version is `2.112.4`.
+After authorized application, deploy only the needed server functions with the JWT/custom authentication settings in `supabase/config.toml`, and perform live isolation/session tests. Payment collectors and the publication worker remain subject to their separate activation permissions. No Cron schedule is created by these files.
 
-Two isolated confirmed Auth fixtures passed password login. `tests/live-http.py --allow-ai` then passed 22 HTTP checks: authenticated identity; unauthenticated/origin/invalid-brief/foreign-attachment rejection; real Hindi JSON output within the X character limit; private PNG upload/download; signed preview creation and reopening; cross-user media/preview denial; draft-with-attachment save/reload; cross-user post read/write denial; exactly 20 successful quota consumptions out of 21 concurrent requests; exhausted-quota AI rejection; and per-user quota visibility. Text-only and image-assisted Gemini calls both returned 200; only two provider calls were made. Results are recorded in `tests/verification-2026-10-06.json`.
+The live security advisor still reports disabled leaked-password protection; performance advisors have no findings. Server password policy, verified SMTP/CAPTCHA, final redirect/origin allowlists, DB patch review, safe media retention, official platform app approval and merchant test configuration remain launch requirements. No billing plan, payment method or DB engine upgrade has been changed.
 
-The test post, both synthetic Auth users and their quota rows were removed, and temporary credential/session files were deleted. The 69-byte PNG was permanently deleted through the Dashboard after explicit user approval; database verification found zero matching test images. The Dashboard retains a zero-byte empty-folder placeholder. No new Storage DELETE policy was added. Confirmed fixture login does not test outbound signup/confirmation email delivery. Browser regression covers the local demo with mocked cloud APIs; it does not establish a full signed-in browser journey.
-
-Database performance advisors returned no notices. The remaining security advisory concerns disabled leaked-password protection; review https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection before public signup. No Auth settings or billing plan were changed.
-
-The initial posts schema was created before migration tracking; its legacy migration is not recorded remotely. The applied live migration version differs from the prepared repository file name. Reconcile/pull migration history before any future CLI db push; do not blindly reapply either file to this project.
-
-Auth settings returned 200: email signup is enabled and email confirmation is required. No Auth settings were changed. Actual app generation succeeded without adding billing: no billing account was linked, credits bought, paid plan enabled or payment method saved. The separate AI Studio Playground attempt had returned an internal error; the cause was not established, and the successful app API calls supersede it for backend verification.
+Limits in the prepared migration: 20 free AI attempts/user/UTC day, up to 100 total using paid credits only after billing approval; failed attempts count. Media <=10 MB/file, 20 objects/user and 80/bucket; drafts <=200/user and 1,000 total. These are conservative abuse limits, not provider spending guarantees. Replaced/detached files remain private until authorized cleanup.

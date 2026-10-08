@@ -1,0 +1,155 @@
+{
+  "date": "2026-10-08",
+  "timezone": "Asia/Kolkata",
+  "verified_at_utc": "2026-10-08T06:53:07.077143+00:00",
+  "scope": "Local PostgreSQL, mocked provider/Auth/Storage, native simulated-media browser, build and read-only live inspection. No live phase-two migration or deployment.",
+  "checks": {
+    "production_build": {
+      "command": "npm run build",
+      "passed": true
+    },
+    "lint": {
+      "command": "npm run lint",
+      "passed": true
+    },
+    "client_workflow": {
+      "command": "npm test",
+      "passed": true,
+      "count": 10
+    },
+    "generation_endpoint": {
+      "command": "npm test",
+      "passed": true,
+      "provider": "mocked"
+    },
+    "local_postgresql": {
+      "command": "npm test",
+      "passed": true,
+      "count": 70,
+      "engine": "PGlite 0.5.8",
+      "connection_count": 1,
+      "auth_storage_catalogs": "modeled fixtures"
+    },
+    "deno_security_provider": {
+      "command": "npm run test:edge",
+      "passed": true,
+      "count": 23,
+      "network_permission": false
+    },
+    "edge_type_checks": {
+      "command": "npm run check:edge",
+      "passed": true,
+      "entrypoints": 6
+    },
+    "browser": {
+      "command": "CHROMIUM_EXECUTABLE=/tmp/aasiflow-chromium npm run test:browser",
+      "passed": true,
+      "chromium": "153.0.0 packaged executable",
+      "mobile_viewport": [
+        390,
+        844
+      ],
+      "desktop_viewport": [
+        1440,
+        1000
+      ],
+      "application_external_network_requests": 0,
+      "cloud_apis": "intercepted fixtures",
+      "microphone": "simulated device; actual MediaRecorder and MIME normalization",
+      "verified_flows": [
+        "persisted draft editing",
+        "approval reset on edit",
+        "calendar future-date validation",
+        "disabled publication and payment",
+        "PKCE signup/recovery redirects",
+        "confirmation resend",
+        "password recovery and global logout request",
+        "private upload and 300-second preview request",
+        "responsive connections/setup layout"
+      ]
+    },
+    "dependency_audit": {
+      "command": "npm audit --json",
+      "passed": true,
+      "known_vulnerabilities": 0,
+      "source_map_js_patched_to": "1.2.2"
+    },
+    "diff_whitespace": {
+      "command": "git diff --check",
+      "passed": true
+    },
+    "credential_pattern_scan": {
+      "passed": true,
+      "findings": 0,
+      "environment_file_excluded": true,
+      "limitation": "Selected private-key/provider-token/JWT patterns; not a complete secret or security audit"
+    }
+  },
+  "prepared_migration": {
+    "path": "supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql",
+    "sha256": "4cd66f287b558404ddd999bb6db80b58b21f685e864a78bea75a340606e8557d",
+    "locally_validated": true,
+    "applied_to_live": false,
+    "approval_review": "rejected",
+    "review_reason": "Broad live schema/RLS/function changes include payment infrastructure; owner reserved permission before payment mode setup. No alternate tool or split execution used."
+  },
+  "live_snapshot": {
+    "inspected_on": "2026-10-08",
+    "project_ref": "nkfecpdegcmsapvbviky",
+    "auth_users": 1,
+    "posts": 1,
+    "payment_tables_exist": false,
+    "publication_queue_exists": false,
+    "postgres_version": "17.6",
+    "migrations": [
+      {
+        "version": "20261006090620",
+        "name": "content_system_private_media_and_quota"
+      }
+    ],
+    "edge_functions": [
+      {
+        "name": "generate-content",
+        "version": 1,
+        "verify_jwt": true
+      }
+    ],
+    "security_advisories": [
+      {
+        "name": "auth_leaked_password_protection",
+        "level": "WARN",
+        "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+      }
+    ],
+    "performance_advisories": []
+  },
+  "external_actions_this_update": {
+    "live_database_migration": false,
+    "edge_deployment": false,
+    "public_hosting": false,
+    "social_publication": false,
+    "payment_method_added": false,
+    "merchant_credentials_added": false,
+    "paid_plan_change": false,
+    "engine_upgrade": false,
+    "worker_schedule": false,
+    "provider_api_test_calls": 0
+  },
+  "not_verified": [
+    "New migration through live Auth/Storage APIs and global session revocation",
+    "Simultaneous live workers and lease races",
+    "Actual confirmation/recovery email delivery",
+    "Server minimum password policy and CAPTCHA/SMTP configuration",
+    "Real physical microphone",
+    "Live Gemini video/audio requests",
+    "Official platform OAuth/upload/publish/analytics",
+    "Merchant test-mode checkout/payment/refund/replay and timeout reconciliation",
+    "Application of generated security headers by a deployed host"
+  ],
+  "earlier_live_evidence": "tests/verification-2026-10-06.json; 22 checks and two actual Gemini text/image calls; approved fixture cleanup complete",
+  "launch_gates": {
+    "publishing": false,
+    "billing": false,
+    "activation_requires_separate_owner_permission": true
+  }
+}

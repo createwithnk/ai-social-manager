@@ -1,0 +1,29 @@
+# Server-side only. No live provider credentials have been added by this update.
+# Set secrets in Supabase, never in VITE_* variables or a committed .env file.
+APP_URL=
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+SOCIAL_TOKEN_ENCRYPTION_KEY=
+META_APP_ID=
+META_APP_SECRET=
+# Set a supported version from your Meta app dashboard, e.g. vNN.0.
+META_GRAPH_VERSION=
+LINKEDIN_CLIENT_ID=
+LINKEDIN_CLIENT_SECRET=
+LINKEDIN_VERSION=202609
+LINKEDIN_ANALYTICS_ENABLED=false
+
+# Do not enable either gate before owner permission.
+# Independent DB launch_controls flags must ALSO be enabled by the operator.
+PUBLISHING_ENABLED=false
+BILLING_ENABLED=false
+WORKER_SECRET=
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+RAZORPAY_ACCOUNT_ID=
+RAZORPAY_WEBHOOK_SECRET=
+# Owner-selected plans only. Amounts are integer paise, no client-supplied price.
+BILLING_PLANS_JSON=[]
+
+# Existing AI endpoint settings; provider key remains on the server.
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.5-flash-lite

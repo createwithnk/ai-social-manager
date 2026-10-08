@@ -2,12 +2,17 @@
 begin;
 select set_config('aasiflow_test.user_a',gen_random_uuid()::text,true),
        set_config('aasiflow_test.user_b',gen_random_uuid()::text,true),
+       set_config('aasiflow_test.session_a',gen_random_uuid()::text,true),
+       set_config('aasiflow_test.session_b',gen_random_uuid()::text,true),
        set_config('aasiflow_test.post_a',gen_random_uuid()::text,true);
 insert into auth.users (id,email) values
 (current_setting('aasiflow_test.user_a')::uuid,'aasiflow-test-a-' || current_setting('aasiflow_test.user_a') || '@example.invalid'),
 (current_setting('aasiflow_test.user_b')::uuid,'aasiflow-test-b-' || current_setting('aasiflow_test.user_b') || '@example.invalid');
+insert into auth.sessions(id,user_id,created_at,updated_at) values
+(current_setting('aasiflow_test.session_a')::uuid,current_setting('aasiflow_test.user_a')::uuid,now(),now()),
+(current_setting('aasiflow_test.session_b')::uuid,current_setting('aasiflow_test.user_b')::uuid,now(),now());
 set local role authenticated;
-select set_config('request.jwt.claims',json_build_object('sub',current_setting('aasiflow_test.user_a'),'role','authenticated')::text,true);
+select set_config('request.jwt.claims',json_build_object('sub',current_setting('aasiflow_test.user_a'),'role','authenticated','session_id',current_setting('aasiflow_test.session_a'))::text,true);
 do $$
 declare n integer; result boolean; denied boolean;
 begin
@@ -55,7 +60,7 @@ begin
   exception when insufficient_privilege then denied:=true; end;
   if not denied then raise exception 'FAIL: upload into another user folder permitted'; end if;
 end $$;
-select set_config('request.jwt.claims',json_build_object('sub',current_setting('aasiflow_test.user_b'),'role','authenticated')::text,true);
+select set_config('request.jwt.claims',json_build_object('sub',current_setting('aasiflow_test.user_b'),'role','authenticated','session_id',current_setting('aasiflow_test.session_b'))::text,true);
 do $$
 declare n integer;
 begin
