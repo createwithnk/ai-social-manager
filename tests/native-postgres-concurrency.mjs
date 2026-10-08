@@ -140,15 +140,43 @@ try {
     assert.equal(await value(admin, 'select status from public.publication_jobs where id=$1', [claimedB.id]), 'uncertain')
     assert.equal(await value(admin, 'select attempts from public.publication_jobs where id=$1', [claimedB.id]), 1)
   })
-  await check('worker skips a post locked for editing rather than waiting on an inverted row-lock order', async () => {
-    const post = await approvedPost()
-    await value(user, 'select public.enqueue_publication($1,$2,1,now())', [post, C])
+  await check('worker skips an editing post, claims another due post and lets the editor cancel its queued revision', async () => {
+    const post = await approvedPost(), available = await approvedPost()
+    const lockedJob = await value(user, 'select public.enqueue_publication($1,$2,1,now())', [post, C])
+    const availableJob = await value(user, 'select public.enqueue_publication($1,$2,1,now())', [available, C])
     await admin.query('begin')
     try {
       await admin.query('select id from public.posts where id=$1 for update', [post])
+      assert.equal((await value(service, 'select public.service_claim_publication()')).id, availableJob)
       assert.equal(await value(service, 'select public.service_claim_publication()'), null)
-    } finally { await admin.query('rollback') }
+      await admin.query("update public.posts set caption='Edited before dispatch' where id=$1", [post])
+      assert.equal(await value(admin, 'select status from public.publication_jobs where id=$1', [lockedJob]), 'cancelled')
+      assert.equal(await value(admin, 'select status from public.posts where id=$1', [post]), 'draft')
+    } finally {
+      await admin.query('rollback')
+      await admin.query('delete from public.publication_jobs where id=any($1::uuid[])', [[lockedJob, availableJob]])
+    }
   }, { continueOnFailure: true })
+  await check('two overlapping workers reconcile expired leases without waiting or dispatching them again', async () => {
+    const jobs = []
+    for (let i=0;i<2;i++) jobs.push(await value(user, 'select public.enqueue_publication($1,$2,1,now())', [await approvedPost(), C]))
+    for (let i=0;i<2;i++) assert.ok(jobs.includes((await value(service, 'select public.service_claim_publication()')).id))
+    await admin.query("update public.publication_jobs set lease_until=now()-interval '1 second' where id=any($1::uuid[])", [jobs])
+    await workerA.query('begin'); await workerB.query('begin')
+    try {
+      assert.equal(await value(workerA, 'select public.service_claim_publication()'), null)
+      assert.equal(await value(workerB, 'select public.service_claim_publication()'), null)
+    } finally { await workerA.query('commit'); await workerB.query('commit') }
+    const rows = (await admin.query('select status,attempts from public.publication_jobs where id=any($1::uuid[])', [jobs])).rows
+    assert.ok(rows.every(row=>row.status==='uncertain' && row.attempts===1))
+  })
+  await check('an orphaned queued job is cancelled without dispatch', async () => {
+    const post = await approvedPost()
+    const job = await value(user, 'select public.enqueue_publication($1,$2,1,now())', [post, C])
+    await admin.query('update public.publication_jobs set post_id=null where id=$1', [job])
+    assert.equal(await value(service, 'select public.service_claim_publication()'), null)
+    assert.equal(await value(admin, 'select status from public.publication_jobs where id=$1', [job]), 'cancelled')
+  })
   await check('eight overlapping OAuth takes consume one state exactly once', async () => {
     const hash = 'b'.repeat(64)
     assert.equal(await value(service, 'select public.service_oauth_start($1,$2,$3,$4)', [hash, A, SA, 'linkedin']), true)
@@ -187,8 +215,9 @@ try {
   })
   await check('24 overlapping Storage metadata inserts preserve the 20-object owner quota', async () => {
     const results = await Promise.allSettled(users.map((client, i) => client.query('insert into storage.objects(bucket_id,name) values($1,$2)', ['post-media', `${A}/local-fixture-${i}`])))
+    report.storage_quota = { accepted: results.filter(item=>item.status==='fulfilled').length, denied_codes: results.filter(item=>item.status==='rejected').map(item=>item.reason.code) }
     assert.equal(results.filter(item => item.status === 'fulfilled').length, 20)
-    assert.ok(results.filter(item => item.status === 'rejected').every(item => item.reason.code === 'P0001'))
+    assert.deepEqual(report.storage_quota.denied_codes, Array(4).fill('42501'))
     assert.equal(Number(await value(admin, 'select count(*) from storage.objects')), 20)
   })
   report.passed = report.checks.every(item => item.passed)

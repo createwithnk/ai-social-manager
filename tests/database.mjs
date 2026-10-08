@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import { PGlite } from '@electric-sql/pglite'
 const db = new PGlite()
 let checks = 0
@@ -16,7 +16,7 @@ const SA='a3333333-3333-4333-8333-333333333333',SB='b4444444-4444-4444-8444-4444
 const C='c5555555-5555-4555-8555-555555555555',P='d6666666-6666-4666-8666-666666666666',O='e7777777-7777-4777-8777-777777777777'
 try {
   await db.exec(await readFile('tests/local-bootstrap.sql','utf8'))
-  for (const path of ['supabase/migrations/20260901000000_create_posts.sql','supabase/migrations/20261003000000_content_system.sql','supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql','supabase/migrations/20261008073141_index_payment_events_order.sql']) await db.exec(await readFile(path,'utf8'))
+  for (const filename of (await readdir('supabase/migrations')).filter(name=>/^\d+_.+\.sql$/.test(name)).sort()) await db.exec(await readFile(`supabase/migrations/${filename}`,'utf8'))
   const baseline = await db.exec(await readFile('tests/live-database.sql','utf8'))
   equal(String(baseline.at(-1).rows[0].verification).startsWith('PASS:'),true)
   const paymentBaseline = await db.exec(await readFile('tests/live-payment-database.sql','utf8'))
