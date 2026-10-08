@@ -30,7 +30,7 @@ function toPost(row: PostRow): Post {
 
 export async function fetchPosts(userId: string): Promise<Post[]> {
   if (!supabase) return []
-
+  if (!userId) throw new Error('Sign in before loading content.')
   const { data, error } = await supabase
     .from('posts')
     .select('id, user_id, idea, platform, tone, caption, hashtags, status, created_at, scheduled_for')
@@ -44,6 +44,10 @@ export async function fetchPosts(userId: string): Promise<Post[]> {
 export async function savePostForUser(post: Post, userId: string): Promise<Post> {
   if (!supabase) return post
   if (!userId) throw new Error('Sign in before saving content.')
+  const { data: sessionData, error: sessionError } = await supabase.auth.getUser()
+  if (sessionError || !sessionData.user || sessionData.user.id !== userId) {
+    throw new Error('Your session is invalid. Please sign in again.')
+  }
 
   const { data, error } = await supabase
     .from('posts')
