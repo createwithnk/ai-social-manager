@@ -28,12 +28,13 @@ function toPost(row: PostRow): Post {
   }
 }
 
-export async function fetchPosts(): Promise<Post[]> {
+export async function fetchPosts(userId: string): Promise<Post[]> {
   if (!supabase) return []
 
   const { data, error } = await supabase
     .from('posts')
     .select('id, user_id, idea, platform, tone, caption, hashtags, status, created_at, scheduled_for')
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
   if (error) throw error
@@ -42,6 +43,7 @@ export async function fetchPosts(): Promise<Post[]> {
 
 export async function savePostForUser(post: Post, userId: string): Promise<Post> {
   if (!supabase) return post
+  if (!userId) throw new Error('Sign in before saving content.')
 
   const { data, error } = await supabase
     .from('posts')
