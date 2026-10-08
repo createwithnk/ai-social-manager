@@ -88,7 +88,7 @@ function Workspace({ auth }: { auth: AuthState }) {
     if (!isSupabaseConfigured || !userId) return
 
     let active = true
-    void fetchPosts()
+    void fetchPosts(userId)
       .then((remotePosts) => {
         if (active) setPosts(remotePosts)
       })
