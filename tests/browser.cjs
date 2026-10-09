@@ -53,6 +53,7 @@ const fs = require('node:fs');
  await page.setViewportSize({width:1440,height:1000});
  await page.screenshot({path:'/tmp/aasiflow-qa/desktop-connections.png',fullPage:true});
  if(process.env.CLOUD_BASE_URL) await cloudTest(browser,process.env.CLOUD_BASE_URL);
+ await require('./browser-arabic.cjs')(browser,process.env.BASE_URL || 'http://127.0.0.1:5173',process.env.CLOUD_BASE_URL);
  console.log('PASS: mobile/desktop drafts, approval reset, calendar validation, disabled publication/payment, PKCE account-email requests, globally revoked recovery and native MediaRecorder using simulated microphone. No external network requests.');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1)});

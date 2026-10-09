@@ -2,8 +2,9 @@
 
 A review-first social content workspace. **Website/social publication and payment activation remain blocked pending owner permission.**
 
-| Area | Status on 8 October 2026 |
+| Area | Status on 9 October 2026 (live backend evidence: 8 October) |
 | --- | --- |
+| English/Arabic interface and mobile RTL | Language switch, persistent preference, localized account/editor/calendar/setup flows; interface/content language kept separate |
 | Supabase email login, drafts, private media and text/image Gemini backend | AI function v3 deployed; 21 live AI/Auth safety checks passed on 8 October; real text/image generation passed on 6 October |
 | Password confirmation/recovery, PKCE and global logout UI | Implemented; hosted minimum 12 saved and short-password rejection verified; email flows browser tested with mocked Auth |
 | Active-session RLS, storage/draft quotas and post revisions | Applied; live ownership/session rollback checks passed |
@@ -16,7 +17,7 @@ Five server functions are active: `generate-content` at version 3, and `social-a
 
 ## Workspace
 
-- Responsive dashboard, drafts, editable content, explicit approval and a planning calendar.
+- Responsive English/Arabic dashboard, drafts, editable content, explicit approval and a planning calendar. Arabic mirrors the layout; language changes keep unsaved draft/approval/calendar state. The browser preference is used initially; an explicit choice persists. Dates use the device timezone and Gregorian calendar.
 - English/Hindi/Urdu/Arabic AI briefs; clearly labelled English local templates.
 - Private image/video/audio uploads, signed previews and browser recording with a 60-second cap. File signatures/MIME/size/owner paths are checked; recorder multipart MIME is normalized.
 - Saved post revisions prevent lost updates through the applied migration. Editing approved/scheduled content clears approval and its plan.
@@ -28,7 +29,7 @@ Five server functions are active: `generate-content` at version 3, and `social-a
 - Worker claims have leases; final-request ambiguity and lost leases require human reconciliation. No automatic retry can duplicate an uncertain publication.
 - Metrics come from official APIs. Instagram currently supplies likes/comments; unavailable impressions/shares remain null. LinkedIn requires approved `r_member_postAnalytics` for its metrics.
 - Posting-time observations require at least 10 comparable posts measured near 24 hours, with 3 samples in each compared hour. They describe past results, not a guarantee.
-- Billing is prepared for one-off, owner-priced AI-attempt credit purchases using hosted Razorpay payment links. No subscription/autopay, card/UPI storage or automatic refund initiation is implemented.
+- Billing is prepared for one-off, owner-priced INR AI-attempt credit purchases using hosted Razorpay payment links. Prices keep the INR currency code in either interface language. No subscription/autopay, card/UPI storage or automatic refund initiation is implemented. The owner selected personal/freelancer; international merchant eligibility remains unverified. The existing flow does not implement PayPal Standard Checkout or direct PayPal. See `supabase/INTERNATIONAL_PAYMENTS.md` before preparing UAE/Arab collection.
 
 ## Run and test locally
 
@@ -58,11 +59,12 @@ For the connected setup, only `VITE_SUPABASE_URL` and its public publishable/ano
 - `tests/native-postgres-concurrency.mjs`: 17 checks on a disposable PostgreSQL 17.10 cluster using 24 independent user connections and overlapping worker transactions. Claims skip editing posts, two workers claim distinct jobs, expired leases remain uncertain, OAuth state is consumed once, duplicate paid/refund events reconcile once, and concurrent AI/media metadata requests preserve their quotas. Auth/Storage catalogs are modeled. The standard GitHub Actions runner used no production secrets, provider calls or deployments; its socket-only cluster was stopped and removed. See `tests/native-postgres-concurrency-2026-10-08.json` and `.github/workflows/database-concurrency.yml`.
 - `tests/security.test.ts`: 23 Deno tests covering encryption/tampering, request limits, redirect/host validation, OAuth scopes/identity, provider publish/upload flows, uncertain outcomes, null analytics, hosted checkout, raw-byte HMAC, merchant/captured-payment/refund validation, and fail-closed launch gates.
 - `tests/payment-endpoints.test.ts`: actual checkout/webhook handlers with intercepted Auth/database/provider HTTP; 15 request-flow checks cover closed gates, revoked sessions, client price/credit/owner tampering, forged events, verified refund routing, uncertain provider responses and missing/invalid website configuration before any order or provider request.
-- 10 client/workflow unit tests plus 30 generation-handler scenarios passed. The AI handler checks active sessions, bounded streamed input, media signatures/ownership, quota and provider output, with provider HTTP intercepted. Version 3 limits provider JSON to 128 KiB of actual streamed bytes, cancels oversize/error responses and returns safe 502 errors for malformed or interrupted provider content. UTF-8 and dishonest/missing length headers are covered; no automatic provider retry is added.
+- 15 client/workflow/locale unit tests plus 30 generation-handler scenarios passed. The AI handler checks active sessions, bounded streamed input, media signatures/ownership, quota and provider output, with provider HTTP intercepted. Version 3 limits provider JSON to 128 KiB of actual streamed bytes, cancels oversize/error responses and returns safe 502 errors for malformed or interrupted provider content. UTF-8 and dishonest/missing length headers are covered; no automatic provider retry is added.
 - 21 actual AI/Auth HTTP checks passed on version 3: two fixture sessions, global logout revoking both old tokens, 21 simultaneous quota calls allowing exactly 20, and denial of a new login after the pending-cleanup fixture was disabled. No model call was requested. Earlier version 2 evidence is retained in its original report.
 - 12 actual account/payment safety HTTP checks passed: unauthenticated access denied, missing social setup blocked, both payment routes blocked by closed billing controls, missing OAuth state rejected and old account-metadata tokens rejected after logout. These are closed-gate checks, not a merchant or platform integration test.
 - Hosted password policy was raised from 6 to 12 through the authorized Dashboard. Reopened settings showed 12; two actual Auth HTTP checks rejected 5- and 11-character passwords with `422 weak_password` and a minimum of 12. No test account was created or email-delivery test requested.
-- Mobile/desktop browser regression passed: persisted draft editing, approval reset, calendar validation, disabled publication/payments, PKCE signup/reset requests, resend, recovery/global logout, 5-minute previews, and native MediaRecorder using a simulated microphone with mocked Storage.
+- English mobile/desktop browser regression passed: persisted draft editing, approval reset, calendar validation, disabled publication/payments, PKCE signup/reset requests, resend, recovery/global logout, 5-minute previews, and native MediaRecorder using a simulated microphone with mocked Storage.
+- Arabic browser coverage adds 360px/1440px RTL layout, persistent language, preserved unsaved content/approval, canonical AI/save payload values, literal user markup, Dubai-to-UTC calendar conversion, existing English draft language, localized PKCE/resend/cooldown/recovery/global logout and closed account/payment/publication gates. These tests use local/mock servers and do not establish real provider or email delivery. See `tests/arabic-readiness-2026-10-09.json`.
 - TypeScript production build, lint and all six Edge entrypoint type checks passed. Dependency audit was patched to `source-map-js` 1.2.2 and returned zero known vulnerabilities.
 - PGlite uses one connection; the separate native PostgreSQL suite verifies SQL concurrency with modeled Auth/Storage catalogs. Hosted worker execution, actual Storage byte handling, real user email delivery, real microphone behavior, actual Gemini video/audio, official social posting/analytics and provider test-mode payments remain unverified.
 

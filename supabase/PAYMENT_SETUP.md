@@ -1,6 +1,6 @@
 # Payment setup and test-mode handoff
 
-Status: 8 October 2026. The owner explicitly approved the complete database scope and continued free development/testing. The combined update and missing payment-event FK index were applied; live baseline and payment/session rollback suites passed. Checkout and webhook functions version 2 are deployed and readback verified. Both launch gates remain false. No merchant credential, checkout transaction, charge, refund, payment document use or website/social publication was performed.
+Status: 9 October 2026. The owner selected personal/freelancer; see `INTERNATIONAL_PAYMENTS.md` for the UAE/Arabic launch limitation and provider handoff. The owner explicitly approved the complete database scope and continued free development/testing. The combined update and missing payment-event FK index were applied; live baseline and payment/session rollback suites passed. Checkout and webhook functions version 2 are deployed and readback verified. Both launch gates remain false. No merchant credential, checkout transaction, charge, refund, payment document use or website/social publication was performed.
 
 ## Reviewed database update
 
@@ -18,14 +18,13 @@ The applied database update covers:
 
 Both payment and publication controls default to **false**. The migration adds
 no merchant keys, charge, public hosting, social post, worker schedule or Storage
-DELETE grant. It changes access policies and write triggers. Role-based live rollback checks and actual HTTP login/global-signout checks passed. Concurrent publication-worker regression remains pending.
+DELETE grant. It changes access policies and write triggers. Role-based live rollback checks and actual HTTP login/global-signout checks passed. The native concurrency regression now passes all 17 checks after the queue lock-order fix; hosted worker/provider testing remains pending.
 Reconcile the existing migration history before a CLI push; do not rerun the
 old schema files. Recorded versions and repository paths are in `migration-history.json`.
 
 ## Merchant account
 
-The owner answered that the Razorpay account status is unknown. Account access
-has not been inspected. The next account step is to sign in or sign up at
+The owner selected personal/freelancer. Merchant jurisdiction and account eligibility are not yet verified, and Razorpay/PayPal account access has not been inspected. Review `INTERNATIONAL_PAYMENTS.md` before choosing an international route. For the existing INR Razorpay test flow, the account step is to sign in or sign up at
 [Razorpay Dashboard](https://dashboard.razorpay.com/), complete the provider's
 verification flow personally, and select **Test Mode**.
 

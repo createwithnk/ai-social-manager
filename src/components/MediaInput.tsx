@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { uploadMedia, mediaUrl, mediaTypes } from '../lib/media'
 import type { Media } from '../types'
+import { useLocale } from '../lib/locale-context'
 export function MediaPreview({ media }: { media: Media }) {
+  const { error: translateError } = useLocale()
   const [preview,setPreview] = useState<{path:string;url:string;error:string}>({path:'',url:'',error:''})
   useEffect(() => {
     let active = true
@@ -15,9 +17,10 @@ export function MediaPreview({ media }: { media: Media }) {
   },[media])
   const url = preview.path === media.path ? preview.url : ''
   const error = preview.path === media.path ? preview.error : ''
-  return <div className="media-preview"><p>{media.name}</p>{error && <p role="alert">{error}</p>}{url && (media.type.startsWith('image/') ? <img src={url} alt={media.name} /> : media.type.startsWith('video/') ? <video src={url} controls /> : <audio src={url} controls />)}</div>
+  return <div className="media-preview"><p dir="auto">{media.name}</p>{error && <p role="alert">{translateError(error)}</p>}{url && (media.type.startsWith('image/') ? <img src={url} alt={media.name} /> : media.type.startsWith('video/') ? <video src={url} controls /> : <audio src={url} controls />)}</div>
 }
 export function MediaInput({ media, onChange, disabled, onBusy }: { media?: Media; onChange: (value?: Media) => void; disabled: boolean; onBusy: (busy: boolean) => void }) {
+  const { t, error: translateError } = useLocale()
   const [error, setError] = useState('')
   const [recording, setRecording] = useState(false)
   const recorder = useRef<MediaRecorder | null>(null)
@@ -43,5 +46,5 @@ export function MediaInput({ media, onChange, disabled, onBusy }: { media?: Medi
       rec.start(); setRecording(true); timer.current = setTimeout(() => { if (rec.state === 'recording') rec.stop() }, 60000)
     } catch { setError('Microphone unavailable. Allow microphone access or upload an audio file.'); onBusy(false) }
   }
-  return <div className="media-input"><label>Photo, video or voice note (up to 10 MB)<input type="file" accept={mediaTypes.join(',')} disabled={disabled || recording} onChange={event => { const file = event.target.files?.[0]; if (file) void upload(file); event.target.value = '' }} /></label>{recording ? <button className="ghost" onClick={() => recorder.current?.stop()}>Stop recording</button> : <button className="ghost" disabled={disabled} onClick={() => { void record() }}>Record voice (up to 60 seconds)</button>}{media && <><MediaPreview key={media.path} media={media} /><button className="ghost" disabled={disabled || recording} onClick={() => onChange(undefined)}>Remove attachment</button></>}{error && <p role="alert" className="form-error">{error}</p>}</div>
+  return <div className="media-input"><label>{t("Photo, video or voice note (up to 10 MB)")}<input type="file" accept={mediaTypes.join(',')} disabled={disabled || recording} onChange={event => { const file = event.target.files?.[0]; if (file) void upload(file); event.target.value = '' }} /></label>{recording ? <button className="ghost" onClick={() => recorder.current?.stop()}>{t("Stop recording")}</button> : <button className="ghost" disabled={disabled} onClick={() => { void record() }}>{t("Record voice (up to 60 seconds)")}</button>}{media && <><MediaPreview key={media.path} media={media} /><button className="ghost" disabled={disabled || recording} onClick={() => onChange(undefined)}>{t("Remove attachment")}</button></>}{error && <p role="alert" className="form-error">{translateError(error)}</p>}</div>
 }

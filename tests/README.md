@@ -1,10 +1,12 @@
 # Verification
 
-`npm test` runs 10 client/workflow tests, 30 mocked generation-handler scenarios and 71 sequential checks against PGlite. `npm run test:edge` runs 23 Deno security/provider tests plus the actual payment endpoint suite with 15 request-flow steps (24 parent tests overall). Only environment permission is granted; no server or external network is started. `npm run check:edge`, `npm run build` and `npm run lint` verify the complete source.
+`npm test` runs 15 client/workflow/locale tests, 30 mocked generation-handler scenarios and 71 sequential checks against PGlite. `npm run test:edge` runs 23 Deno security/provider tests plus the actual payment endpoint suite with 15 request-flow steps (24 parent tests overall). Only environment permission is granted; no server or external network is started. `npm run check:edge`, `npm run build` and `npm run lint` verify the complete source.
 
 `payment-endpoints.test.ts` captures the actual entrypoint handlers and intercepts Supabase Auth/RPC/order and Razorpay HTTP. It verifies request routing, authentication, input tampering, gates, uncertain outcomes and webhook validation. Its mocked RPC responses do not establish ledger balances or database idempotency; those are checked separately by `database.mjs`.
 
 `npm run test:browser` starts local demo and mocked-cloud servers on 5177/5178. Install Playwright Chromium first or supply `CHROMIUM_EXECUTABLE`. Every nonlocal application request is intercepted. Signup/reset/resend, private uploads, provider functions and logout are fixtures: no email, credentials, social post, or payment reaches an external account. Microphone capture uses Chromium's simulated device and the real MediaRecorder. Screenshots in `/tmp/aasiflow-qa` are intermediate layout checks, not a published site.
+
+`browser-arabic.cjs` is included in the browser suite. It checks Arabic detection/persistent switching, RTL at 360px and 1440px, mixed/literal user text, unsaved draft and approval preservation, canonical platform/tone/content-language payloads, device-timezone scheduling in Asia/Dubai, approval/schedule reset, English draft-language preservation and closed publication/payment controls. Mocked Arabic signup/recovery/resend includes minimum length, PKCE, one-minute email cooldown, password mismatch and global logout. Test markup stays text; no external request is allowed. `locale.test.ts` checks invalid saved preferences, safe interpolation, localized error fallback, unchanged INR amount/currency and Gregorian device-timezone dates.
 
 `tests/local-bootstrap.sql` models the Auth/Storage catalog contracts used by the migrations. It is a test fixture, never a production schema. PGlite has one connection, so this is not a concurrent-worker integration test.
 

@@ -1,0 +1,107 @@
+{
+  "verified_at_utc": "2026-10-09T05:11:55.682281+00:00",
+  "scope": "Local production build and isolated English/Arabic browser regression; no live backend or merchant update",
+  "passed": true,
+  "build": "npm run build: passed",
+  "lint": "npm run lint: passed",
+  "client_workflow_locale_tests": 15,
+  "intercepted_ai_handler_scenarios": 30,
+  "sequential_pglite_checks": 71,
+  "browser": {
+    "command": "CHROMIUM_EXECUTABLE=<local packaged Chromium> npm run test:browser",
+    "playwright": "1.63.0",
+    "chromium": "153.0.8010.0",
+    "temporary_package": "@sparticuz/chromium@153.0.0; application dependencies unchanged",
+    "viewports": [
+      [
+        360,
+        800
+      ],
+      [
+        390,
+        844
+      ],
+      [
+        1440,
+        1000
+      ]
+    ],
+    "locales": [
+      "en",
+      "ar-AE"
+    ],
+    "timezones": [
+      "Asia/Kolkata",
+      "Asia/Dubai"
+    ],
+    "english_regression": "passed, including native MediaRecorder with simulated microphone and mocked Storage",
+    "arabic_flows": [
+      "Browser preference detection and explicit saved language choice",
+      "Right-side desktop/mobile RTL navigation and no horizontal overflow",
+      "Unsaved idea, caption, hashtags, tone, content language and approval survive switching",
+      "Literal user markup remains text, not injected elements",
+      "Arabic content and hashtags round-trip through local storage",
+      "Dubai 2099-01-01T10:00 input persists as 2099-01-01T06:00:00.000Z",
+      "Calendar input survives language change; past times are rejected",
+      "Editing scheduled content removes its approval and calendar time",
+      "Existing English draft language remains English in Arabic interface",
+      "Closed local/mock-cloud publication, account and payment controls",
+      "12-character signup minimum; PKCE signup/reset and confirmation resend",
+      "One-minute reset-email cooldown sends only one intercepted request",
+      "Recovery password mismatch blocks update; global logout and cleared password",
+      "Arabic AI and post-save payloads keep canonical language/tone/platform values"
+    ],
+    "screenshots_visually_reviewed": [
+      "Arabic mobile/desktop dashboard",
+      "Arabic mobile editor/calendar",
+      "Arabic mobile password reset",
+      "Arabic desktop connections"
+    ],
+    "runtime_errors": 0,
+    "application_external_network_requests": 0,
+    "auth_storage_and_ai_http": "intercepted synthetic fixtures only",
+    "actual_email_delivery": false,
+    "actual_model_calls": false,
+    "actual_social_calls": false,
+    "payment_transaction": false
+  },
+  "personal_merchant": {
+    "owner_selected_business_type": "personal / freelancer",
+    "merchant_country_and_eligibility": "unverified",
+    "current_checkout": "Razorpay hosted Payment Links, INR only, gated",
+    "international_paypal_checkout": "not implemented or activated",
+    "display_currency": "INR remains INR; no AED conversion",
+    "handoff": "supabase/INTERNATIONAL_PAYMENTS.md",
+    "primary_docs_checked_on": "2026-10-09"
+  },
+  "live_backend_modified": false,
+  "backend_state_reference": "supabase/deployments/current-state-2026-10-08.json (historical live inspection; not repeated for this UI change)",
+  "holds": {
+    "website_publication": true,
+    "social_publication": true,
+    "real_payment_collection": true,
+    "paid_upgrade": true,
+    "personal_payment_documents": true
+  },
+  "limitations": [
+    "Merchant eligibility and provider test transactions pending",
+    "Actual email delivery, real-device microphone, AI video/audio and social provider integrations remain pending",
+    "Arabic interface does not establish customer demand or revenue",
+    "Native browser file/date widgets use the device/browser language"
+  ],
+  "sha256": {
+    "src/App.tsx": "7acb9cd88d4066874c2a1487b0dfa89b3a0d212bc7b0ddfbade4ab1c725f45d8",
+    "src/styles.css": "c30f25783419770d05642effe5c28c8dc8cdb9f2bc1ea9582bc64ab5a067b1a4",
+    "src/lib/locale.ts": "d4f1de41286128fe0fdf7b2ccb763d3faf23a7bb819136b2a69bcb212555ab71",
+    "src/lib/locale-context.ts": "f6778509482fbc399478bc1ca68e1bb9cb3a693d447de3f8a048eb5f2608cd23",
+    "src/components/LocaleProvider.tsx": "865a87667c0306474e68fb2785914322a0d25e72dd63a8e18a596d5b70576a4e",
+    "src/components/LanguageSwitcher.tsx": "b7b47af049563fea08c13b9ef36c4fb64101c49fb736aac09aec21676275c991",
+    "src/components/AuthScreens.tsx": "1ed94b4703180551e45b79020adae058c60c6c0c83b72eca5f3a94dc4ab73a4f",
+    "src/components/ConnectionsPanel.tsx": "6723dda4b650c20ac71fa32b5269da7ee9829e9d4dbd94276bbf6816d13a89df",
+    "src/components/MediaInput.tsx": "63bb086058e34f9e033ca328a5ca8d6d30041d5773f7d2280de00c223b37e297",
+    "tests/browser.cjs": "384d485f4efa5fcda233609342aead0b4b3db26d13257c8e35702a8f0b39060b",
+    "tests/browser-arabic.cjs": "485a6679fcba73b95bc4d167fe9d16c7ca547d58c173c04ac62daeac24c2a0f2",
+    "tests/locale.test.ts": "6734ada0053fd1a1e54a0e88ed149ea8d6c0e8e9d66dfdfaa647a8c359c8a0fb",
+    "package.json": "ac0b24705163222545d318f25b96873425e8c922d7685af437f53945f6590b3b"
+  }
+}

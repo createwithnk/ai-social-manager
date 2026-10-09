@@ -37,6 +37,10 @@ The owner explicitly approved the whole reviewed database update on 8 October an
 
 The SQL concurrency gap was checked on 8 October with a disposable native PostgreSQL 17.10 cluster: 17 checks passed, including overlapping claims, editing, lost leases, OAuth consumption, duplicate payment/refund events and concurrent quotas. The first run reproduced the editor/worker lock inversion; `publication_claim_lock_order` was applied as live migration `20261008170743`, its function body exactly matched readback, and three live role/closed-gate checks passed. The original data, disabled fixture and closed launch controls were preserved. Auth/Storage catalogs are modeled in the native suite; actual hosted worker/provider and Storage byte tests remain part of the launch requirements. See `tests/native-postgres-concurrency-2026-10-08.json` and `tests/live-publication-claim-fix-2026-10-08.json`.
 
+## English/Arabic interface
+
+Translations and interpolated values remain plain React text; user ideas/captions are never translated as interface messages or inserted as HTML. Explicit select values preserve the server platform/tone/content-language enums. Language switching keeps editor approval and calendar state and does not alter launch controls or currency. Unknown errors use a localized fallback; known session/quota/validation errors remain actionable. Arabic browser tests verify literal markup, closed controls, canonical request values and password recovery/global logout with intercepted Auth. This adds no live merchant or social activation.
+
 ## Advisor interpretation after live verification
 
 - [RLS enabled without a policy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy): six private tables intentionally deny direct access. Privileges are revoked and RLS has no allow policy; trusted private definer functions provide narrow server operations. Do not add client policies to silence this informational notice.

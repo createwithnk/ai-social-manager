@@ -2,8 +2,11 @@ import { useState } from 'react'
 import { LoaderCircle, WandSparkles } from 'lucide-react'
 import type { AuthState } from '../lib/auth'
 import { minimumPasswordLength } from '../lib/auth-flows'
+import { useLocale } from '../lib/locale-context'
+import { LanguageSwitcher } from './LanguageSwitcher'
 
 export function AuthScreen({ auth }: { auth: AuthState }) {
+  const { t, error: translateError } = useLocale()
   const [mode, setMode] = useState<'login' | 'signup' | 'reset' | 'confirm'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,22 +26,23 @@ export function AuthScreen({ auth }: { auth: AuthState }) {
     setNotice(result.notice ?? null)
     if (result.notice) setPassword('')
   }
-  return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-title">
-    <div className="brand auth-brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>AasiFlowAI</strong><small>Content workspace</small></div></div>
-    <span className="eyebrow">SECURE WORKSPACE</span><h1 id="auth-title">{title}</h1>
-    <p>{emailOnly ? 'Open the email link in this browser to finish. Links expire and can be used once.' : 'Your drafts and attachments belong to your signed-in account.'}</p>
-    <form onSubmit={submit}><label>Email<input type="email" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" maxLength={254} required disabled={auth.loading} /></label>
-      {!emailOnly && <label>Password<input type="password" aria-label="Password" aria-describedby={mode === 'signup' ? 'password-hint' : undefined} value={password} onChange={e => setPassword(e.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'signup' ? minimumPasswordLength : 1} maxLength={128} required disabled={auth.loading} />{mode === 'signup' && <small id="password-hint">At least 12 characters. A unique passphrase is easier to remember.</small>}</label>}
-      {auth.error && !emailOnly && <p className="form-error" role="alert">{auth.error}</p>}{(notice || auth.notice) && <p className="form-notice" role="status">{notice || auth.notice}</p>}
-      <button className="primary wide" disabled={auth.loading}>{auth.loading ? <><LoaderCircle className="spinner" /> Please wait</> : button}</button>
+  return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-title"><LanguageSwitcher />
+    <div className="brand auth-brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>AasiFlowAI</strong><small>{t("Content workspace")}</small></div></div>
+    <span className="eyebrow">{t("SECURE WORKSPACE")}</span><h1 id="auth-title">{t(title)}</h1>
+    <p>{emailOnly ? t("Open the email link in this browser to finish. Links expire and can be used once.") : t("Your drafts and attachments belong to your signed-in account.")}</p>
+    <form onSubmit={submit}><label>{t("Email")}<input type="email" dir="ltr" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" maxLength={254} required disabled={auth.loading} /></label>
+      {!emailOnly && <label>{t("Password")}<input type="password" dir="ltr" aria-label={t("Password")} aria-describedby={mode === 'signup' ? 'password-hint' : undefined} value={password} onChange={e => setPassword(e.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'signup' ? minimumPasswordLength : 1} maxLength={128} required disabled={auth.loading} />{mode === 'signup' && <small id="password-hint">{t("At least 12 characters. A unique passphrase is easier to remember.")}</small>}</label>}
+      {auth.error && !emailOnly && <p className="form-error" role="alert">{translateError(auth.error)}</p>}{(notice || auth.notice) && <p className="form-notice" role="status">{t(notice || auth.notice || '')}</p>}
+      <button className="primary wide" disabled={auth.loading}>{auth.loading ? <><LoaderCircle className="spinner" /> {t("Please wait")}</> : t(button)}</button>
     </form>
-    {mode === 'login' && <button className="auth-switch" onClick={() => changeMode('reset')} disabled={auth.loading}>Forgot password?</button>}
-    <button className="auth-switch" onClick={() => changeMode(mode === 'login' ? 'signup' : 'login')} disabled={auth.loading}>{mode === 'login' ? 'Need an account? Sign up' : 'Back to log in'}</button>
-    {(mode === 'login' || mode === 'signup') && <button className="auth-switch" onClick={() => changeMode('confirm')} disabled={auth.loading}>Resend confirmation email</button>}
+    {mode === 'login' && <button className="auth-switch" onClick={() => changeMode('reset')} disabled={auth.loading}>{t("Forgot password?")}</button>}
+    <button className="auth-switch" onClick={() => changeMode(mode === 'login' ? 'signup' : 'login')} disabled={auth.loading}>{mode === 'login' ? t("Need an account? Sign up") : t("Back to log in")}</button>
+    {(mode === 'login' || mode === 'signup') && <button className="auth-switch" onClick={() => changeMode('confirm')} disabled={auth.loading}>{t("Resend confirmation email")}</button>}
   </section></main>
 }
 
 export function PasswordRecoveryScreen({ auth }: { auth: AuthState }) {
+  const { t, error: translateError } = useLocale()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [notice, setNotice] = useState('')
@@ -49,11 +53,11 @@ export function PasswordRecoveryScreen({ auth }: { auth: AuthState }) {
     setNotice(result.notice ?? '')
     if (result.ok) { setPassword(''); setConfirm('') }
   }
-  return <main className="auth-shell"><section className="auth-card"><h1>Choose a new password</h1><p>Use a unique passphrase. After updating, sign in again; other device sessions are signed out.</p><form onSubmit={submit}>
-    <label>New password<input type="password" value={password} onChange={e => setPassword(e.target.value)} minLength={minimumPasswordLength} maxLength={128} autoComplete="new-password" required disabled={auth.loading} /></label>
-    <label>Confirm new password<input type="password" value={confirm} onChange={e => setConfirm(e.target.value)} minLength={minimumPasswordLength} maxLength={128} autoComplete="new-password" required disabled={auth.loading} /></label>
-    {(auth.error || notice) && <p role="alert" className="form-error">{auth.error || notice}</p>}
-    <button className="primary wide" disabled={auth.loading}>{auth.loading ? 'Updating…' : 'Update password'}</button></form>
-    <button className="auth-switch" disabled={auth.loading} onClick={() => { void auth.signOut() }}>Cancel and log out</button>
+  return <main className="auth-shell"><section className="auth-card"><LanguageSwitcher /><h1>{t("Choose a new password")}</h1><p>{t("Use a unique passphrase. After updating, sign in again; other device sessions are signed out.")}</p><form onSubmit={submit}>
+    <label>{t("New password")}<input type="password" dir="ltr" value={password} onChange={e => setPassword(e.target.value)} minLength={minimumPasswordLength} maxLength={128} autoComplete="new-password" required disabled={auth.loading} /></label>
+    <label>{t("Confirm new password")}<input type="password" dir="ltr" value={confirm} onChange={e => setConfirm(e.target.value)} minLength={minimumPasswordLength} maxLength={128} autoComplete="new-password" required disabled={auth.loading} /></label>
+    {(auth.error || notice) && <p role="alert" className="form-error">{auth.error ? translateError(auth.error) : t(notice)}</p>}
+    <button className="primary wide" disabled={auth.loading}>{auth.loading ? t("Updating…") : t("Update password")}</button></form>
+    <button className="auth-switch" disabled={auth.loading} onClick={() => { void auth.signOut() }}>{t("Cancel and log out")}</button>
   </section></main>
 }
