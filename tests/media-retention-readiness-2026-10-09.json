@@ -19,13 +19,25 @@
     "edge_typechecked_entrypoints": 7,
     "build": "passed",
     "lint": "passed",
-    "native_retention_concurrency": "six tests written; CI execution pending",
+    "native_retention_concurrency": {
+      "passed": true,
+      "checks": 23,
+      "new_retention_checks": 6,
+      "run_id": 37917290653,
+      "source_commit": "0a62bc21e73bdca5631b8282faa302b93170816f",
+      "migration_sha256": "f1da3d1b5481b0ad65514eaa698f163cc2c8f5d74e82928c2827101ee76ccc82",
+      "cluster_stopped": true,
+      "cluster_removed": true,
+      "evidence": "tests/native-media-retention-2026-10-09.json"
+    },
     "previous_work_commit_native_ci": {
       "run_id": 37915002175,
       "conclusion": "success",
       "checks": 17,
       "contains_new_retention_migration": false
-    }
+    },
+    "browser": "passed; complete English/Arabic, CAPTCHA lifecycle and playable-media regression",
+    "local_checks_total": 237
   },
   "safeguards": [
     "Default-deny private quarantine and service-only maintenance RPCs",
@@ -40,7 +52,7 @@
     "No user DELETE privilege or SQL deletion of production Storage metadata"
   ],
   "limitations": [
-    "Native overlapping transaction checks must pass before schema activation",
+    "Native races passed on modeled Auth/Storage; actual hosted Storage/API activation tests remain pending",
     "No actual Storage byte deletion/removal-response/restart test; SQL uses modeled provider metadata and worker RPC/Storage are intercepted",
     "Privileged admin/service replacements must be prevented operationally; path-only delete is not a conditional-version transaction",
     "Tombstone audit cap requires operator review; uncertain jobs have no automated reset/retry",
@@ -59,11 +71,11 @@
     "documents_or_charges": false
   },
   "source_sha256": {
-    "README.md": "bbd90b39a3697075b44deabd0010d82cc6e4e374da40011d1bfd98bc62046b03",
-    "SECURITY.md": "c754f234d19869e62bbd3d97c8e89e86bf9db21af3571a28012f65796cfc0bcb",
+    "README.md": "19dcb447ff367dbebea563157acb736991689fe0940e942c6b412b27950d8a84",
+    "SECURITY.md": "edeb2bd421c96f6c62c6e8c2825393208522cf27015b193b38f58718702cce22",
     "package.json": "18a3f4f58889060c9fe6a3941afa43f83b7f89b4b1e48f79ac3ffa05ba42ebcf",
     "src/lib/locale.ts": "eb0bded98d9ea1f18246a372e44d44dfad2adf4e4662a9aa7c170b8e7b963397",
-    "supabase/MEDIA_RETENTION.md": "b195ba82e8cf1ecf3d2bcba47d5ded89e6ae218a54495bc3113d42a3a50e62a9",
+    "supabase/MEDIA_RETENTION.md": "3028d4cd7a275f39d00ef0ec264297ecbb343e12b8efe52ee69e3496bc9f9545",
     "supabase/config.toml": "3ce52c72873989da305a3c26b75c0d325871ff851051aa17d5ff98e3b4510266",
     "supabase/server-env.example": "f0e3483df00b51adfe4ac53bbb754a7cc7665d880a35d151add1e8f40829983c",
     "supabase/migrations/20261009100241_media_quarantine.sql": "f1da3d1b5481b0ad65514eaa698f163cc2c8f5d74e82928c2827101ee76ccc82",
@@ -71,10 +83,29 @@
     "supabase/functions/_shared/retention.ts": "39496a2a254695d0600d5117afcdb27a91ae2d9ab70251ebd0529a44ca569485",
     "supabase/functions/media-retention/index.ts": "f1bc66f32c3db08242f9e72ca0d1028277b6455eeb9d0391bd9cf588645c7286",
     "supabase/functions/media-retention/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
-    "tests/README.md": "c6583286ccdc48387622f3be7ab0d090a31712469bc8de0cbe3f95b3a07e1d57",
+    "tests/README.md": "8162be2b292164e792ee0abf7f3e1a2aa18495367945e47f1ba035cb47b9be75",
     "tests/local-bootstrap.sql": "6dbfae5d721ca521b03d9f62b903c1783fc6a4bf9730cab6fa61b2a2190a79e2",
     "tests/media-retention.mjs": "c72e52a18c9b3bf515af284bd5c76afb41909cc08b355ef807dcb8263e316dbd",
     "tests/retention-endpoint.cjs": "fc749ca3de7433317970c778807a5c8cd6266fcd8cd1982d0e6e9cccac3b45ca",
-    "tests/native-postgres-concurrency.mjs": "71d6c3c10fff029d85f8694818a9944b3852511991ea129518ccd4f94e6bf046"
-  }
+    "tests/native-postgres-concurrency.mjs": "71d6c3c10fff029d85f8694818a9944b3852511991ea129518ccd4f94e6bf046",
+    "tests/native-media-retention-2026-10-09.json": "f842792c088f65f10fd6469d3ec35ae0a454562fec09a77e40b5e99295b0a30e"
+  },
+  "live_read_only_final_check": {
+    "checked_at": "2026-10-09 10:26:33.004388+00",
+    "server_version": "17.6",
+    "auth_users": 2,
+    "posts": 1,
+    "publication_jobs": 0,
+    "payment_orders": 0,
+    "social_connections": 0,
+    "retained_fixture_sessions": 0,
+    "retained_fixture_disabled": true,
+    "publishing_enabled": false,
+    "billing_enabled": false,
+    "media_retention_gate": null,
+    "retention_migration_unapplied": true,
+    "media_objects": 1
+  },
+  "updated_at": "2026-10-09T10:34:49.044350+00:00",
+  "reviewed_implementation_commit": "0a62bc21e73bdca5631b8282faa302b93170816f"
 }

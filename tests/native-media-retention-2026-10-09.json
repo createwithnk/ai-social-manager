@@ -1,0 +1,115 @@
+{
+  "run_id": 37917290653,
+  "job_id": 113776478466,
+  "commit": "0a62bc21e73bdca5631b8282faa302b93170816f",
+  "url": "https://github.com/createwithnk/ai-social-manager/actions/runs/37917290653",
+  "checks": [
+    {
+      "name": "live-database.sql passes against native PostgreSQL",
+      "passed": true
+    },
+    {
+      "name": "live-payment-database.sql passes against native PostgreSQL",
+      "passed": true
+    },
+    {
+      "name": "ordinary user cannot claim a publication",
+      "passed": true
+    },
+    {
+      "name": "closed local publishing gate prevents claims",
+      "passed": true
+    },
+    {
+      "name": "eight overlapping enqueue attempts create exactly one job for one approved revision",
+      "passed": true
+    },
+    {
+      "name": "two workers claim distinct rows while both transactions overlap; third gets no duplicate",
+      "passed": true
+    },
+    {
+      "name": "stale lease cannot finish; a successful requeue invalidates the old lease",
+      "passed": true
+    },
+    {
+      "name": "expired lease becomes uncertain and is not automatically claimed again",
+      "passed": true
+    },
+    {
+      "name": "worker skips an editing post, claims another due post and lets the editor cancel its queued revision",
+      "passed": true
+    },
+    {
+      "name": "two overlapping workers reconcile expired leases without waiting or dispatching them again",
+      "passed": true
+    },
+    {
+      "name": "an orphaned queued job is cancelled without dispatch",
+      "passed": true
+    },
+    {
+      "name": "eight overlapping OAuth takes consume one state exactly once",
+      "passed": true
+    },
+    {
+      "name": "overlapping duplicate payment events grant one credit-ledger entry",
+      "passed": true
+    },
+    {
+      "name": "overlapping identical refund notifications reverse credits only once",
+      "passed": true
+    },
+    {
+      "name": "overlapping distinct partial refunds reconcile exactly the full amount",
+      "passed": true
+    },
+    {
+      "name": "24 overlapping AI quota requests allow exactly 20 free attempts",
+      "passed": true
+    },
+    {
+      "name": "24 overlapping Storage metadata inserts preserve the 20-object owner quota",
+      "passed": true
+    },
+    {
+      "name": "attaching first makes quarantine wait and preserves the committed draft reference",
+      "passed": true
+    },
+    {
+      "name": "quarantining first makes attach wait then rejects the stale request snapshot",
+      "passed": true
+    },
+    {
+      "name": "two overlapping quarantine requests share one immutable tombstone",
+      "passed": true
+    },
+    {
+      "name": "repeatable-read media attachment fails closed instead of using a stale snapshot",
+      "passed": true
+    },
+    {
+      "name": "two overlapping retention workers claim different due objects",
+      "passed": true
+    },
+    {
+      "name": "the same deletion lease authorizes exactly one overlapping dispatch",
+      "passed": true
+    }
+  ],
+  "completion": {
+    "passed": true,
+    "checks": 23,
+    "cluster_stopped": true,
+    "cluster_removed": true
+  },
+  "server_version": "postgres (PostgreSQL) 17.10",
+  "migration_sha256": "f1da3d1b5481b0ad65514eaa698f163cc2c8f5d74e82928c2827101ee76ccc82",
+  "verified_at_utc": "2026-10-09T10:27:24.831643+00:00",
+  "scope": "Disposable PostgreSQL 17.10 on standard GitHub Actions; independent transactions; TCP disabled",
+  "live_project_modified": false,
+  "storage_api_calls": false,
+  "website_or_social_publication": false,
+  "payment_transaction": false,
+  "limitations": "Auth/Storage catalogs modeled. Actual hosted Storage byte deletion and privileged operator replacement exclusion remain separate checks."
+}
