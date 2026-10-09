@@ -1,17 +1,25 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { LoaderCircle, WandSparkles } from 'lucide-react'
 import type { AuthState } from '../lib/auth'
 import { minimumPasswordLength } from '../lib/auth-flows'
 import { useLocale } from '../lib/locale-context'
 import { LanguageSwitcher } from './LanguageSwitcher'
+import { TurnstileChallenge } from './TurnstileChallenge'
+import { captchaConfig } from '../lib/captcha-config'
 
 export function AuthScreen({ auth }: { auth: AuthState }) {
-  const { t, error: translateError } = useLocale()
+  const { t, locale, error: translateError } = useLocale()
   const [mode, setMode] = useState<'login' | 'signup' | 'reset' | 'confirm'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [notice, setNotice] = useState<string | null>(() => new URLSearchParams(location.search).has('error') ? 'This account link expired or could not be used. Request a new link.' : null)
   const [nextEmailRequest, setNextEmailRequest] = useState(0)
+  const [captchaNonce,setCaptchaNonce] = useState(0)
+  const [proof,setProof] = useState<{key:string;token:string} | null>(null)
+  const challengeKey = `${mode}-${locale}-${captchaNonce}`
+  const captchaToken = proof?.key === challengeKey ? proof.token : undefined
+  const receiveProof = useCallback((token:string) => setProof({key:challengeKey,token}),[challengeKey])
+  const verificationBlocked = captchaConfig.enabled && (!captchaToken || !!captchaConfig.error)
   const emailOnly = mode === 'reset' || mode === 'confirm'
   const title = { login: 'Welcome back', signup: 'Create your account', reset: 'Reset your password', confirm: 'Confirm your email' }[mode]
   const button = { login: 'Log in', signup: 'Sign up', reset: 'Send reset link', confirm: 'Resend confirmation' }[mode]
@@ -19,9 +27,11 @@ export function AuthScreen({ auth }: { auth: AuthState }) {
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); setNotice(null)
     if (emailOnly && Date.now() < nextEmailRequest) { setNotice('Please wait one minute before requesting another email.'); return }
-    const result = mode === 'login' ? await auth.signIn(email, password)
-      : mode === 'signup' ? await auth.signUp(email, password)
-      : mode === 'reset' ? await auth.resetPassword(email) : await auth.resendConfirmation(email)
+    if (verificationBlocked) { setNotice(captchaConfig.error ?? 'Complete bot verification before continuing.'); return }
+    const result = mode === 'login' ? await auth.signIn(email, password, captchaToken)
+      : mode === 'signup' ? await auth.signUp(email, password, captchaToken)
+      : mode === 'reset' ? await auth.resetPassword(email, captchaToken) : await auth.resendConfirmation(email, captchaToken)
+    setCaptchaNonce(value => value + 1)
     if (emailOnly) setNextEmailRequest(Date.now() + 60_000)
     setNotice(result.notice ?? null)
     if (result.notice) setPassword('')
@@ -32,8 +42,9 @@ export function AuthScreen({ auth }: { auth: AuthState }) {
     <p>{emailOnly ? t("Open the email link in this browser to finish. Links expire and can be used once.") : t("Your drafts and attachments belong to your signed-in account.")}</p>
     <form onSubmit={submit}><label>{t("Email")}<input type="email" dir="ltr" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" maxLength={254} required disabled={auth.loading} /></label>
       {!emailOnly && <label>{t("Password")}<input type="password" dir="ltr" aria-label={t("Password")} aria-describedby={mode === 'signup' ? 'password-hint' : undefined} value={password} onChange={e => setPassword(e.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'signup' ? minimumPasswordLength : 1} maxLength={128} required disabled={auth.loading} />{mode === 'signup' && <small id="password-hint">{t("At least 12 characters. A unique passphrase is easier to remember.")}</small>}</label>}
+      {captchaConfig.error ? <p className="form-error" role="alert">{t(captchaConfig.error)}</p> : captchaConfig.enabled && <TurnstileChallenge key={challengeKey} siteKey={captchaConfig.siteKey} action={mode} onToken={receiveProof} onRetry={() => setCaptchaNonce(value => value + 1)} disabled={auth.loading} />}
       {auth.error && !emailOnly && <p className="form-error" role="alert">{translateError(auth.error)}</p>}{(notice || auth.notice) && <p className="form-notice" role="status">{t(notice || auth.notice || '')}</p>}
-      <button className="primary wide" disabled={auth.loading}>{auth.loading ? <><LoaderCircle className="spinner" /> {t("Please wait")}</> : t(button)}</button>
+      <button className="primary wide" disabled={auth.loading || verificationBlocked}>{auth.loading ? <><LoaderCircle className="spinner" /> {t("Please wait")}</> : t(button)}</button>
     </form>
     {mode === 'login' && <button className="auth-switch" onClick={() => changeMode('reset')} disabled={auth.loading}>{t("Forgot password?")}</button>}
     <button className="auth-switch" onClick={() => changeMode(mode === 'login' ? 'signup' : 'login')} disabled={auth.loading}>{mode === 'login' ? t("Need an account? Sign up") : t("Back to log in")}</button>

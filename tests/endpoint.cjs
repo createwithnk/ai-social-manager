@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
 const { test } = require('node:test');
+const mediaFixtures = require('./media-fixtures.cjs');
 
 // Execute the real entrypoint and media helper. All Auth, RPC, Storage and
 // provider HTTP use intercepted fixtures; no network, payments or publishing.
@@ -12,7 +13,7 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('supabase/functions/_share
 const securityExports = {};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('supabase/functions/_shared/security.ts', 'utf8'), { compilerOptions }).outputText, { exports: securityExports, TextEncoder, TextDecoder, Uint8Array });
 let handler, providerCalls, quotaCalls, downloadCalls, clientOptions, providerRequest;
-let authenticated, active, sessionError, quota, quotaError, downloadError, mediaFile, providerStatus, providerDraft, providerFailure;
+let authenticated, active, sessionError, quota, quotaError, downloadError, mediaFile, providerStatus, providerDraft, providerFailure, expectedDownloadPath;
 let providerResponse, providerCancelled, providerChunksRead;
 const env = { SUPABASE_URL: 'https://example.supabase.co', SUPABASE_ANON_KEY: 'public-placeholder', GEMINI_API_KEY: 'test-only', GEMINI_MODEL: 'test-model', ALLOWED_ORIGINS: 'https://app.example' };
 const pngHeader = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
@@ -26,7 +27,7 @@ const client = {
   storage: { from: bucket => {
     assert.equal(bucket, 'post-media');
     return { download: async path => {
-      downloadCalls++; assert.equal(path, 'user-a/photo.png');
+      downloadCalls++; assert.equal(path, expectedDownloadPath);
       return { data: mediaFile, error: downloadError };
     } };
   } },
@@ -52,6 +53,7 @@ function reset() {
   providerCalls = 0; quotaCalls = 0; downloadCalls = 0; clientOptions = null; providerRequest = null;
   authenticated = true; active = true; quota = true;
   sessionError = null; quotaError = null; downloadError = null;
+  expectedDownloadPath = 'user-a/photo.png';
   mediaFile = new Blob([pngHeader], { type: 'image/png' });
   providerStatus = 200; providerDraft = { caption: 'A draft', hashtags: ['Example'] }; providerFailure = false;
   providerResponse = null; providerCancelled = false; providerChunksRead = 0;
@@ -133,6 +135,25 @@ test('AI entrypoint security and request flow (intercepted HTTP)', async t => {
     const payload = JSON.parse(providerRequest.options.body); const attachment = payload.contents[0].parts[1].inlineData;
     assert.equal(attachment.mimeType, 'image/png'); assert.equal(attachment.data, Buffer.from(pngHeader).toString('base64'));
   });
+  for (const fixture of mediaFixtures) {
+    await check(`playable ${fixture.codec} ${fixture.name} keeps exact MIME/bytes in the provider request`, async () => {
+      expectedDownloadPath = `user-a/${fixture.name}`;
+      mediaFile = new Blob([fixture.buffer],{type:fixture.mime});
+      const response = await handler(request({...brief,media:{path:expectedDownloadPath,type:fixture.mime}}));
+      assert.equal(response.status,200);assert.equal(downloadCalls,1);assert.equal(providerCalls,1);assert.equal(quotaCalls,1);
+      const attachment = JSON.parse(providerRequest.options.body).contents[0].parts[1].inlineData;
+      assert.equal(attachment.mimeType,fixture.mime);
+      assert.deepEqual(Buffer.from(attachment.data,'base64'),fixture.buffer);
+    });
+    await check(`${fixture.name} cannot disguise its container as image/png`, async () => {
+      mediaFile = new Blob([fixture.buffer],{type:'image/png'});
+      assert.equal((await handler(request(mediaBrief))).status,400);assert.equal(providerCalls,0);assert.equal(downloadCalls,1);
+    });
+    await check(`foreign ${fixture.name} is denied before download or provider calls`, async () => {
+      assert.equal((await handler(request({...brief,media:{path:`user-b/${fixture.name}`,type:fixture.mime}}))).status,400);
+      untouched();
+    });
+  }
   await check('caption plus hashtags outside the selected platform limit are rejected', async () => {
     providerDraft.caption = 'x'.repeat(2200); assert.equal((await handler(request())).status, 502); assert.equal(providerCalls, 1);
   });

@@ -50,3 +50,9 @@ header{height:auto;min-height:100px;padding-block:16px;gap:14px;flex-wrap:wrap}
   .workspace-notice{margin-inline:20px;font-size:12px}
   .panel-head{gap:12px}
 }
+
+.captcha-check{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;justify-items:center;gap:10px;min-width:0}
+.captcha-check>p{font-size:12px;margin:0;line-height:1.6;text-align:center}
+.captcha-status{color:var(--muted)}
+.captcha-widget{max-width:100%;min-height:140px}
+.auth-switch{display:block;width:100%;text-align:start}

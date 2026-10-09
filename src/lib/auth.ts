@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase, supabaseConfigurationError } from './supabase'
 import { authRedirect, recoveryMarker, validateNewPassword } from './auth-flows'
+import { captchaOptions } from './captcha'
+import { captchaConfig } from './captcha-config'
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'unconfigured' | 'error'
 
@@ -17,11 +19,11 @@ export interface AuthState {
   error: string | null
   notice: string | null
   recovering: boolean
-  signIn: (email: string, password: string) => Promise<AuthActionResult>
-  signUp: (email: string, password: string) => Promise<AuthActionResult>
+  signIn: (email: string, password: string, captchaToken?: string) => Promise<AuthActionResult>
+  signUp: (email: string, password: string, captchaToken?: string) => Promise<AuthActionResult>
   signOut: () => Promise<AuthActionResult>
-  resetPassword: (email: string) => Promise<AuthActionResult>
-  resendConfirmation: (email: string) => Promise<AuthActionResult>
+  resetPassword: (email: string, captchaToken?: string) => Promise<AuthActionResult>
+  resendConfirmation: (email: string, captchaToken?: string) => Promise<AuthActionResult>
   updatePassword: (password: string) => Promise<AuthActionResult>
   retrySession: () => void
 }
@@ -130,13 +132,13 @@ export function useAuth(): AuthState {
     setSessionAttempt((attempt) => attempt + 1)
   }, [])
 
-  const signIn = useCallback(async (email: string, password: string): Promise<AuthActionResult> => {
+  const signIn = useCallback(async (email: string, password: string, captchaToken?: string): Promise<AuthActionResult> => {
     if (!supabase) return { notice: 'Supabase is not configured for this app.' }
 
     setLoading(true)
     setError(null)
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password, options: captchaOptions(captchaConfig,captchaToken) })
       if (signInError) {
         setError(signInError.message)
         return {}
@@ -152,7 +154,7 @@ export function useAuth(): AuthState {
     }
   }, [])
 
-  const signUp = useCallback(async (email: string, password: string): Promise<AuthActionResult> => {
+  const signUp = useCallback(async (email: string, password: string, captchaToken?: string): Promise<AuthActionResult> => {
     if (!supabase) return { notice: 'Supabase is not configured for this app.' }
 
     setLoading(true)
@@ -160,7 +162,7 @@ export function useAuth(): AuthState {
     try {
       validateNewPassword(password)
       const { data, error: signUpError } = await supabase.auth.signUp({ email: email.trim(), password,
-        options: { emailRedirectTo: authRedirect('confirmed') },
+        options: { emailRedirectTo: authRedirect('confirmed'), ...captchaOptions(captchaConfig,captchaToken) },
       })
       if (signUpError) {
         setError(signUpError.message)
@@ -205,13 +207,13 @@ export function useAuth(): AuthState {
     }
   }, [user])
 
-  const emailAction = useCallback(async (email: string, action: 'reset' | 'confirm'): Promise<AuthActionResult> => {
+  const emailAction = useCallback(async (email: string, action: 'reset' | 'confirm', captchaToken?: string): Promise<AuthActionResult> => {
     if (!supabase) return { notice: 'Account service is not configured.' }
     setLoading(true); setError(null)
     try {
       const response = action === 'reset'
-        ? await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: authRedirect('recovery') })
-        : await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: authRedirect('confirmed') } })
+        ? await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: authRedirect('recovery'), ...captchaOptions(captchaConfig,captchaToken) })
+        : await supabase.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: authRedirect('confirmed'), ...captchaOptions(captchaConfig,captchaToken) } })
       if (response.error) throw response.error
       return { ok: true, notice: 'If this account can receive the email, a link has been sent. Open it in this browser. Check spam too.' }
     } catch {
@@ -219,8 +221,8 @@ export function useAuth(): AuthState {
     } finally { setLoading(false) }
   }, [])
 
-  const resetPassword = useCallback((email: string) => emailAction(email, 'reset'), [emailAction])
-  const resendConfirmation = useCallback((email: string) => emailAction(email, 'confirm'), [emailAction])
+  const resetPassword = useCallback((email: string, captchaToken?: string) => emailAction(email, 'reset', captchaToken), [emailAction])
+  const resendConfirmation = useCallback((email: string, captchaToken?: string) => emailAction(email, 'confirm', captchaToken), [emailAction])
   const updatePassword = useCallback(async (password: string): Promise<AuthActionResult> => {
     if (!supabase || !user || !recovering) return { notice: 'Open a new password reset link first.' }
     setLoading(true); setError(null)

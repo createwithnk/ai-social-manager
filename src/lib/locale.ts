@@ -8,6 +8,14 @@ export function contentLanguageTag(language?: string) {
 // Plain text only. React escapes both translations and interpolated values.
 export const arabicMessages: Record<string, string> = {
   'Interface language': 'لغة الواجهة',
+  'Bot verification': 'التحقق من أنك لست روبوتًا',
+  'Loading bot verification…': 'جارٍ تحميل التحقق…',
+  'Verification complete.': 'اكتمل التحقق.',
+  'Verification expired. Retry verification.': 'انتهت صلاحية التحقق. أعد المحاولة.',
+  'Bot verification could not load. Retry verification.': 'تعذر تحميل التحقق. أعد المحاولة.',
+  'Complete bot verification before continuing.': 'أكمل التحقق قبل المتابعة.',
+  'Bot verification is misconfigured. Contact the site owner.': 'إعداد التحقق غير صحيح. اتصل بمسؤول الموقع.',
+  'Retry verification': 'إعادة التحقق',
   'Content workspace': 'مساحة المحتوى',
   'Dashboard': 'لوحة التحكم',
   'Create content': 'إنشاء محتوى',

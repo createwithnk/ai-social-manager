@@ -1,5 +1,5 @@
 {
-  "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://nkfecpdegcmsapvbviky.supabase.co wss://nkfecpdegcmsapvbviky.supabase.co; img-src 'self' blob: data: https://nkfecpdegcmsapvbviky.supabase.co; media-src 'self' blob: data: https://nkfecpdegcmsapvbviky.supabase.co; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests",
+  "Content-Security-Policy": "default-src 'self'; script-src 'self'; frame-src 'none'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://nkfecpdegcmsapvbviky.supabase.co wss://nkfecpdegcmsapvbviky.supabase.co; img-src 'self' blob: data: https://nkfecpdegcmsapvbviky.supabase.co; media-src 'self' blob: data: https://nkfecpdegcmsapvbviky.supabase.co; font-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "no-referrer",
   "Permissions-Policy": "microphone=(self), camera=(), geolocation=(), payment=()",
