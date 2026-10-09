@@ -220,6 +220,65 @@ try {
     assert.deepEqual(report.storage_quota.denied_codes, Array(4).fill('42501'))
     assert.equal(Number(await value(admin, 'select count(*) from storage.objects')), 20)
   })
+  // Retention is enabled only in this disposable cluster. No Storage API runs.
+  await admin.query('update private.launch_controls set media_retention_enabled=true')
+  const attaching=await connect('authenticated',B,SB), cleaner=await connect('service_role')
+  const attachPid=await value(attaching,'select pg_backend_pid()'),cleanerPid=await value(cleaner,'select pg_backend_pid()')
+  const retentionObject=async()=>{
+    const id=randomUUID(),name=`${B}/${randomUUID()}`
+    await admin.query("insert into storage.objects(id,bucket_id,name,metadata,created_at,updated_at,version) values($1,'post-media',$2,'{\"size\":32,\"mimetype\":\"image/png\"}','2020-01-01','2020-01-01','isolated-version')",[id,name])
+    return {id,media:{path:name,name:'isolated.png',type:'image/png',size:32}}
+  }
+  const attach=o=>attaching.query("insert into public.posts(user_id,idea,platform,tone,caption,status,media) values($1,'Concurrent retention','Instagram','Friendly','Private fixture','draft',$2)",[B,o.media])
+  const waitForMediaLock=async pid=>{
+    const deadline=Date.now()+700
+    while(Date.now()<deadline){
+      if(await value(admin,"select exists(select 1 from pg_stat_activity where pid=$1 and wait_event='advisory')",[pid]))return
+      await sleep(20)
+    }
+    throw new Error('The second transaction did not wait on the media lock')
+  }
+  await check('attaching first makes quarantine wait and preserves the committed draft reference',async()=>{
+    const o=await retentionObject();await attaching.query('begin');await attach(o)
+    const pending=value(cleaner,'select public.service_quarantine_media($1)',[o.id]).then(result=>({result}),error=>({error}))
+    await waitForMediaLock(cleanerPid);await attaching.query('commit')
+    const result=await pending;if(result.error)throw result.error
+    assert.equal(result.result,null)
+    assert.equal(Number(await value(admin,"select count(*) from public.posts where media->>'path'=$1",[o.media.path])),1)
+  })
+  await check('quarantining first makes attach wait then rejects the stale request snapshot',async()=>{
+    const o=await retentionObject();await cleaner.query('begin');const q=await value(cleaner,'select public.service_quarantine_media($1)',[o.id]);assert(q)
+    const pending=attach(o).then(()=>({accepted:true}),error=>({accepted:false,code:error.code}))
+    await waitForMediaLock(attachPid);await cleaner.query('commit')
+    assert.deepEqual(await pending,{accepted:false,code:'23514'})
+    assert.equal(Number(await value(admin,"select count(*) from public.posts where media->>'path'=$1",[o.media.path])),0)
+  })
+  await check('two overlapping quarantine requests share one immutable tombstone',async()=>{
+    const o=await retentionObject()
+    const results=await Promise.all([cleaner,service].map(client=>value(client,'select public.service_quarantine_media($1)',[o.id])))
+    assert.equal(results[0].id,results[1].id)
+    assert.equal(Number(await value(admin,'select count(*) from private.media_quarantine where object_id=$1',[o.id])),1)
+  })
+  await check('repeatable-read media attachment fails closed instead of using a stale snapshot',async()=>{
+    const o=await retentionObject();await attaching.query('begin isolation level repeatable read')
+    try{await assert.rejects(attach(o),error=>error.code==='P0001')}finally{await attaching.query('rollback')}
+  })
+  const due=[]
+  for(let i=0;i<2;i++){
+    const o=await retentionObject(),q=await value(cleaner,'select public.service_quarantine_media($1)',[o.id]);due.push(q.id)
+    await admin.query("update private.media_quarantine set quarantined_at='2020-01-01',delete_after='2020-01-08' where id=$1",[q.id])
+  }
+  let deletionClaims
+  await check('two overlapping retention workers claim different due objects',async()=>{
+    deletionClaims=await Promise.all([cleaner,service].map(client=>value(client,'select public.service_claim_media_delete()')))
+    assert.notEqual(deletionClaims[0].id,deletionClaims[1].id)
+    assert.deepEqual(deletionClaims.map(q=>q.id).sort(),due.sort())
+  })
+  await check('the same deletion lease authorizes exactly one overlapping dispatch',async()=>{
+    const q=deletionClaims[0]
+    const results=await Promise.all([cleaner,service].map(client=>value(client,'select public.service_begin_media_delete($1,$2)',[q.id,q.lease_id])))
+    assert.equal(results.filter(Boolean).length,1)
+  })
   report.passed = report.checks.every(item => item.passed)
   if (!report.passed) process.exitCode = 1
 } catch (error) {

@@ -8,9 +8,9 @@
     "build": "node scripts/security-headers.mjs && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "node --experimental-strip-types --test tests/workflow.test.ts tests/client-flows.test.ts tests/locale.test.ts tests/captcha.test.ts tests/header-policy.test.mjs && node tests/endpoint.cjs && node tests/database.mjs && node tests/media-inventory.mjs",
+    "test": "node --experimental-strip-types --test tests/workflow.test.ts tests/client-flows.test.ts tests/locale.test.ts tests/captcha.test.ts tests/header-policy.test.mjs && node tests/endpoint.cjs && node tests/database.mjs && node tests/media-inventory.mjs && node tests/media-retention.mjs && node tests/retention-endpoint.cjs",
     "test:edge": "npx --yes --package=deno@2.9.6 deno test --allow-env tests/security.test.ts tests/payment-endpoints.test.ts",
-    "check:edge": "npx --yes --package=deno@2.9.6 deno check supabase/functions/generate-content/index.ts supabase/functions/social-account/index.ts supabase/functions/social-callback/index.ts supabase/functions/publish-worker/index.ts supabase/functions/payment-checkout/index.ts supabase/functions/payment-webhook/index.ts",
+    "check:edge": "npx --yes --package=deno@2.9.6 deno check supabase/functions/generate-content/index.ts supabase/functions/social-account/index.ts supabase/functions/social-callback/index.ts supabase/functions/publish-worker/index.ts supabase/functions/payment-checkout/index.ts supabase/functions/payment-webhook/index.ts supabase/functions/media-retention/index.ts",
     "test:browser": "node scripts/test-browser.mjs"
   },
   "dependencies": {

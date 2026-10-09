@@ -248,6 +248,7 @@ export const arabicMessages: Record<string, string> = {
   'AI attempt limit reached. Try again tomorrow (UTC). Payments remain subject to owner setup.': 'وصلت إلى حد محاولات الذكاء الاصطناعي. حاول غدًا بتوقيت UTC. المدفوعات تحتاج إعداد المسؤول.',
   'Invalid attachment.': 'المرفق غير صالح.',
   'Attachment could not be read.': 'تعذر قراءة المرفق.',
+  'Attachment is unavailable. Upload it again': 'المرفق غير متاح. ارفع الملف مجددًا.',
   'Attachment contents do not match its media type.': 'محتويات المرفق لا تطابق نوعه.',
   'AI provider quota is exhausted. Check billing later or retry.': 'نفد حد استخدام مزوّد الذكاء الاصطناعي. تحقق من إعداداته أو أعد المحاولة لاحقًا.',
   'AI provider failed. Please retry.': 'فشل مزوّد الذكاء الاصطناعي. أعد المحاولة.',

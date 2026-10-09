@@ -1,0 +1,80 @@
+{
+  "project": "AasiFlowAI",
+  "created_at": "2026-10-09T10:22:23.645800+00:00",
+  "date": "2026-10-09",
+  "parent_commit": "27e7450437d02cd5ca5b47e0a5f50f9a166b8d5d",
+  "scope": "Prepared app-owned media quarantine, serialized references and one-object Storage API worker; disabled and not applied/deployed",
+  "migration": "20261009100241_media_quarantine.sql",
+  "migration_created_by": "Supabase CLI 2.117.0 migration new media_quarantine",
+  "verification": {
+    "retention_pglite_assertions": 57,
+    "worker_intercepted_scenarios": 23,
+    "http_boundary_helper_check": 1,
+    "baseline_pglite_assertions": 71,
+    "inventory_assertions": 24,
+    "unit_workflow_locale_captcha_header_tests": 22,
+    "generation_handler_scenarios": 39,
+    "deno_tests": 24,
+    "payment_steps": 15,
+    "edge_typechecked_entrypoints": 7,
+    "build": "passed",
+    "lint": "passed",
+    "native_retention_concurrency": "six tests written; CI execution pending",
+    "previous_work_commit_native_ci": {
+      "run_id": 37915002175,
+      "conclusion": "success",
+      "checks": 17,
+      "contains_new_retention_migration": false
+    }
+  },
+  "safeguards": [
+    "Default-deny private quarantine and service-only maintenance RPCs",
+    "Independent closed DB/environment gates and server-only worker secret",
+    "Seven-day object age plus seven-day quarantine grace; all post/job states preserved",
+    "Known immutable object ID/version/metadata/timestamps; unknown identities rejected",
+    "Single media advisory lock; VOLATILE reads and READ COMMITTED enforcement",
+    "New/changed draft/job references and reused authenticated upload paths reject permanent tombstones",
+    "Single-use lease dispatch; expired/ambiguous outcomes uncertain without automatic delete retry",
+    "Storage remove API on exactly one validated path with returned object ID/path and DB absence verification",
+    "HTTPS Supabase-origin allowlist, no redirects and 10-second HTTP bounds",
+    "No user DELETE privilege or SQL deletion of production Storage metadata"
+  ],
+  "limitations": [
+    "Native overlapping transaction checks must pass before schema activation",
+    "No actual Storage byte deletion/removal-response/restart test; SQL uses modeled provider metadata and worker RPC/Storage are intercepted",
+    "Privileged admin/service replacements must be prevented operationally; path-only delete is not a conditional-version transaction",
+    "Tombstone audit cap requires operator review; uncertain jobs have no automated reset/retry",
+    "Migration history reconciliation and isolated project admin credential flow still needed before activation"
+  ],
+  "live_effects": {
+    "schema_changed": false,
+    "edge_deployed": false,
+    "retention_secret_created": false,
+    "retention_gates_activated": false,
+    "worker_scheduled": false,
+    "storage_bytes_or_metadata_deleted": false,
+    "original_user_post_preserved": true,
+    "publishing_or_payment_enabled": false,
+    "website_or_social_published": false,
+    "documents_or_charges": false
+  },
+  "source_sha256": {
+    "README.md": "bbd90b39a3697075b44deabd0010d82cc6e4e374da40011d1bfd98bc62046b03",
+    "SECURITY.md": "c754f234d19869e62bbd3d97c8e89e86bf9db21af3571a28012f65796cfc0bcb",
+    "package.json": "18a3f4f58889060c9fe6a3941afa43f83b7f89b4b1e48f79ac3ffa05ba42ebcf",
+    "src/lib/locale.ts": "eb0bded98d9ea1f18246a372e44d44dfad2adf4e4662a9aa7c170b8e7b963397",
+    "supabase/MEDIA_RETENTION.md": "b195ba82e8cf1ecf3d2bcba47d5ded89e6ae218a54495bc3113d42a3a50e62a9",
+    "supabase/config.toml": "3ce52c72873989da305a3c26b75c0d325871ff851051aa17d5ff98e3b4510266",
+    "supabase/server-env.example": "f0e3483df00b51adfe4ac53bbb754a7cc7665d880a35d151add1e8f40829983c",
+    "supabase/migrations/20261009100241_media_quarantine.sql": "f1da3d1b5481b0ad65514eaa698f163cc2c8f5d74e82928c2827101ee76ccc82",
+    "supabase/functions/_shared/runtime.ts": "838095aec8f1d6d73ee8fc9e7a9f839491ba3316defc2fe7ac8e0dfdcd46420c",
+    "supabase/functions/_shared/retention.ts": "39496a2a254695d0600d5117afcdb27a91ae2d9ab70251ebd0529a44ca569485",
+    "supabase/functions/media-retention/index.ts": "f1bc66f32c3db08242f9e72ca0d1028277b6455eeb9d0391bd9cf588645c7286",
+    "supabase/functions/media-retention/deno.json": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb",
+    "tests/README.md": "c6583286ccdc48387622f3be7ab0d090a31712469bc8de0cbe3f95b3a07e1d57",
+    "tests/local-bootstrap.sql": "6dbfae5d721ca521b03d9f62b903c1783fc6a4bf9730cab6fa61b2a2190a79e2",
+    "tests/media-retention.mjs": "c72e52a18c9b3bf515af284bd5c76afb41909cc08b355ef807dcb8263e316dbd",
+    "tests/retention-endpoint.cjs": "fc749ca3de7433317970c778807a5c8cd6266fcd8cd1982d0e6e9cccac3b45ca",
+    "tests/native-postgres-concurrency.mjs": "71d6c3c10fff029d85f8694818a9944b3852511991ea129518ccd4f94e6bf046"
+  }
+}

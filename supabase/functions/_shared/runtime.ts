@@ -9,10 +9,10 @@ export function userClient(authorization: string) {
     auth:{persistSession:false,autoRefreshToken:false}, global:{headers:{Authorization:authorization}},
   })
 }
-export function serviceClient() {
+export function serviceClient(fetcher?: typeof fetch) {
   const key = configuredKey('SUPABASE_SECRET_KEYS','SUPABASE_SERVICE_ROLE_KEY')
   if (!key) throw new RequestError(503,'Server account setup is pending.')
-  return createClient(env('SUPABASE_URL'),key,{ auth:{persistSession:false,autoRefreshToken:false} })
+  return createClient(env('SUPABASE_URL'),key,{ auth:{persistSession:false,autoRefreshToken:false},...(fetcher ? {global:{fetch:fetcher}} : {}) })
 }
 export async function authenticate(req: Request) {
   const authorization = req.headers.get('authorization') ?? ''
