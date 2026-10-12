@@ -19,7 +19,7 @@ Updated: 12 October 2026. Development only; not launch-ready or deployed by this
 | Social OAuth and official publishing | Blocked | Provider app credentials/review and owner approval needed; no posting implementation enabled |
 | Billing and paid subscriptions | Blocked | Provider/test account and business plan decisions needed; no live payment setup |
 | Live Supabase identity verification | Blocked | Confirm whether `nkfecpdegcmsapvbviky` is the AasiFlowAI project |
-| Push / PR CI execution | Blocked at last attempt | GitHub Git authentication unavailable; local commits preserved |
+| Push / PR CI execution | Partially completed | Remote branch includes the three earlier development commits through `15c191b`; the latest AI body-timeout fix is local because Git authentication is unavailable. CI status unverified |
 
 ## Constraints and risks
 
@@ -33,7 +33,7 @@ Updated: 12 October 2026. Development only; not launch-ready or deployed by this
 ## Exact continuation
 
 1. Read ROADMAP.md, TEST_REPORT.md and LAUNCH_CHECKLIST.md. Check Git status before edits.
-2. Restore GitHub authentication and push the development branch without merging or deploying. The latest attempt failed with `Cannot prompt because user interactivity has been disabled`; two earlier local development commits remain safe and unpushed.
+2. Restore GitHub authentication and push the remaining AI body-timeout commit without merging or deploying. Fetch verified the three earlier development commits through `15c191b` are already remote. The latest push failed because Git CLI authentication is unavailable. Private account metadata was removed before those earlier commits were published. The connected GitHub app tools are unavailable in this continuation.
 3. Continue draft media attachments and provider separation. Run browser tests in local preview mode; keep live requests blocked until the owner confirms project identity.
 4. After confirmation, inspect existing project metadata/configuration read-only and request only the credentials or deployment permission actually needed. Never paste secrets into chat.
 5. Review/apply migrations and deploy only with explicit owner approval; rerun live auth/RLS/CORS/quota/storage tests afterward.

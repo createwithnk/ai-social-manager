@@ -4,6 +4,7 @@ interface Dependencies {
   consumeCredit: (userId: string) => Promise<boolean>
   fetch: typeof fetch
   timeoutMs?: number
+  readTimeoutMs?: number
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -40,9 +41,14 @@ export function createHandler(dependencies: Dependencies) {
     }
     if (Number(request.headers.get('content-length')) > 8192) return reply(413, { error: 'Request too large' })
     let input: unknown
+    const reader = request.body?.getReader()
+    if (!reader) return reply(400, { error: 'Invalid JSON' })
+    let expired = false
+    const readTimer = setTimeout(() => {
+      expired = true
+      void reader.cancel().catch(() => {})
+    }, dependencies.readTimeoutMs ?? 10000)
     try {
-      const reader = request.body?.getReader()
-      if (!reader) return reply(400, { error: 'Invalid JSON' })
       const chunks: Uint8Array[] = []
       let size = 0
       while (true) {
@@ -55,11 +61,13 @@ export function createHandler(dependencies: Dependencies) {
         }
         chunks.push(value)
       }
+      if (expired) return reply(408, { error: 'Request timed out. Please retry.' })
       const bytes = new Uint8Array(size)
       let offset = 0
       for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength }
       input = JSON.parse(new TextDecoder().decode(bytes))
-    } catch { return reply(400, { error: 'Invalid JSON' }) }
+    } catch { return reply(expired ? 408 : 400, { error: expired ? 'Request timed out. Please retry.' : 'Invalid JSON' }) }
+    finally { clearTimeout(readTimer) }
     if (!isRecord(input)) return reply(400, { error: 'Invalid request' })
     const { idea, platform, tone } = input
     const language = input.language ?? 'en'

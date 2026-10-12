@@ -5,7 +5,7 @@ Date: 12 October 2026. Runtime: Node 24. No real credentials, provider usage, Su
 | Check | Last verified outcome |
 | --- | --- |
 | Baseline production build and lint | Passed |
-| Expanded offline tests | 51 passed, including deletion confirmation, server uploads, reservation limits, post persistence, Arabic UI/RTL and Edge authentication |
+| Expanded offline tests | 52 passed, including stalled AI request cancellation, deletion confirmation, server uploads, reservation limits, post persistence, Arabic UI/RTL and Edge authentication |
 | Strict Edge TypeScript | Passed for both handlers and entrypoints against installed SDK and minimal Deno contract; actual Deno runtime still unverified |
 | Dependency audit | 0 vulnerabilities after source-map-js 1.2.2 and brace-expansion 5.0.12 patches |
 | Updated media/localization build and lint | Passed on final checkpoint source, with no lint errors or warnings |
@@ -16,6 +16,8 @@ Date: 12 October 2026. Runtime: Node 24. No real credentials, provider usage, Su
 | GitHub Actions | Configured; not run remotely |
 
 Coverage includes mocked auth/signup/recovery/logout, late callbacks, authenticated AI/CORS/validation/provider failure paths, quota rejection and verified-user charging, Arabic prompt preferences, approval edit/revert invalidation, draft saving, future-only scheduling, client media size/MIME/signature validation, private URL expiry and errors.
+
+Latest continuation: AI JSON body reads now stop after ten seconds, cancel the stream and return a sanitized 408 before charging credits or contacting Gemini. A stalled-stream regression passes. All 52 offline tests, production build, lint and strict Edge TypeScript were rerun successfully. Earlier browser results remain applicable; this change affects only the server body reader.
 
 Server media tests cover MIME/signature forgery, actual and declared byte limits, stalled body timeout, verified-user capacity reservations, quota denial, cross-owner paths, storage failures, and reservation finalization. New SQL tests verify direct client uploads are denied and reservation caps cannot be bypassed. No actual customer files were uploaded or deleted.
 

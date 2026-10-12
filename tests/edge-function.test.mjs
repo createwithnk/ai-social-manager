@@ -8,7 +8,7 @@ const provider = (value = draft, finishReason = 'STOP') => Response.json({ candi
 function setup(overrides = {}) {
   const calls = []
   const env = { ALLOWED_ORIGINS: 'http://localhost:5173', SUPABASE_URL: 'https://example.invalid', SUPABASE_ANON_KEY: 'test-public-key', GEMINI_API_KEY: 'test-secret-sentinel', ...overrides.env }
-  const handler = createHandler({ env: (name) => env[name], authenticate: overrides.authenticate ?? (async (_url, _key, token) => token === 'valid-token' ? 'verified-user-id' : null), consumeCredit: overrides.consumeCredit ?? (async () => true), fetch: async (url, options) => { calls.push({ url, options }); return overrides.fetch ? overrides.fetch(url, options) : provider() }, timeoutMs: overrides.timeoutMs })
+  const handler = createHandler({ env: (name) => env[name], authenticate: overrides.authenticate ?? (async (_url, _key, token) => token === 'valid-token' ? 'verified-user-id' : null), consumeCredit: overrides.consumeCredit ?? (async () => true), fetch: async (url, options) => { calls.push({ url, options }); return overrides.fetch ? overrides.fetch(url, options) : provider() }, timeoutMs: overrides.timeoutMs, readTimeoutMs: overrides.readTimeoutMs })
   const request = (body = brief, options = {}) => handler(new Request('https://example.invalid/generate', { method: 'POST', headers: { Origin: 'http://localhost:5173', Authorization: 'Bearer valid-token', 'Content-Type': 'application/json', ...options.headers }, body: typeof body === 'string' ? body : JSON.stringify(body), ...options.init }))
   return { handler, request, calls }
 }
@@ -68,6 +68,22 @@ test('limits actual streamed body size as well as content-length', async () => {
   assert.equal((await request(' '.repeat(8193))).status, 413)
   assert.equal((await request(brief, { headers: { 'Content-Length': '9000' } })).status, 413)
   assert.equal(calls.length, 0)
+})
+
+test('stalled request bodies are cancelled before consuming credits or calling Gemini', async () => {
+  let cancelled = false
+  let credits = 0
+  const { request, calls } = setup({ readTimeoutMs: 10, consumeCredit: async () => { credits++; return true } })
+  const body = new ReadableStream({
+    start(controller) { controller.enqueue(new TextEncoder().encode('{')) },
+    cancel() { cancelled = true },
+  })
+  const response = await request(undefined, { init: { body, duplex: 'half' } })
+  assert.equal(response.status, 408)
+  assert.equal(cancelled, true)
+  assert.equal(credits, 0)
+  assert.equal(calls.length, 0)
+  assert.deepEqual(await response.json(), { error: 'Request timed out. Please retry.' })
 })
 test('valid generation returns only an editable draft, with secret confined to provider header', async () => {
   const { request, calls } = setup()
