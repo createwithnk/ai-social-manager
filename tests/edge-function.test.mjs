@@ -96,6 +96,16 @@ test('valid generation returns only an editable draft, with secret confined to p
   assert.doesNotMatch(calls[0].url + calls[0].options.body, /test-secret-sentinel|valid-token/)
   assert.equal(JSON.parse(calls[0].options.body).generationConfig.responseFormat.text.schema.type, 'object')
 })
+
+test('provider model and credentials come only from server configuration', async () => {
+  const { request, calls } = setup({ env: { GEMINI_MODEL: 'gemini-2.5-pro' } })
+  const result = await request({ ...brief, model: '../client-model', apiKey: 'untrusted-client-key' })
+  assert.equal(result.status, 200)
+  assert.equal(calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent')
+  assert.equal(calls[0].options.headers['x-goog-api-key'], 'test-secret-sentinel')
+  assert.doesNotMatch(calls[0].options.body, /untrusted-client-key|client-model/)
+  assert.ok(calls[0].options.signal instanceof AbortSignal)
+})
 test('provider HTTP, network, JSON, schema and incomplete response errors are sanitized', async () => {
   const failures = [
     async () => new Response('test-secret-sentinel', { status: 429 }),

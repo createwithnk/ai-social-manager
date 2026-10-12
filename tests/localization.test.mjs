@@ -43,3 +43,21 @@ test('locale preference changes document language and direction; storage failure
     assert.equal(document.documentElement.dir, 'ltr')
   }
 })
+
+test('AI and media error messages have Arabic translations without changing English', () => {
+  let checked = 0
+  for (const file of ['../src/lib/ai.ts', '../src/lib/media.ts']) {
+    const source = ts.createSourceFile(file, fs.readFileSync(new URL(file, import.meta.url), 'utf8'), ts.ScriptTarget.Latest, true)
+    function visit(node) {
+      if (ts.isNewExpression(node) && node.expression.getText(source) === 'Error' && ts.isStringLiteral(node.arguments?.[0])) {
+        const text = node.arguments[0].text
+        assert.equal(translate('en', text), text)
+        assert.notEqual(translate('ar', text), text, `Untranslated user error: ${text}`)
+        checked++
+      }
+      ts.forEachChild(node, visit)
+    }
+    visit(source)
+  }
+  assert.ok(checked >= 15)
+})

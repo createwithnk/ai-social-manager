@@ -31,6 +31,8 @@ The Node tests exercise the real request handler with mocked Supabase authentica
 
 The function uses a structured response schema, validates completed output, and returns only an editable caption and hashtags. Gemini keys are sent only in the server-side provider header. Authentication has a 10-second network deadline; generation has a 25-second deadline covering response-body reading. CORS uses exact trusted origins, never a wildcard. The body is capped at 8 KiB and the brief at 500 characters.
 
+JSON body reads also have a ten-second deadline; stalled requests return 408 before reserving usage. `generate-content/gemini.ts` implements the server-only provider transport contract. The handler retains authentication, validation, quota reservation, provider deadlines and safe response handling. Model and credential configuration remain server-controlled; client model/key fields are ignored. No additional provider, credentials or deployment is enabled by this separation.
+
 The Deno entrypoints pin Supabase JS to the frontend's current version. `check:edge` checks handlers and entrypoints against the installed SDK and a minimal Deno runtime contract. Actual Deno/npm resolution and the Supabase gateway still require runtime validation before deployment.
 
 Structured response fields follow Google's [Generate Content structured-output guide](https://ai.google.dev/gemini-api/docs/generate-content/structured-output?hl=en).

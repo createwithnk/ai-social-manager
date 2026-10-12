@@ -9,6 +9,7 @@ Updated: 12 October 2026. Development only; not launch-ready or deployed by this
 | Signup/login, email-confirmation handling, recovery/logout | Completed and tested with mocks | Actual email delivery, auth settings and browser flow require confirmed Supabase project |
 | Post owner isolation and approval/scheduling rules | Completed and tested in local PostgreSQL | New trigger/migration not applied to Supabase |
 | Gemini generator | Completed and tested with mocked provider | No real provider calls, secrets inspected, or deployments |
+| Server provider separation | Completed and tested locally | Gemini transport isolated behind a provider contract; authentication, quotas, timeouts and output validation remain in the handler. No second provider enabled |
 | Arabic/English content, Gulf-market targeting, RTL content editor | Completed and tested locally | Full Arabic interface translation remains separate work |
 | AI attempts and abuse limits | Completed and tested locally | Atomic 20 attempts/user/UTC day; server-only RPC; migration required |
 | Private media library and server uploads | Completed and tested locally | Shared MIME/signature checks, bounded server reads, signed previews, confirmation; live Storage unverified |
@@ -19,7 +20,7 @@ Updated: 12 October 2026. Development only; not launch-ready or deployed by this
 | Social OAuth and official publishing | Blocked | Provider app credentials/review and owner approval needed; no posting implementation enabled |
 | Billing and paid subscriptions | Blocked | Provider/test account and business plan decisions needed; no live payment setup |
 | Live Supabase identity verification | Blocked | Confirm whether `nkfecpdegcmsapvbviky` is the AasiFlowAI project |
-| Push / PR CI execution | Partially completed | Remote branch includes the three earlier development commits through `15c191b`; the latest AI body-timeout fix is local because Git authentication is unavailable. CI status unverified |
+| Push / PR CI execution | Partially completed | Remote branch verified at `e94efb6`, including the AI body-timeout fix pushed through GitHub Desktop. Latest provider/localization checkpoint is local; CLI authentication unavailable. CI status unverified |
 
 ## Constraints and risks
 
@@ -33,8 +34,8 @@ Updated: 12 October 2026. Development only; not launch-ready or deployed by this
 ## Exact continuation
 
 1. Read ROADMAP.md, TEST_REPORT.md and LAUNCH_CHECKLIST.md. Check Git status before edits.
-2. Restore GitHub authentication and push the remaining AI body-timeout commit without merging or deploying. Fetch verified the three earlier development commits through `15c191b` are already remote. The latest push failed because Git CLI authentication is unavailable. Private account metadata was removed before those earlier commits were published. The connected GitHub app tools are unavailable in this continuation.
-3. Continue draft media attachments and provider separation. Run browser tests in local preview mode; keep live requests blocked until the owner confirms project identity.
+2. Push the latest provider/localization checkpoint through GitHub Desktop or authenticated Git without merging or deploying. Remote verification confirmed `e94efb6`; private account metadata was removed before the earlier commits were published. Git Credential Manager has no signed-in account, separately from Desktop. Connected GitHub app tools are unavailable in this continuation.
+3. Continue draft media attachments and locale-aware dates. Provider transport separation and Arabic translations for fixed AI/media errors are complete. Run browser tests in local preview mode; keep live requests blocked until the owner confirms project identity.
 4. After confirmation, inspect existing project metadata/configuration read-only and request only the credentials or deployment permission actually needed. Never paste secrets into chat.
 5. Review/apply migrations and deploy only with explicit owner approval; rerun live auth/RLS/CORS/quota/storage tests afterward.
 
