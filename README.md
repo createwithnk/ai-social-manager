@@ -5,9 +5,9 @@ Human-in-the-loop social media content workspace. Turn an idea into a platform-s
 ## Current MVP
 
 - Responsive dashboard and content metrics
-- Platform and tone-aware local draft generation
+- Authenticated server-side Gemini generation, with template drafts in unconfigured local preview mode
 - Review, save, and resume drafts before approval
-- Explicit approval gate before saving
+- Explicit approval gate before saving as approved; every edit clears approval
 - Approved-content calendar with custom scheduling, rescheduling, and unscheduling
 - Browser persistence for local MVP data
 - No automatic publishing and no client-side API keys
@@ -15,7 +15,7 @@ Human-in-the-loop social media content workspace. Turn an idea into a platform-s
 ## Run locally
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -32,4 +32,4 @@ Never add a service-role key, a real `.env` file, or any other credentials to Gi
 
 ## Next milestone
 
-Add media storage and a secure server-side AI endpoint while preserving the approval gate. Publishing remains intentionally out of scope.
+Validate the server-side AI endpoint against the confirmed AasiFlowAI Supabase project, then add media storage while preserving the approval gate. See [AI setup](docs/AI_SETUP.md) and [security QA](docs/SECURITY_QA.md). Publishing remains out of scope.

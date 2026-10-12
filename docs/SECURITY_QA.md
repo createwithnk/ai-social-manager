@@ -12,7 +12,9 @@ This branch contains proposed hardening changes. It is not approved for producti
 - Test missing/expired sessions and network failures.
 - Confirm no service-role or AI provider secret is present in Vite variables or tracked files.
 - Review browser localStorage fallback: it is for local MVP only and is not a substitute for authenticated storage.
-- Add automated tests for these invariants before merging.
+- Run `npm test` for the offline generator and approval invariants. Live authentication, RLS, and browser checks are still required.
+
+See the [12 October development report](DEVELOPMENT_REPORT_2026-10-12.md) for verified checks and outstanding project confirmation.
 
 ## Deployment restrictions
 - No public deployment, live billing, payment document submission, or social publishing without explicit owner approval.

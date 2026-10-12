@@ -17,4 +17,15 @@ The React app invokes the Supabase Edge Function `generate-content` when signed 
 5. Verify Gemini usage limits and cost before allowing public traffic; add per-user rate limits and quotas before launch.
 6. Keep manual approval before saving as approved, scheduling, or any future publishing.
 
-Current status: code committed on the security hardening branch; not deployed or end-to-end tested.
+## Offline verification
+
+Run `npm ci`, `npm run build`, `npm run lint`, `npm test`, and `npm run check:edge`.
+The Node tests exercise the real request handler with mocked Supabase authentication and Gemini responses. Frontend tests execute the AI client and composer event handlers with in-memory React hooks. No credentials, database writes, deployments, or provider usage are needed. These checks do not replace a browser test against the confirmed project.
+
+The function uses a structured response schema, validates completed output, and returns only an editable caption and hashtags. Gemini keys are sent only in the server-side provider header. Authentication has a 10-second network deadline; generation has a 25-second deadline covering response-body reading. CORS uses exact trusted origins, never a wildcard. The body is capped at 8 KiB and the brief at 500 characters.
+
+The Deno entrypoint pins Supabase JS to the frontend's current version. `check:edge` type-checks the portable handler; the Deno entrypoint and Supabase gateway still require runtime validation before deployment.
+
+Structured response fields follow Google's [Generate Content structured-output guide](https://ai.google.dev/gemini-api/docs/generate-content/structured-output?hl=en).
+
+Current status: no deployment or live end-to-end verification was performed during this development pass.

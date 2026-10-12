@@ -1,4 +1,6 @@
 node_modules
+.npm-cache/
+supabase/.temp/
 dist
 *.tsbuildinfo
 vite.config.js

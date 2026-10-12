@@ -36,7 +36,7 @@ function App() {
   if (auth.status === 'error') return <AuthBootstrapError auth={auth} />
   if (isSupabaseConfigured && !auth.user) return <AuthScreen auth={auth} />
 
-  return <Workspace auth={auth} />
+  return <Workspace key={auth.user?.id ?? 'local-preview'} auth={auth} />
 }
 
 function AuthLoading() {
@@ -127,9 +127,6 @@ function Workspace({ auth }: { auth: AuthState }) {
     if (!isSupabaseConfigured || !userId) return
 
     let active = true
-    setPostsLoading(true)
-    setPostsError(null)
-    setPosts([])
     void fetchPosts(userId)
       .then((remotePosts) => {
         if (active) setPosts(remotePosts)
@@ -273,7 +270,7 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
   const isApproved = approved && reviewedFingerprint === fingerprint && draftMatchesBrief
 
   async function generate() {
-    if (!canGenerate || generating) return
+    if (!canGenerate || generating || saving || disabled) return
     const requestedBrief = currentBrief
     setGenerating(true)
     setSaveError(null)
@@ -295,7 +292,7 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
   }
 
   async function save(status: 'draft' | 'approved') {
-    if (!draft || !draftMatchesBrief || !idea.trim() || idea.trim().length > 500 || (status === 'approved' && !isApproved)) return
+    if (saving || generating || disabled || !draft || !draft.caption.trim() || !draftMatchesBrief || !idea.trim() || idea.trim().length > 500 || (status === 'approved' && !isApproved)) return
     const id = postId ?? crypto.randomUUID()
     const timestamp = createdAt ?? new Date().toISOString()
     setSaving(true)
@@ -312,7 +309,7 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
   }
 
   const busy = saving || generating || disabled
-  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>1 <b>Brief</b></span><i /><span className={draft ? 'current' : ''}>2 <b>Review</b></span><i /><span>3 <b>Approve</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">STEP 1 — YOUR IDEA</span><h2>What do you want to share?</h2><label>Content idea<textarea value={idea} onChange={(event) => setIdea(event.target.value)} placeholder="Example: Five simple ways small businesses can create better Instagram posts..." maxLength={500} disabled={busy} /><small>{idea.length}/500 · Minimum 10 characters</small></label><div className="field-row"><label>Platform<select value={platform} onChange={(event) => setPlatform(event.target.value as Platform)} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option}>{option}</option>)}</select></label><label>Tone<select value={tone} onChange={(event) => setTone(event.target.value)} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option}>{option}</option>)}</select></label></div><button className="primary wide" disabled={!canGenerate || busy} onClick={() => { void generate() }}><WandSparkles /> {generating ? 'Generating…' : 'Generate draft'}</button><p className="fineprint">AI drafts use a secure server-side provider when signed in. Local preview mode uses templates. Every post still requires your approval.</p>{saveError && !draft && <p className="form-error" role="alert">{saveError}</p>}</div><div className="panel preview-panel"><span className="eyebrow">STEP 2 — REVIEW & EDIT</span><h2>Your draft</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>Your generated draft will appear here.</p></div> : <><label>Caption<textarea className="caption" value={draft.caption} onChange={(event) => setDraft({ ...draft, caption: event.target.value })} disabled={busy} /></label><label>Hashtags<input value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) })} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{saveError}</p>}<button className="ghost draft-save" disabled={busy || !draftMatchesBrief} onClick={() => { void save('draft') }}><FileText /> {saving ? 'Saving…' : postId ? 'Update draft' : 'Save draft'}</button><div className="approval"><input id="approve" type="checkbox" checked={isApproved && draftMatchesBrief} onChange={(event) => { setApproved(event.target.checked); setReviewedFingerprint(event.target.checked ? fingerprint : null) }} disabled={busy || !draftMatchesBrief} /><label htmlFor="approve"><strong>I reviewed and approve this content</strong><span>Required before saving or scheduling.</span></label></div><button className="primary wide" disabled={!isApproved || !draftMatchesBrief || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? 'Saving…' : 'Approve & save'}</button></>}</div></div></section>
+  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>1 <b>Brief</b></span><i /><span className={draft ? 'current' : ''}>2 <b>Review</b></span><i /><span>3 <b>Approve</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">STEP 1 — YOUR IDEA</span><h2>What do you want to share?</h2><label>Content idea<textarea value={idea} onChange={(event) => { setIdea(event.target.value); setApproved(false); setReviewedFingerprint(null) }} placeholder="Example: Five simple ways small businesses can create better Instagram posts..." maxLength={500} disabled={busy} /><small>{idea.length}/500 · Minimum 10 characters</small></label><div className="field-row"><label>Platform<select value={platform} onChange={(event) => { setPlatform(event.target.value as Platform); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option}>{option}</option>)}</select></label><label>Tone<select value={tone} onChange={(event) => { setTone(event.target.value); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option}>{option}</option>)}</select></label></div><button className="primary wide" disabled={!canGenerate || busy} onClick={() => { void generate() }}><WandSparkles /> {generating ? 'Generating…' : 'Generate draft'}</button><p className="fineprint">AI drafts use a secure server-side provider when signed in. Local preview mode uses templates. Every post still requires your approval.</p>{saveError && !draft && <p className="form-error" role="alert">{saveError}</p>}</div><div className="panel preview-panel"><span className="eyebrow">STEP 2 — REVIEW & EDIT</span><h2>Your draft</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>Your generated draft will appear here.</p></div> : <><label>Caption<textarea className="caption" value={draft.caption} onChange={(event) => { setDraft({ ...draft, caption: event.target.value }); setApproved(false); setReviewedFingerprint(null) }} disabled={busy} /></label><label>Hashtags<input value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => { setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) }); setApproved(false); setReviewedFingerprint(null) }} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{saveError}</p>}<button className="ghost draft-save" disabled={busy || !draftMatchesBrief} onClick={() => { void save('draft') }}><FileText /> {saving ? 'Saving…' : postId ? 'Update draft' : 'Save draft'}</button><div className="approval"><input id="approve" type="checkbox" checked={isApproved && draftMatchesBrief} onChange={(event) => { setApproved(event.target.checked); setReviewedFingerprint(event.target.checked ? fingerprint : null) }} disabled={busy || !draftMatchesBrief} /><label htmlFor="approve"><strong>I reviewed and approve this content</strong><span>Required before saving as approved or scheduling.</span></label></div><button className="primary wide" disabled={!isApproved || !draftMatchesBrief || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? 'Saving…' : 'Approve & save'}</button></>}</div></div></section>
 }
 
 function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpdate: (post: Post) => Promise<void>; onView: (post: Post) => void; disabled: boolean }) {
