@@ -1,29 +1,14 @@
-# Security and QA checklist
+# Security QA for the reconciled backend
 
-This branch contains proposed hardening changes. It is not approved for production deployment.
+No deployment or live mutation is authorized. Project identity is confirmed; version compatibility is separately verified locally. See BACKEND_COMPATIBILITY.md.
 
-## Before merge
-- Run `npm ci`, `npm run lint`, and `npm run build` in a clean environment.
-- Test signup and login with email confirmation enabled and verify password policy in Supabase Auth settings.
-- Verify each user can read/write only their own posts. Confirm SQL grants and RLS are applied to the live project.
-- Test draft edits invalidate approval when caption, hashtags, idea, tone, or platform changes.
-- Test editing scheduled content resets status to draft and clears scheduled time.
-- Test scheduling rejects past times and accepts future times.
-- Test missing/expired sessions and network failures.
-- Confirm no service-role or AI provider secret is present in Vite variables or tracked files.
-- Review browser localStorage fallback: it is for local MVP only and is not a substitute for authenticated storage.
-- Run `npm test` for the offline generator and approval invariants. Live authentication, RLS, and browser checks are still required.
+- Retain the existing session-aware post/usage/Storage RLS and private security-definer functions with pinned search paths and narrow grants.
+- Keep immutable ownership, revision compare-and-swap, approval invalidation, queued-job cancellation, processing locks and provider replay/lease protections.
+- Use consume_ai_quota with the verified caller token, never a body-supplied user ID or a duplicate service-only RPC. Clients cannot reset ai_usage or credit balances.
+- Keep Gemini/provider/server credentials out of Vite, repositories and logs. Never log signed previews or user content.
+- Validate exact CORS, MIME/byte bounds, revoked sessions, provider failures/timeouts and platform character limits.
+- Use private post-media, no upsert, 10 MiB media, owner/session restrictions and existing object caps. No client deletion policy exists; do not claim successful deletion or bypass it.
+- Treat generation, approval, calendar planning and actual publication as distinct actions. Publishing and billing require environment AND database gates, plus separate owner approval.
+- Keep existing social/payment source unchanged except loader-compatible shared error syntax. Test OAuth state, encryption binding, replay, immutable prices, merchant identity and webhook signatures with fixtures only.
 
-See the [12 October development report](DEVELOPMENT_REPORT_2026-10-12.md) for verified checks and outstanding project confirmation.
-
-The ongoing roadmap pass adds local PostgreSQL tests for actual approval/usage migrations and private Storage policies. See [current status](PROJECT_STATUS.md) and [test report](TEST_REPORT.md), which supersede that earlier snapshot for new work. No migrations have been applied remotely.
-
-- Verify quota RPC execution is restricted to service_role and uses the server-verified user ID, never a request-body user ID.
-- Verify clients cannot alter attempts or approval identity/timestamps.
-- Verify edits reset scheduled/approved content and scheduled inserts are rejected.
-- Verify private media is isolated by owner folder, cannot be overwritten, and signed preview URLs are never logged.
-- Server upload signatures/byte limits and storage reservations are implemented and tested locally. Verify real Storage behavior and add scanning/quarantine before public access.
-
-## Deployment restrictions
-- No public deployment, live billing, payment document submission, or social publishing without explicit owner approval.
-- Do not bypass RLS, weaken password requirements, or use unofficial social APIs.
+Local Node/PGlite/Deno/browser results are in TEST_REPORT.md. Real Auth/email/Storage enforcement, live new-function behavior, distributed concurrency and hosted-log checks remain pending. Scanning/quarantine and owner-authorized retention are separate pre-launch work.

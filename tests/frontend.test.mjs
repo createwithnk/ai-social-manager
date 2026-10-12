@@ -6,7 +6,7 @@ const draft = { caption: 'A draft to review', hashtags: ['Business', 'Tips', 'Gr
 test('frontend rejects missing sessions, bad briefs, provider failures and malformed drafts', async () => {
   for (const scenario of ['no-session', 'bad-brief', 'provider-error', 'empty-caption', 'bad-tags', 'valid']) {
     let calls = 0
-    const client = { auth: { getSession: async () => ({ data: { session: scenario === 'no-session' ? null : {} }, error: null }) }, functions: { invoke: async () => { calls++; return { data: scenario === 'empty-caption' ? { ...draft, caption: ' ' } : scenario === 'bad-tags' ? { ...draft, hashtags: [] } : draft, error: scenario === 'provider-error' ? new Error('private-provider-detail') : null } } } }
+    const client = { auth: { getSession: async () => ({ data: { session: scenario === 'no-session' ? null : {} }, error: null }) }, functions: { invoke: async () => { calls++; return { data: scenario === 'empty-caption' ? { ...draft, caption: ' ' } : scenario === 'bad-tags' ? { ...draft, hashtags: ['#Invalid'] } : draft, error: scenario === 'provider-error' ? new Error('private-provider-detail') : null } } } }
     const { generateAiDraft } = loadModule('../src/lib/ai.ts', { './supabase': { supabase: client } })
     if (scenario === 'valid') assert.equal((await generateAiDraft('A valid idea for a post', 'Instagram', 'Friendly')).caption, draft.caption)
     else await assert.rejects(generateAiDraft(scenario === 'bad-brief' ? 'short' : 'A valid idea for a post', 'Instagram', 'Friendly'), (error) => !error.message.includes('private-provider-detail'))
@@ -20,13 +20,13 @@ function generatorHarness(overrides = {}) {
   const saves = []
   const jsx = (type, props) => ({ type, props })
   const react = { useState: (initial) => { const index = cursor++; if (!(index in states)) states[index] = typeof initial === 'function' ? initial() : initial; return [states[index], (value) => { states[index] = typeof value === 'function' ? value(states[index]) : value }] }, useMemo: (fn) => fn(), useCallback: (fn) => fn, useEffect: () => {} }
-  const { Generator, Calendar } = loadModule('../src/App.tsx', { react, 'react/jsx-runtime': { jsx, jsxs: jsx }, 'lucide-react': {}, './MediaLibrary': {}, './LanguageSwitcher': {}, './lib/locale': { useLocale: () => ({ t: (text) => text }) }, './lib/auth': {}, './lib/content': {}, './lib/ai': { generateAiDraft: overrides.generate ?? (async () => draft) }, './lib/posts': {}, './lib/supabase': { isSupabaseConfigured: true } }, '\nexport { Generator, Calendar }')
+  const { Generator, Calendar } = loadModule('../src/App.tsx', { react, 'react/jsx-runtime': { jsx, jsxs: jsx }, 'lucide-react': {}, './components/MediaInput': { MediaInput: 'media-input', MediaPreview: 'media-preview' }, './MediaLibrary': {}, './LanguageSwitcher': {}, './lib/locale': { useLocale: () => ({ t: (text) => text }) }, './lib/workflow': { validatePost: () => {} }, './lib/auth': {}, './lib/content': {}, './lib/ai': { generateAiDraft: overrides.generate ?? (async () => draft) }, './lib/posts': {}, './lib/supabase': { isSupabaseConfigured: true } }, '\nexport { Generator, Calendar }')
   const post = { id: 'draft-id', idea: 'A valid idea for a post', platform: 'Instagram', tone: 'Friendly', ...draft, status: 'draft', createdAt: '2026-01-01T00:00:00Z' }
   function render() {
     cursor = 0
     const tree = overrides.calendar
       ? Calendar({ posts: overrides.posts ?? [post], onUpdate: async (value) => saves.push(value), onView: () => {}, disabled: false })
-      : Generator({ initialPost: post, onSave: async (value) => saves.push(value), disabled: false })
+      : Generator({ initialPost: post, onSave: async (value) => { saves.push(value); return { ...value, revision: (value.revision ?? 0) + 1 } }, disabled: false })
     const nodes = []
     function visit(node) { if (!node || typeof node !== 'object') return; if (Array.isArray(node)) { node.forEach(visit); return } nodes.push(node); visit(node.props?.children) }
     visit(tree)
@@ -112,4 +112,26 @@ test('calendar excludes drafts, rejects past dates, and schedules only approved 
   assert.equal(saves.length, 1)
   assert.equal(saves[0].status, 'scheduled')
   assert.ok(new Date(saves[0].scheduledFor).getTime() > Date.now())
+})
+
+test('composer carries the server revision forward across repeated saves', async () => {
+  const { render, saves } = generatorHarness()
+  const saveDraft = nodes => nodes.find(node => node.props?.className === 'ghost draft-save')
+  await saveDraft(render()).props.onClick()
+  await new Promise(resolve => setImmediate(resolve))
+  await saveDraft(render()).props.onClick()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(saves.length, 2)
+  assert.equal(saves[1].revision, 1)
+})
+
+test('attachment changes clear explicit approval even after the attachment is reverted', () => {
+  const { render } = generatorHarness()
+  checkbox(render()).props.onChange({target:{checked:true}})
+  assert.equal(approveButton(render()).props.disabled,false)
+  const control = render().find(node => node.type === 'media-input')
+  control.props.onChange({path:'user/file',type:'image/png',name:'Fixture',size:9})
+  assert.equal(checkbox(render()).props.checked,false)
+  control.props.onChange(undefined)
+  assert.equal(approveButton(render()).props.disabled,true)
 })

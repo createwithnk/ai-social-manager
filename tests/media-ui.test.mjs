@@ -2,9 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { loadModule } from './helpers.mjs'
 
-test('media deletion requires confirmation; cancellation leaves media unchanged', async () => {
+test('media library does not offer deletion without a Storage DELETE policy', async () => {
   const states = []
-  let cursor = 0, mounted = false, confirmed = false
+  let cursor = 0, mounted = false
   const deleted = []
   const item = { path: 'user-a/file.png', url: 'https://example.invalid/private-preview', kind: 'image' }
   const jsx = (type, props) => ({ type, props })
@@ -16,7 +16,7 @@ test('media deletion requires confirmation; cancellation leaves media unchanged'
     },
     'react/jsx-runtime': { jsx, jsxs: jsx }, './lib/locale': { useLocale: () => ({ t: (text) => text }) },
     './lib/media': { listMedia: async () => [item], deleteMedia: async (...args) => deleted.push(args), uploadMedia: async () => {} },
-  }, '', { window: { confirm: () => confirmed } })
+  }, '', { window: { confirm: () => { throw new Error('Deletion must not be offered') } } })
   function render() {
     cursor = 0
     const tree = MediaLibrary({ userId: 'user-a' })
@@ -28,13 +28,7 @@ test('media deletion requires confirmation; cancellation leaves media unchanged'
   render()
   await new Promise((resolve) => setImmediate(resolve))
   const button = () => render().find((node) => node.type === 'button' && node.props.children === 'Delete media')
-  button().props.onClick()
-  await new Promise((resolve) => setImmediate(resolve))
-  assert.equal(deleted.length, 0)
-  assert.ok(button())
-  confirmed = true
-  button().props.onClick()
-  await new Promise((resolve) => setImmediate(resolve))
-  assert.deepEqual(deleted[0], ['user-a', item.path])
   assert.equal(button(), undefined)
+  assert.ok(render().some(node => node.props?.children === 'Media deletion requires owner maintenance.'))
+  assert.equal(deleted.length, 0)
 })

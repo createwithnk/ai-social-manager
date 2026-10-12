@@ -1,20 +1,15 @@
 # Development roadmap
 
-The order favors working, tested features. “Tested” means local/mocked unless TEST_REPORT.md explicitly says otherwise.
+Reconciliation with work/content-system-2026-10-03 takes precedence over the earlier duplicate backend proposal. Existing deployed capabilities are preserved; no live operations are authorized by this roadmap.
 
-| Phase | Status | Next concrete work |
-| --- | --- | --- |
-| 1. Audit/stability/CI | Completed locally; remote push through `e94efb6` verified | Push latest checkpoint with Desktop/authenticated Git; inspect CI results |
-| 2. Authentication/security | Completed locally; live verification blocked | Confirm project, verify email/password policy and two-user live RLS |
-| 3. AI generator | Completed locally; provider transport separated; real AI blocked | Validate Gemini/configuration after approved deployment; choose and test a second provider only if needed |
-| 4. Media | Library/server validation/quotas completed locally | Attach media to drafts, add optional malware scanning, verify actual Storage API behavior |
-| 5. Draft/approval/calendar | Completed locally | Browser regression and migrated-project integration tests |
-| 6. Official social connections | Blocked | Choose provider apps and supply authorized OAuth test credentials; keep publishing disabled |
-| 7. Business features | Usage credits implemented locally; billing blocked | Define plan allowances, choose a test payment provider, implement verified server webhook entitlements |
-| 8. UI/localization | Arabic/RTL/responsive preview workflows tested; AI/media fixed errors translated | Locale-aware dates and remaining auth messages; native-speaker and broader accessibility/device checks |
-| 9. Tests/security audit | In progress | Continue failure-path tests, server media validation, real Deno/gateway checks |
-| 10. Launch readiness | Checklist drafted; launch blocked | Complete every LAUNCH_CHECKLIST.md gate; no automatic deployment |
+| Area | State / next work |
+| --- | --- |
+| Backend identity | Confirmed; retain nkfecpdegcmsapvbviky and its recorded migration mappings |
+| Compatibility | Locally implemented: named languages, media/revisions, caller quota, existing private bucket and protected lifecycle |
+| Authentication/approval | Local regressions cover recovery/logout, revoked sessions, explicit reapproval, revision conflicts and scheduling |
+| AI/media | Private attachment/voice-note editor preserved; runtime/HTTP tests use fixtures. Approved staged/live verification remains pending |
+| Migrations | One additive prior-approval trigger prepared; historical migration reconciliation and owner approval required before application |
+| Social/payment | Existing guarded code retained; local gates/replay checks pass. No publishing, payment activation or external credential setup |
+| Release security | Scanning/quarantine, retention, full accessibility/native-speaker review and live gateway/log verification remain pending |
 
-Local work to prioritize next: connect media to post drafts with ownership checks, finish locale-aware dates, and expand browser tests for mocked auth/media. Gemini now implements a server-only provider transport contract, with security checks retained in the request handler. Four browser preview tests pass. Avoid empty placeholder connection/payment screens.
-
-Do not implement or activate posting/payment flows from unverified client input. OAuth state, PKCE where supported, encrypted server-side credentials, narrow scopes, webhook signature checks, idempotency, and audited approval must be validated before those integrations are enabled.
+Next safe work: inspect pushed CI, review compatibility changes, and expand mocked browser coverage for authentication/media. Keep deployments, migration application, live fixture writes, main merges and activation behind separate owner approval. Do not replay historical SQL or create duplicate resources.

@@ -11,11 +11,12 @@ function setup(overrides = {}) {
   const bucket = {
     upload: async (...args) => { calls.push(['upload', ...args]); return { error: null } },
     remove: async (...args) => { calls.push(['remove', ...args]); return { error: null } },
-    list: async () => ({ data: [{ id: 'id', name: `${user}.png` }], error: null }),
+    list: async () => ({ data: [{ id: 'id', name: user, metadata: { mimetype: 'image/png', size: 9 } }], error: null }),
     createSignedUrl: async (path, expires) => { calls.push(['sign', path, expires]); return { data: { signedUrl: 'https://private.example.invalid/preview' }, error: null } },
     ...overrides.bucket,
   }
-  const client = { auth: { getUser: async () => ({ data: { user: { id: overrides.userId ?? user } }, error: null }) }, storage: { from: () => bucket }, functions: { invoke: async (name, options) => { calls.push(['invoke', name, options]); return { data: { path: `${user}/opaque.png` }, error: overrides.invokeError ?? null } } } }
+  const client = { auth: { getUser: async () => ({ data: { user: { id: overrides.userId ?? user } }, error: null }) }, rpc: async () => ({ data: overrides.active !== false, error: null }), storage: { from: name => { assert.equal(name, 'post-media'); return bucket } }, functions: { invoke: async (name, options) => { calls.push(['invoke', name, options]); return { data: { path: `${user}/opaque.png` }, error: overrides.invokeError ?? null } } } }
+  if (overrides.invokeError) bucket.upload = async () => ({ error: overrides.invokeError })
   return { ...loadModule('../src/lib/media.ts', { './supabase': { supabase: client }, '../../supabase/functions/_shared/media-validation': { matchesMediaHeader, mediaFormats } }, '', { File }), calls }
 }
 test('media validates size, MIME and file signature before uploads', async () => {
@@ -27,13 +28,14 @@ test('media validates size, MIME and file signature before uploads', async () =>
   await assert.rejects(validateMedia({ type: 'video/mp4', size: 50 * 1024 * 1024 + 1 }))
   await assert.rejects(validateMedia(new File([], 'empty.png', { type: 'image/png' })))
 })
-test('uploads go through the server validation endpoint instead of direct Storage', async () => {
+test('uploads reuse private post-media storage with opaque owner paths and no upsert', async () => {
   const { uploadMedia, calls } = setup()
   await uploadMedia(user, png)
-  assert.equal(calls[0][0], 'invoke')
-  assert.equal(calls[0][1], 'upload-media')
-  assert.equal(calls[0][2].headers['Content-Type'], 'image/png')
-  assert.equal(calls.some((call) => call[0] === 'upload'), false)
+  assert.equal(calls[0][0], 'upload')
+  assert.equal(calls[0][1], `${user}/test-post-id`)
+  assert.equal(calls[0][3].contentType, 'image/png')
+  assert.equal(calls[0][3].upsert, false)
+  assert.equal(calls.some((call) => call[0] === 'invoke'), false)
 })
 test('expired/mismatched sessions and cross-owner deletion never reach storage', async () => {
   const { uploadMedia, deleteMedia, calls } = setup({ userId: other })
@@ -48,4 +50,11 @@ test('private previews use expiring signed URLs and storage failures are sanitiz
   assert.equal(calls[0][2], 300)
   const failing = setup({ invokeError: new Error('private-storage-detail') })
   await assert.rejects(failing.uploadMedia(user, png), (error) => !error.message.includes('private-storage-detail'))
+})
+
+test('revoked sessions cannot list or upload private media', async () => {
+  const { uploadMedia, listMedia, calls } = setup({ active: false })
+  await assert.rejects(uploadMedia(user, png))
+  await assert.rejects(listMedia(user))
+  assert.equal(calls.length, 0)
 })

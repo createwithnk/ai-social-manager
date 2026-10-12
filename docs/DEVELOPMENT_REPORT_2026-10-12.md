@@ -1,3 +1,5 @@
+> Historical snapshot. Superseded by BACKEND_COMPATIBILITY.md, PROJECT_STATUS.md and TEST_REPORT.md after confirmed backend reconciliation. Do not follow the earlier duplicate migration proposal.
+
 # AasiFlowAI development report — 12 October 2026
 
 Repository: `createwithnk/ai-social-manager`

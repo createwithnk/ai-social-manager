@@ -1,42 +1,31 @@
 # AasiFlowAI project status
 
-Updated: 12 October 2026. Development only; not launch-ready or deployed by this agent.
+Updated: 12 October 2026. Compatibility reconciliation is local development work; no live project changes or deployment were performed.
 
-| Feature | Status | Evidence / limitation |
-| --- | --- | --- |
-| Build, lint, strict Edge handler types | Completed and tested locally | See TEST_REPORT.md |
-| Automated CI | Implemented but untested remotely | Pinned checkout/setup-node, read-only token, no deployment steps |
-| Signup/login, email-confirmation handling, recovery/logout | Completed and tested with mocks | Actual email delivery, auth settings and browser flow require confirmed Supabase project |
-| Post owner isolation and approval/scheduling rules | Completed and tested in local PostgreSQL | New trigger/migration not applied to Supabase |
-| Gemini generator | Completed and tested with mocked provider | No real provider calls, secrets inspected, or deployments |
-| Server provider separation | Completed and tested locally | Gemini transport isolated behind a provider contract; authentication, quotas, timeouts and output validation remain in the handler. No second provider enabled |
-| Arabic/English content, Gulf-market targeting, RTL content editor | Completed and tested locally | Full Arabic interface translation remains separate work |
-| AI attempts and abuse limits | Completed and tested locally | Atomic 20 attempts/user/UTC day; server-only RPC; migration required |
-| Private media library and server uploads | Completed and tested locally | Shared MIME/signature checks, bounded server reads, signed previews, confirmation; live Storage unverified |
-| Upload abuse/storage limits | Completed and tested locally | 5 attempts/UTC day, 100 MiB/user including pending reservations; clients cannot upload directly |
-| Media attachments to posts | Not started | Library is independent of posts |
-| Core Arabic interface and RTL navigation | Completed and tested locally | Label coverage and document-direction tests pass; visual/native-speaker verification and some dynamic error/date messages remain |
-| Desktop/mobile browser workflows | Completed and tested in local preview | 4 tests passed; viewport, accessible names and mobile keyboard navigation fixed |
-| Social OAuth and official publishing | Blocked | Provider app credentials/review and owner approval needed; no posting implementation enabled |
-| Billing and paid subscriptions | Blocked | Provider/test account and business plan decisions needed; no live payment setup |
-| Live Supabase identity verification | Blocked | Confirm whether `nkfecpdegcmsapvbviky` is the AasiFlowAI project |
-| Push / PR CI execution | Partially completed | Remote branch verified at `e94efb6`, including the AI body-timeout fix pushed through GitHub Desktop. Latest provider/localization checkpoint is local; CLI authentication unavailable. CI status unverified |
+The owner-confirmed project is `nkfecpdegcmsapvbviky`. Read-only checks matched the local URL, base posts schema, deployed functions and all four historical migration mappings in `work/content-system-2026-10-03`. Remote development commit `d779495` and its successful CI were verified before this reconciliation.
 
-## Constraints and risks
+| Area | Current state |
+| --- | --- |
+| Backend baseline | Existing migrations, session-aware RLS, lifecycle/revision locks and gated social/payment functions retained from the work branch |
+| Posts | Selects only existing columns; maps English/Arabic/Hindi/Urdu; preserves media and returned revisions; owner/revision-scoped UPDATE, INSERT for new posts |
+| Approval | Fresh checkbox/fingerprint required after any edit, including attachments; editing approved content saves a draft and uses the returned revision |
+| AI | Existing has_active_session and caller-authenticated consume_ai_quota; no duplicate credit RPC or service key in the generator; bounded request/provider bodies and timeouts retained |
+| Private media | Existing post-media bucket, 10 MiB image/video/audio, owner paths, opaque names, no upsert, expiring previews; attachment/voice-note editor restored |
+| Media deletion | Disabled because the existing Storage policies have no client DELETE grant; detach never deletes the stored object |
+| Social/payment code | Existing server gates, encrypted credentials, replay protections, queue leases and webhook checks retained; no activation or live endpoint invocation |
+| Schema additions | One additive prior-approval scheduling trigger prepared and locally tested; NOT applied live |
+| Duplicate proposal | Earlier ai_daily_usage, aasiflow-media and upload reservation migrations/function archived outside active migration/function directories |
+| Market targeting | Prompt-only preference, not a posts column; not fabricated or stored as approval evidence. Existing deployed AI may ignore it until an approved function update |
 
-- Apply migrations and deploy the matching frontend/function together only after project confirmation and explicit deployment approval. The new frontend selects language and approval columns; it requires the new schema.
-- Existing approved/scheduled rows are not silently assigned approval evidence. They need explicit draft/review/approval before scheduling under the new trigger.
-- Storage writes go through the verified-user Edge endpoint; direct authenticated uploads are denied. Header checks are not full decoding or malware scanning. A scanning/quarantine pipeline and abuse monitoring remain pre-launch work.
-- Failed uploads count toward daily attempts. Failed tracking retains pending capacity conservatively for up to one hour. Refresh the library before retrying uncertain uploads; missing legacy size metadata is conservatively treated as 50 MiB.
-- Media previews are bearer URLs valid for five minutes. Do not log or share them; deletion does not instantly revoke previously issued URLs.
-- No distributed load test, real email/OAuth integration, live Supabase browser test, full accessibility certification or hosted-log audit has been performed. Local desktop/mobile preview tests and screenshot review passed.
+See [compatibility plan](BACKEND_COMPATIBILITY.md) and [test report](TEST_REPORT.md). The work branch's pending quarantine/retention changes are not promoted by this reconciliation.
 
-## Exact continuation
+## Remaining blockers and continuation
 
-1. Read ROADMAP.md, TEST_REPORT.md and LAUNCH_CHECKLIST.md. Check Git status before edits.
-2. Push the latest provider/localization checkpoint through GitHub Desktop or authenticated Git without merging or deploying. Remote verification confirmed `e94efb6`; private account metadata was removed before the earlier commits were published. Git Credential Manager has no signed-in account, separately from Desktop. Connected GitHub app tools are unavailable in this continuation.
-3. Continue draft media attachments and locale-aware dates. Provider transport separation and Arabic translations for fixed AI/media errors are complete. Run browser tests in local preview mode; keep live requests blocked until the owner confirms project identity.
-4. After confirmation, inspect existing project metadata/configuration read-only and request only the credentials or deployment permission actually needed. Never paste secrets into chat.
-5. Review/apply migrations and deploy only with explicit owner approval; rerun live auth/RLS/CORS/quota/storage tests afterward.
+1. Verify this checkpoint's push and CI; keep PR #2 draft and do not merge main.
+2. Review/reconcile historical migration IDs before any CLI database push. The base posts schema existed before recorded migrations; replaying the directory against live is unsafe.
+3. Owner approval is required before applying the single new trigger or deploying the updated generator/frontend. Existing social/payment runtime settings must remain unchanged.
+4. A staged/live test of the new code is pending; local HTTP and SQL mocks do not certify the hosted gateway, email, actual Storage enforcement or concurrent production behavior.
+5. Live compatibility with the current generator requires named language values, already handled. Gulf prompts and additional local response hardening require the proposed generator update; never silently assume deployment occurred.
+6. Quarantine/scanning, owner-authorized retention/deletion, full Arabic/native-speaker review and provider/merchant credentials remain release work. No registration, payment or publishing gate was enabled.
 
-Original pre-session local edits remain in the named Git stash on `main`; do not blindly apply them over the development branch.
+The pre-session local work remains in its named Git stash; do not blindly reapply it. No existing customer data was read or changed; inspection used catalog/configuration metadata only.

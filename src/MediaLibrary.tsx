@@ -1,6 +1,6 @@
 import { useLocale } from './lib/locale'
 import { useCallback, useEffect, useState } from 'react'
-import { deleteMedia, listMedia, uploadMedia, type MediaItem } from './lib/media'
+import { listMedia, uploadMedia, type MediaItem } from './lib/media'
 
 export default function MediaLibrary({ userId }: { userId?: string }) {
   const { t } = useLocale()
@@ -26,24 +26,17 @@ export default function MediaLibrary({ userId }: { userId?: string }) {
     catch (error) { setError(error instanceof Error ? error.message : 'Upload failed.') }
     finally { setBusy(false) }
   }
-  async function remove(item: MediaItem) {
-    if (!userId || busy || !window.confirm(t('Delete this media permanently? This cannot be undone.'))) return
-    setBusy(true); setError(null); setNotice(null)
-    try { await deleteMedia(userId, item.path); setItems((items) => items.filter((media) => media.path !== item.path)); setNotice('Media deleted.') }
-    catch (error) { setError(error instanceof Error ? error.message : 'Deletion failed.') }
-    finally { setBusy(false) }
-  }
   return <section className="content"><div className="panel">
     <div className="panel-head"><div><span className="eyebrow">{t("PRIVATE MEDIA")}</span><h2>{t("Your images and videos")}</h2></div><button className="ghost" onClick={refresh} disabled={!userId || busy || loading}>{t("Refresh previews")}</button></div>
-    <p>{t("JPEG, PNG, WebP up to 10 MiB. MP4 and WebM up to 50 MiB. Previews expire after five minutes; refresh to renew them.")}</p>
-    <p>{t('Five upload attempts per UTC day. Private storage limit: 100 MiB.')}</p>
+    <p>{t("Images, videos and audio up to 10 MiB. Private previews expire after five minutes; refresh to renew them.")}</p>
+    <p>{t('Existing storage limits: 20 files per user and 80 files per project. Media deletion requires owner maintenance.')}</p>
     {!userId && <p className="form-notice">{t("Sign in to upload and manage private media.")}</p>}
-    <label>{t("Upload media")}<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" disabled={!userId || busy || loading} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; void upload(file) }} /></label>
+    <label>{t("Upload media")}<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,audio/webm,audio/mp4,audio/mpeg,audio/wav,audio/ogg" disabled={!userId || busy || loading} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; void upload(file) }} /></label>
     {busy && <p role="status">{t("Saving media…")}</p>}{loading && <p role="status">{t("Loading private previews…")}</p>}
     {error && <p className="form-error" role="alert">{t(error)}</p>}{notice && <p className="form-notice" role="status">{t(notice)}</p>}
     <div className="media-grid">{items.map((item) => <article key={item.path} className="media-card">
-      {item.kind === 'image' ? <img src={item.url} alt={t("Uploaded private media")} loading="lazy" onError={() => setError('Preview expired or unavailable. Refresh previews.')} /> : <video src={item.url} controls preload="metadata" onError={() => setError('Preview expired or unavailable. Refresh previews.')} />}
-      <button className="ghost" disabled={busy || loading} onClick={() => { void remove(item) }}>{t("Delete media")}</button>
+      {item.kind === 'image' ? <img src={item.url} alt={t("Uploaded private media")} loading="lazy" onError={() => setError('Preview expired or unavailable. Refresh previews.')} /> : item.kind === 'audio' ? <audio src={item.url} controls preload="metadata" onError={() => setError('Preview expired or unavailable. Refresh previews.')} /> : <video src={item.url} controls preload="metadata" onError={() => setError('Preview expired or unavailable. Refresh previews.')} />}
+      <p>{t("Media deletion requires owner maintenance.")}</p>
     </article>)}</div>
     {!loading && !items.length && userId && !error && <p>{t("No media yet. Upload a file to get started.")}</p>}
   </div></section>

@@ -1,15 +1,9 @@
-# Private media setup — not deployed
+# Private media compatibility
 
-The library supports JPEG/PNG/WebP images up to 10 MiB and MP4/WebM videos up to 50 MiB. The private `aasiflow-media` bucket has exact MIME restrictions and a 50 MiB bucket cap. The `upload-media` Edge Function verifies an email-authenticated user, reads a bounded binary body, validates media signatures, and reserves owner-specific capacity before a server-only upload.
+Reuse the existing private post-media bucket. Do not create aasiflow-media or new upload reservation tables/RPCs. The existing bucket allows images, video and audio up to 10 MiB per file. Existing Storage policies enforce owner folders, active sessions and serialized object limits (20/user, 80/project).
 
-Apply migrations in order only on the owner-confirmed project, after release approval. The final migration removes direct authenticated upload permission; old clients must use the new function. Existing objects and read/delete permissions remain owner-scoped by path. Supabase's actual byte limits and any other existing Storage policies must be audited on the confirmed project.
+Uploads use normalized MIME, client container-signature checks, opaque owner paths and upsert:false. The generator rechecks downloaded file size, MIME and signature server-side. Image/video/audio attachments and optional voice-note recording are supported; preview URLs expire after five minutes. Never log URLs, attachment contents or provider keys. Signature checks are not full decoding, malware scanning or quarantine.
 
-Required server environment: built-in `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and the same exact `ALLOWED_ORIGINS` used by the generator. Keep gateway JWT verification enabled and verify preflight behavior in the actual runtime. Never copy the service-role key into Vite, Git, logs or chat.
+The existing bucket has no client DELETE policy, so deletion is unavailable. Removing an attachment only detaches its metadata from the edited post; it does not delete stored files. Storage limits can therefore require owner-authorized maintenance. Do not add a service-key bypass or run retention without approval.
 
-Each verified user is limited to five upload attempts per UTC day and 100 MiB of stored plus pending media. Failed storage attempts still count toward daily attempts; malformed inputs do not. Database reservations use a per-user transaction lock and account for pending uploads so overlapping requests cannot over-reserve capacity. Pending entries conservatively expire after one hour if completion tracking fails. Refresh the library before retrying uncertain uploads. Missing legacy object-size metadata counts as 50 MiB, avoiding an optimistic allowance.
-
-The client supplies no storage path or user ID to the function. Database reservations derive opaque filenames from the verified user. Objects cannot be replaced with upsert. The library previews via five-minute signed URLs, which are bearer credentials: never log or share them. User-confirmed deletion is performed through owner-scoped Storage access; usage calculation reads actual remaining objects.
-
-Signature validation checks known headers; it does not decode every image/video container, validate codecs, or scan malware. Add a quarantine/scanning pipeline and monitor abuse before public uploads. No customer files, live Storage settings, or remote migrations were changed during local testing.
-
-See Supabase's [private bucket model](https://supabase.com/docs/guides/storage/buckets/fundamentals) and [file limits](https://supabase.com/docs/guides/storage/uploads/file-limits) for runtime controls that still need hosted verification.
+No files were uploaded to or deleted from live Storage. No bucket, policy or retention configuration was changed. The alternative upload function/migrations are archived outside active deployment directories. The source work branch's proposed quarantine/retention implementation remains a separate reviewed milestone.

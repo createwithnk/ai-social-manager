@@ -1,12 +1,14 @@
 import { createGeminiProvider } from './gemini.ts'
+import { readBody } from '../_shared/security.ts'
 
 interface Dependencies {
   env: (name: string) => string | undefined
   authenticate: (url: string, key: string, token: string) => Promise<string | null>
-  consumeCredit: (userId: string) => Promise<boolean>
+  consumeCredit: (userId: string, token: string) => Promise<boolean>
   fetch: typeof fetch
   timeoutMs?: number
   readTimeoutMs?: number
+  readMedia?: (path: string, type: string, token: string) => Promise<{ mimeType: string; data: string }>
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -32,7 +34,9 @@ export function createHandler(dependencies: Dependencies) {
     const token = request.headers.get('authorization')?.match(/^Bearer\s+(\S+)$/i)?.[1]
     if (!token) return reply(401, { error: 'Sign in required' })
     const url = dependencies.env('SUPABASE_URL')
-    const key = dependencies.env('SUPABASE_ANON_KEY') ?? dependencies.env('SUPABASE_PUBLISHABLE_KEY')
+    let publicKey: string | undefined
+    try { publicKey = JSON.parse(dependencies.env('SUPABASE_PUBLISHABLE_KEYS') ?? '{}').default } catch { /* Fall back to the configured public key. */ }
+    const key = publicKey ?? dependencies.env('SUPABASE_ANON_KEY') ?? dependencies.env('SUPABASE_PUBLISHABLE_KEY')
     if (!url || !key) return reply(503, { error: 'Authentication service is not configured' })
     let userId: string | null
     try {
@@ -72,37 +76,55 @@ export function createHandler(dependencies: Dependencies) {
     finally { clearTimeout(readTimer) }
     if (!isRecord(input)) return reply(400, { error: 'Invalid request' })
     const { idea, platform, tone } = input
-    const language = input.language ?? 'en'
+    const languageAliases: Record<string, string> = { English: 'en', Arabic: 'ar', Hindi: 'hi', Urdu: 'ur' }
+    const language = typeof input.language === 'string' ? languageAliases[input.language] ?? input.language : input.language ?? 'en'
     const market = input.market ?? 'General'
     if (typeof idea !== 'string' || idea.trim().length < 10 || idea.length > 500 ||
         typeof platform !== 'string' || !['Instagram', 'LinkedIn', 'Facebook', 'X'].includes(platform) ||
         typeof tone !== 'string' || !['Friendly', 'Professional', 'Bold', 'Educational'].includes(tone) ||
-        typeof language !== 'string' || !['en', 'ar'].includes(language) ||
+        typeof language !== 'string' || !['en', 'ar', 'hi', 'ur'].includes(language) ||
         typeof market !== 'string' || !['General', 'UAE', 'Saudi Arabia', 'Kuwait', 'Gulf'].includes(market)) return reply(400, { error: 'Invalid content brief' })
     const geminiKey = dependencies.env('GEMINI_API_KEY')
     if (!geminiKey) return reply(503, { error: 'AI service is not configured' })
     const model = dependencies.env('GEMINI_MODEL') ?? 'gemini-2.5-flash'
     if (!/^gemini-[a-z0-9.-]+$/.test(model)) return reply(503, { error: 'Invalid model configuration' })
+    const media = input.media
+    if (media != null && (!isRecord(media) || typeof media.path !== 'string' || !media.path.startsWith(`${userId}/`) ||
+      !/^[A-Za-z0-9][A-Za-z0-9._-]{0,150}$/.test(media.path.slice(userId.length + 1)) ||
+      typeof media.type !== 'string' || !['image/jpeg','image/png','image/webp','video/mp4','video/webm','audio/webm','audio/mp4','audio/mpeg','audio/wav','audio/ogg'].includes(media.type))) return reply(400, { error: 'Invalid attachment' })
     try {
-      if (!await dependencies.consumeCredit(userId)) return reply(429, { error: 'Daily AI limit reached. Try again after midnight UTC.' })
+      if (!await dependencies.consumeCredit(userId, token)) return reply(429, { error: 'Daily AI limit reached. Try again after midnight UTC.' })
     } catch {
       return reply(503, { error: 'AI usage checks unavailable. Please retry later.' })
+    }
+    let attachment: { mimeType: string; data: string } | undefined
+    if (isRecord(media)) {
+      try {
+        if (!dependencies.readMedia) throw new Error('Attachment service unavailable')
+        attachment = await dependencies.readMedia(media.path as string, media.type as string, token)
+      } catch { return reply(400, { error: 'Attachment could not be read' }) }
     }
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), dependencies.timeoutMs ?? 25000)
     try {
-      const response = await createGeminiProvider(dependencies.fetch, geminiKey, model).generate({ idea: idea.trim(), platform, tone, language, market }, controller.signal)
-      if (!response.ok) return reply(502, { error: 'AI provider unavailable. Try again later.' })
-      const result: unknown = await response.json()
+      const response = await createGeminiProvider(dependencies.fetch, geminiKey, model).generate({ idea: idea.trim(), platform, tone, language, market, attachment }, controller.signal)
+      if (!response.ok) {
+        await response.body?.cancel().catch(() => {})
+        return reply(502, { error: 'AI provider unavailable. Try again later.' })
+      }
+      const result: unknown = JSON.parse(new TextDecoder().decode(await readBody(response, 128 * 1024)))
       if (!isRecord(result) || !Array.isArray(result.candidates)) return reply(502, { error: 'AI returned no content' })
       const candidate: unknown = result.candidates[0]
       if (!isRecord(candidate) || candidate.finishReason !== 'STOP' || !isRecord(candidate.content) || !Array.isArray(candidate.content.parts)) return reply(502, { error: 'AI returned incomplete content' })
       const raw = candidate.content.parts.filter((part: unknown) => isRecord(part) && part.thought !== true && typeof part.text === 'string').map((part: Record<string, unknown>) => part.text).join('')
       const draft: unknown = JSON.parse(raw)
-      if (!isRecord(draft) || typeof draft.caption !== 'string' || !draft.caption.trim() || draft.caption.length > 1500 ||
-          !Array.isArray(draft.hashtags) || draft.hashtags.length < 3 || draft.hashtags.length > 8 ||
-          !draft.hashtags.every((tag: unknown) => typeof tag === 'string' && /^[\p{L}\p{N}_]{1,40}$/u.test(tag)) ||
+      if (!isRecord(draft) || typeof draft.caption !== 'string' || !draft.caption.trim() || draft.caption.length > 10000 ||
+          !Array.isArray(draft.hashtags) || draft.hashtags.length > 8 ||
+          !draft.hashtags.every((tag: unknown) => typeof tag === 'string' && /^[\p{L}\p{M}\p{N}_]{1,80}$/u.test(tag)) ||
           new Set(draft.hashtags).size !== draft.hashtags.length) return reply(502, { error: 'AI response format was invalid' })
+      const limits: Record<string, number> = { Instagram: 2200, LinkedIn: 3000, Facebook: 63206, X: 280 }
+      const fullText = `${draft.caption.trim()}\n\n${draft.hashtags.map((tag) => `#${tag}`).join(' ')}`.trim()
+      if ([...fullText].length > limits[platform]) return reply(502, { error: 'AI response exceeds the platform limit' })
       return reply(200, { caption: draft.caption.trim(), hashtags: draft.hashtags })
     } catch {
       return reply(502, { error: 'AI generation failed. Please retry.' })

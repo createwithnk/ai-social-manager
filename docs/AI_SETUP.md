@@ -1,40 +1,11 @@
-# AI Generator setup (not deployed)
+# AI compatibility setup
 
-The React app invokes the Supabase Edge Function `generate-content` when signed in. The function validates the user's session, calls Gemini server-side, and returns an editable caption and hashtags. Nothing publishes automatically.
+The confirmed AasiFlowAI project is nkfecpdegcmsapvbviky. This branch now reuses its existing has_active_session and consume_ai_quota RPCs. Both run under the caller session; the generator needs no service-role credential for quota or attachment reads.
 
-## Required server configuration
-- `GEMINI_API_KEY`: Google AI Studio key. Store only as a Supabase Edge Function secret. Never put it in `VITE_*`, GitHub, or browser code.
-- `ALLOWED_ORIGINS`: comma-separated exact development and production frontend origins, for example `http://localhost:5173`. Set only trusted origins. This is a browser CORS allowlist, not a substitute for authentication.
-- `GEMINI_MODEL`: optional; defaults to `gemini-2.5-flash`.
-- Supabase's built-in `SUPABASE_URL` and `SUPABASE_ANON_KEY` (or `SUPABASE_PUBLISHABLE_KEY`) must be available to the function.
-- Supabase's built-in `SUPABASE_SERVICE_ROLE_KEY` is used only server-side to reserve an AI attempt through the restricted `consume_ai_credit` RPC. Never place it in frontend configuration. Apply the approval/usage migration before deploying this version of the function; missing usage configuration fails closed.
-- Keep JWT verification enabled for the Edge Function.
+The frontend sends English/Arabic/Hindi/Urdu language names for the current deployed function. The proposed handler also accepts en/ar/hi/ur aliases and Gulf market prompts. Market is prompt-only and is not a posts column. No new quota table/RPC is required; existing daily attempts and paid-credit accounting remain authoritative.
 
-## Before enabling
-1. Verify the intended Supabase project ID matches the frontend `VITE_SUPABASE_URL`. Do not use an unrelated project.
-2. Configure the secrets and allowed frontend origins on the correct project.
-3. Deploy only after the user explicitly approves deployment.
-4. Test browser OPTIONS preflight, authenticated POST, expired JWT, malformed JSON, provider errors, and valid caption/hashtags.
-5. Verify Gemini usage limits and cost before allowing public traffic; add per-user rate limits and quotas before launch.
-6. Keep manual approval before saving as approved, scheduling, or any future publishing.
+GEMINI_API_KEY and GEMINI_MODEL remain server-only. Existing public-key dictionary/legacy anon configuration is supported. Exact ALLOWED_ORIGINS, verified nonanonymous email users, revoked-session rejection, 8 KiB/10-second input reads, 25-second provider deadline and 128 KiB response limit are checked locally. Attachments are downloaded from post-media under the caller token, with 10 MiB/MIME/container checks. The provider cannot publish or approve posts; generation only returns editable content.
 
-The generator accepts `language` (`en` or `ar`) and `market` (`General`, `UAE`, `Saudi Arabia`, `Kuwait`, `Gulf`). Omitted values default to English/general for older clients. Arabic caption editing uses RTL and Arabic hashtags are validated with Unicode letters/numbers. Each authenticated user may reserve 20 generation attempts per UTC day. Failed provider attempts still count; malformed briefs and rejected authentication do not. This conservative policy avoids automatic retry charges. No paid subscription allowance is enabled.
+Run npm ci, npm run build, npm run lint, npm test, npm run check:edge, npm run check:deno and npm run test:edge. Deno 2.9.6 is pinned for the actual runtime checks; its offline fixture tests have no network permission.
 
-The Edge adapter requires a verified email user and rejects Supabase anonymous-auth sessions. Ensure email confirmation is actually configured and verified on the confirmed project. No auth settings have been changed by this development pass.
-
-The matching frontend now reads language and server approval metadata from posts. Coordinate schema/function/frontend release after owner approval; it is not compatible with an unmigrated database. Existing approved posts need fresh review rather than fabricated approval timestamps.
-
-## Offline verification
-
-Run `npm ci`, `npm run build`, `npm run lint`, `npm test`, and `npm run check:edge`.
-The Node tests exercise the real request handler with mocked Supabase authentication and Gemini responses. Frontend tests execute the AI client and composer event handlers with in-memory React hooks. No credentials, database writes, deployments, or provider usage are needed. These checks do not replace a browser test against the confirmed project.
-
-The function uses a structured response schema, validates completed output, and returns only an editable caption and hashtags. Gemini keys are sent only in the server-side provider header. Authentication has a 10-second network deadline; generation has a 25-second deadline covering response-body reading. CORS uses exact trusted origins, never a wildcard. The body is capped at 8 KiB and the brief at 500 characters.
-
-JSON body reads also have a ten-second deadline; stalled requests return 408 before reserving usage. `generate-content/gemini.ts` implements the server-only provider transport contract. The handler retains authentication, validation, quota reservation, provider deadlines and safe response handling. Model and credential configuration remain server-controlled; client model/key fields are ignored. No additional provider, credentials or deployment is enabled by this separation.
-
-The Deno entrypoints pin Supabase JS to the frontend's current version. `check:edge` checks handlers and entrypoints against the installed SDK and a minimal Deno runtime contract. Actual Deno/npm resolution and the Supabase gateway still require runtime validation before deployment.
-
-Structured response fields follow Google's [Generate Content structured-output guide](https://ai.google.dev/gemini-api/docs/generate-content/structured-output?hl=en).
-
-Current status: no deployment or live end-to-end verification was performed during this development pass.
+The current hosted generator is a different version. Do not claim the new runtime is live. A deployment, real Gemini call or migration still needs separate owner approval. See BACKEND_COMPATIBILITY.md and LAUNCH_CHECKLIST.md before any release.

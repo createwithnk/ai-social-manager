@@ -8,7 +8,7 @@ const provider = (value = draft, finishReason = 'STOP') => Response.json({ candi
 function setup(overrides = {}) {
   const calls = []
   const env = { ALLOWED_ORIGINS: 'http://localhost:5173', SUPABASE_URL: 'https://example.invalid', SUPABASE_ANON_KEY: 'test-public-key', GEMINI_API_KEY: 'test-secret-sentinel', ...overrides.env }
-  const handler = createHandler({ env: (name) => env[name], authenticate: overrides.authenticate ?? (async (_url, _key, token) => token === 'valid-token' ? 'verified-user-id' : null), consumeCredit: overrides.consumeCredit ?? (async () => true), fetch: async (url, options) => { calls.push({ url, options }); return overrides.fetch ? overrides.fetch(url, options) : provider() }, timeoutMs: overrides.timeoutMs, readTimeoutMs: overrides.readTimeoutMs })
+  const handler = createHandler({ env: (name) => env[name], authenticate: overrides.authenticate ?? (async (_url, _key, token) => token === 'valid-token' ? 'verified-user-id' : null), consumeCredit: overrides.consumeCredit ?? (async () => true), readMedia: overrides.readMedia, fetch: async (url, options) => { calls.push({ url, options }); return overrides.fetch ? overrides.fetch(url, options) : provider() }, timeoutMs: overrides.timeoutMs, readTimeoutMs: overrides.readTimeoutMs })
   const request = (body = brief, options = {}) => handler(new Request('https://example.invalid/generate', { method: 'POST', headers: { Origin: 'http://localhost:5173', Authorization: 'Bearer valid-token', 'Content-Type': 'application/json', ...options.headers }, body: typeof body === 'string' ? body : JSON.stringify(body), ...options.init }))
   return { handler, request, calls }
 }
@@ -93,6 +93,7 @@ test('valid generation returns only an editable draft, with secret confined to p
   assert.equal(result.headers.get('cache-control'), 'no-store')
   assert.equal(calls.length, 1)
   assert.equal(calls[0].options.headers['x-goog-api-key'], 'test-secret-sentinel')
+  assert.equal(calls[0].options.redirect, 'error')
   assert.doesNotMatch(calls[0].url + calls[0].options.body, /test-secret-sentinel|valid-token/)
   assert.equal(JSON.parse(calls[0].options.body).generationConfig.responseFormat.text.schema.type, 'object')
 })
@@ -114,8 +115,8 @@ test('provider HTTP, network, JSON, schema and incomplete response errors are sa
     async () => Response.json({ candidates: {} }),
     async () => provider(draft, 'MAX_TOKENS'),
     async () => provider({ ...draft, caption: ' ' }),
-    async () => provider({ ...draft, caption: 'x'.repeat(1501) }),
-    async () => provider({ ...draft, hashtags: [] }),
+    async () => provider({ ...draft, caption: 'x'.repeat(10001) }),
+    async () => provider({ ...draft, hashtags: ['x'.repeat(81)] }),
     async () => provider({ ...draft, hashtags: ['A', 'A', 'B'] }),
     async () => provider({ ...draft, hashtags: ['#Bad', 'B', 'C'] }),
   ]
@@ -127,8 +128,14 @@ test('provider HTTP, network, JSON, schema and incomplete response errors are sa
   }
 })
 test('timeout stays active while reading provider body', async () => {
-  const result = await setup({ timeoutMs: 5, fetch: async (_url, { signal }) => ({ ok: true, json: () => new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true })) }) }).request()
+  const result = await setup({ timeoutMs: 5, fetch: async (_url, { signal }) => new Response(new ReadableStream({ start(controller) { signal.addEventListener('abort', () => controller.error(new Error('timeout')), { once: true }) } })) }).request()
   assert.equal(result.status, 502)
+})
+
+test('oversized provider bodies fail safely without returning partial drafts', async () => {
+  const result = await setup({ fetch: async () => new Response('x'.repeat(128 * 1024 + 1)) }).request()
+  assert.equal(result.status, 502)
+  assert.deepEqual(await result.json(), { error: 'AI generation failed. Please retry.' })
 })
 test('credits use verified user identity, never a body-supplied user ID', async () => {
   const users = []
@@ -154,4 +161,33 @@ test('Arabic Gulf prompts carry validated preferences and accept Arabic hashtags
   for (const invalid of [{ language: 'invalid' }, { market: 'Unknown' }, { language: [] }]) {
     assert.equal((await request({ ...brief, ...invalid })).status, 400)
   }
+})
+
+test('legacy language names and public-key dictionaries work without client credentials', async () => {
+  for (const language of ['English', 'Arabic', 'Hindi', 'Urdu']) {
+    const { request } = setup({ env: { SUPABASE_ANON_KEY: undefined, SUPABASE_PUBLISHABLE_KEYS: '{"default":"fixture-public-key"}' } })
+    assert.equal((await request({ ...brief, language })).status, 200)
+  }
+})
+
+test('attachments are owner-scoped and loaded with the caller session before Gemini', async () => {
+  const reads = []
+  const { request, calls } = setup({ readMedia: async (...args) => { reads.push(args); return { mimeType: 'image/png', data: 'mock-base64-only' } } })
+  const result = await request({ ...brief, media: { path: 'verified-user-id/opaque-file', type: 'image/png' } })
+  assert.equal(result.status, 200)
+  assert.deepEqual(reads, [['verified-user-id/opaque-file', 'image/png', 'valid-token']])
+  assert.equal(JSON.parse(calls[0].options.body).contents[0].parts[1].inlineData.data, 'mock-base64-only')
+  for (const path of ['other-user/file', 'verified-user-id/../file', 'verified-user-id/folder/file']) {
+    assert.equal((await request({ ...brief, media: { path, type: 'image/png' } })).status, 400)
+  }
+  assert.equal(reads.length, 1)
+})
+
+test('unreadable attachments and overlong X drafts fail safely', async () => {
+  const { request, calls } = setup({ readMedia: async () => { throw new Error('private-storage-detail') } })
+  const failure = await request({ ...brief, media: { path: 'verified-user-id/file', type: 'image/png' } })
+  assert.equal(failure.status, 400)
+  assert.doesNotMatch(await failure.text(), /private-storage-detail/)
+  assert.equal(calls.length, 0)
+  assert.equal((await setup({ fetch: async () => provider({ caption: 'a'.repeat(279), hashtags: ['LongTag'] }) }).request({ ...brief, platform: 'X' })).status, 502)
 })
