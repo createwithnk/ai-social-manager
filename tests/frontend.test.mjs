@@ -1,16 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import fs from 'node:fs'
-import vm from 'node:vm'
-import ts from 'typescript'
+import { loadModule } from './helpers.mjs'
 
-// Execute the actual TSX event handlers with in-memory React hooks, without a live backend.
-function loadModule(path, mocks, extra = '') {
-  const exports = {}
-  const source = ts.transpileModule(fs.readFileSync(new URL(path, import.meta.url), 'utf8') + extra, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText
-  vm.runInNewContext(source, { exports, Error, require: (name) => { if (!(name in mocks)) throw new Error(`Unexpected import: ${name}`); return mocks[name] }, crypto: { randomUUID: () => 'test-post-id' } })
-  return exports
-}
 const draft = { caption: 'A draft to review', hashtags: ['Business', 'Tips', 'Growth'] }
 test('frontend rejects missing sessions, bad briefs, provider failures and malformed drafts', async () => {
   for (const scenario of ['no-session', 'bad-brief', 'provider-error', 'empty-caption', 'bad-tags', 'valid']) {
@@ -29,7 +20,7 @@ function generatorHarness(overrides = {}) {
   const saves = []
   const jsx = (type, props) => ({ type, props })
   const react = { useState: (initial) => { const index = cursor++; if (!(index in states)) states[index] = typeof initial === 'function' ? initial() : initial; return [states[index], (value) => { states[index] = typeof value === 'function' ? value(states[index]) : value }] }, useMemo: (fn) => fn(), useCallback: (fn) => fn, useEffect: () => {} }
-  const { Generator, Calendar } = loadModule('../src/App.tsx', { react, 'react/jsx-runtime': { jsx, jsxs: jsx }, 'lucide-react': {}, './lib/auth': {}, './lib/content': {}, './lib/ai': { generateAiDraft: overrides.generate ?? (async () => draft) }, './lib/posts': {}, './lib/supabase': { isSupabaseConfigured: true } }, '\nexport { Generator, Calendar }')
+  const { Generator, Calendar } = loadModule('../src/App.tsx', { react, 'react/jsx-runtime': { jsx, jsxs: jsx }, 'lucide-react': {}, './MediaLibrary': {}, './LanguageSwitcher': {}, './lib/locale': { useLocale: () => ({ t: (text) => text }) }, './lib/auth': {}, './lib/content': {}, './lib/ai': { generateAiDraft: overrides.generate ?? (async () => draft) }, './lib/posts': {}, './lib/supabase': { isSupabaseConfigured: true } }, '\nexport { Generator, Calendar }')
   const post = { id: 'draft-id', idea: 'A valid idea for a post', platform: 'Instagram', tone: 'Friendly', ...draft, status: 'draft', createdAt: '2026-01-01T00:00:00Z' }
   function render() {
     cursor = 0

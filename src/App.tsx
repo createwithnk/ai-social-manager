@@ -1,3 +1,5 @@
+import { useLocale } from './lib/locale'
+import LanguageSwitcher from './LanguageSwitcher'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BarChart3, CalendarDays, CheckCircle2, Clock3, FileText, LayoutDashboard, LoaderCircle, LogOut, Menu, Plus, Sparkles, WandSparkles, X } from 'lucide-react'
 import { useAuth, type AuthState } from './lib/auth'
@@ -5,9 +7,10 @@ import { createDraft } from './lib/content'
 import { generateAiDraft } from './lib/ai'
 import { fetchPosts, savePostForUser } from './lib/posts'
 import { isSupabaseConfigured } from './lib/supabase'
-import type { Platform, Post } from './types'
+import MediaLibrary from './MediaLibrary'
+import type { ContentLanguage, Market, Platform, Post } from './types'
 
-type View = 'dashboard' | 'create' | 'calendar' | 'detail'
+type View = 'dashboard' | 'create' | 'calendar' | 'detail' | 'media'
 
 function loadLocalPosts(): Post[] {
   try {
@@ -29,6 +32,7 @@ function replacePost(posts: Post[], post: Post) {
 }
 
 function App() {
+
   const auth = useAuth()
 
   if (auth.status === 'loading') return <AuthLoading />
@@ -40,14 +44,17 @@ function App() {
 }
 
 function AuthLoading() {
-  return <main className="auth-shell"><section className="auth-card"><LoaderCircle className="spinner" /><h1>Loading AasiFlowAI</h1><p>Checking your session securely.</p></section></main>
+  const { t } = useLocale()
+  return <main className="auth-shell"><section className="auth-card"><LoaderCircle className="spinner" /><h1>{t("Loading AasiFlowAI")}</h1><p>{t("Checking your session securely.")}</p></section></main>
 }
 
 function AuthBootstrapError({ auth }: { auth: AuthState }) {
-  return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-error-title"><span className="eyebrow">CONNECTION ISSUE</span><h1 id="auth-error-title">We couldn’t start your secure session</h1><p>{auth.error ?? 'Check your connection and Supabase configuration, then retry.'}</p><button className="primary wide" type="button" onClick={auth.retrySession}>Retry session check</button></section></main>
+  const { t } = useLocale()
+  return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-error-title"><span className="eyebrow">{t("CONNECTION ISSUE")}</span><h1 id="auth-error-title">{t("We couldn’t start your secure session")}</h1><p>{auth.error ?? 'Check your connection and Supabase configuration, then retry.'}</p><button className="primary wide" type="button" onClick={auth.retrySession}>{t("Retry session check")}</button></section></main>
 }
 
 function PasswordRecovery({ auth }: { auth: AuthState }) {
+  const { t } = useLocale()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [notice, setNotice] = useState<string | null>(null)
@@ -69,22 +76,23 @@ function PasswordRecovery({ auth }: { auth: AuthState }) {
     }
   }
 
-  return <main className="auth-shell"><section className="auth-card" aria-labelledby="recovery-title">
-    <span className="eyebrow">ACCOUNT RECOVERY</span>
-    <h1 id="recovery-title">Set a new password</h1>
-    <p>Choose a new password of at least 12 characters.</p>
+  return <main className="auth-shell"><section className="auth-card" aria-labelledby="recovery-title"><LanguageSwitcher />
+    <span className="eyebrow">{t("ACCOUNT RECOVERY")}</span>
+    <h1 id="recovery-title">{t("Set a new password")}</h1>
+    <p>{t("Choose a new password of at least 12 characters.")}</p>
     {!finished ? <form onSubmit={(event) => { void submit(event) }}>
-      <label>New password<input type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={auth.loading} /></label>
-      <label>Confirm new password<input type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={confirm} onChange={(event) => setConfirm(event.target.value)} disabled={auth.loading} /></label>
-      {auth.error && <p className="form-error" role="alert">{auth.error}</p>}
-      {notice && <p className="form-notice" role="status">{notice}</p>}
-      <button className="primary wide" type="submit" disabled={auth.loading || password !== confirm}>{auth.loading ? 'Updating…' : 'Update password'}</button>
-    </form> : <p className="form-notice" role="status">{notice}</p>}
-    {finished && <button className="primary wide" type="button" onClick={auth.exitRecovery}>Continue</button>}
+      <label>{t("New password")}<input type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={auth.loading} /></label>
+      <label>{t("Confirm new password")}<input type="password" autoComplete="new-password" minLength={12} maxLength={128} required value={confirm} onChange={(event) => setConfirm(event.target.value)} disabled={auth.loading} /></label>
+      {auth.error && <p className="form-error" role="alert">{t(auth.error)}</p>}
+      {notice && <p className="form-notice" role="status">{t(notice ?? '')}</p>}
+      <button className="primary wide" type="submit" disabled={auth.loading || password !== confirm}>{auth.loading ? t("Updating…") : t("Update password")}</button>
+    </form> : <p className="form-notice" role="status">{t(notice ?? '')}</p>}
+    {finished && <button className="primary wide" type="button" onClick={auth.exitRecovery}>{t("Continue")}</button>}
   </section></main>
 }
 
 function AuthScreen({ auth }: { auth: AuthState }) {
+  const { t } = useLocale()
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -99,10 +107,11 @@ function AuthScreen({ auth }: { auth: AuthState }) {
     setNotice(result.notice ?? null)
   }
 
-  return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-title"><div className="brand auth-brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>AasiFlowAI</strong><small>Content workspace</small></div></div><span className="eyebrow">SECURE WORKSPACE</span><h1 id="auth-title">{mode === 'login' ? 'Welcome back' : 'Create your account'}</h1><p>{mode === 'login' ? 'Sign in to access your content workspace.' : 'Use your email to create a protected workspace.'}</p><form onSubmit={submit}><label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required disabled={auth.loading} /></label><label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'signup' ? 12 : undefined} maxLength={128} required disabled={auth.loading} /></label>{auth.error && <p className="form-error" role="alert">{auth.error}</p>}{notice && <p className="form-notice" role="status">{notice}</p>}<button className="primary wide" disabled={auth.loading}>{auth.loading ? <><LoaderCircle className="spinner" /> Please wait</> : mode === 'login' ? 'Log in' : 'Sign up'}</button></form><button className="auth-switch" type="button" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setNotice(null) }} disabled={auth.loading}>{mode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Log in'}</button>{mode === 'login' && <button className="auth-switch" type="button" onClick={() => { setNotice(null); void auth.requestPasswordReset(email).then((result) => setNotice(result.notice ?? null)) }} disabled={auth.loading}>Forgot password?</button>}</section></main>
+  return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-title"><LanguageSwitcher /><div className="brand auth-brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>{t("AasiFlowAI")}</strong><small>{t("Content workspace")}</small></div></div><span className="eyebrow">{t("SECURE WORKSPACE")}</span><h1 id="auth-title">{mode === 'login' ? t("Welcome back") : t("Create your account")}</h1><p>{mode === 'login' ? t("Sign in to access your content workspace.") : t("Use your email to create a protected workspace.")}</p><form onSubmit={submit}><label>{t("Email")}<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required disabled={auth.loading} /></label><label>{t("Password")}<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'signup' ? 12 : undefined} maxLength={128} required disabled={auth.loading} /></label>{auth.error && <p className="form-error" role="alert">{t(auth.error)}</p>}{notice && <p className="form-notice" role="status">{t(notice ?? '')}</p>}<button className="primary wide" disabled={auth.loading}>{auth.loading ? <><LoaderCircle className="spinner" />{t("Please wait")}</> : mode === 'login' ? t("Log in") : t("Sign up")}</button></form><button className="auth-switch" type="button" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setNotice(null) }} disabled={auth.loading}>{mode === 'login' ? t("Need an account? Sign up") : t("Already have an account? Log in")}</button>{mode === 'login' && <button className="auth-switch" type="button" onClick={() => { setNotice(null); void auth.requestPasswordReset(email).then((result) => setNotice(result.notice ?? null)) }} disabled={auth.loading}>{t("Forgot password?")}</button>}</section></main>
 }
 
 function Workspace({ auth }: { auth: AuthState }) {
+  const { t } = useLocale()
   const [view, setView] = useState<View>('dashboard')
   const [posts, setPosts] = useState<Post[]>(() => isSupabaseConfigured ? [] : loadLocalPosts())
   const [editingPost, setEditingPost] = useState<Post | null>(null)
@@ -194,28 +203,26 @@ function Workspace({ auth }: { auth: AuthState }) {
 
   async function signOut() {
     await auth.signOut()
-    setPosts([])
-    setEditingPost(null)
-    setViewingPost(null)
-    setView('dashboard')
   }
 
   return <div className="app-shell">
     <aside className={mobile ? 'sidebar open' : 'sidebar'}>
-      <div className="brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>AasiFlowAI</strong><small>Content workspace</small></div></div>
-      <button className="close" onClick={() => setMobile(false)} aria-label="Close navigation"><X /></button>
+      <div className="brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>{t("AasiFlowAI")}</strong><small>{t("Content workspace")}</small></div></div>
+      <button className="close" onClick={() => setMobile(false)} aria-label={t("Close navigation")}><X /></button>
       <nav>
-        <Nav active={view === 'dashboard'} icon={<LayoutDashboard />} label="Dashboard" onClick={() => { setView('dashboard'); setMobile(false) }} />
-        <Nav active={view === 'create'} icon={<Sparkles />} label="Create content" onClick={() => { createPost(); setMobile(false) }} />
-        <Nav active={view === 'calendar'} icon={<CalendarDays />} label="Content calendar" onClick={() => { setView('calendar'); setMobile(false) }} />
+        <Nav active={view === 'dashboard'} icon={<LayoutDashboard />} label={t("Dashboard")} onClick={() => { setView('dashboard'); setMobile(false) }} />
+        <Nav active={view === 'create'} icon={<Sparkles />} label={t("Create content")} onClick={() => { createPost(); setMobile(false) }} />
+        <Nav active={view === 'calendar'} icon={<CalendarDays />} label={t("Content calendar")} onClick={() => { setView('calendar'); setMobile(false) }} />
+        <Nav active={view === 'media'} icon={<FileText />} label={t("Media library")} onClick={() => { setView('media'); setMobile(false) }} />
       </nav>
-      <div className="guardrail"><CheckCircle2 /><div><strong>Approval protected</strong><span>Nothing is published without your approval.</span></div></div>
+      <div className="guardrail"><CheckCircle2 /><div><strong>{t("Approval protected")}</strong><span>{t("Nothing is published without your approval.")}</span></div></div>
     </aside>
     <main>
-      <header><button className="menu" onClick={() => setMobile(true)} aria-label="Open navigation"><Menu /></button><div><small>AI SOCIAL MEDIA WORKSPACE</small><h1>{view === 'dashboard' ? 'Welcome back, Noshad' : view === 'create' ? 'Create new content' : view === 'detail' ? 'Content details' : 'Content calendar'}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut /> Log out</button></div>}<button className="primary compact" onClick={createPost}><Plus /> New post</button></header>
-      {(postsError ?? auth.error) && <p className="workspace-error" role="alert">{postsError ?? auth.error}</p>}
+      <header><LanguageSwitcher /><button className="menu" onClick={() => setMobile(true)} aria-label={t("Open navigation")}><Menu /></button><div><small>{t("AI SOCIAL MEDIA WORKSPACE")}</small><h1>{view === 'dashboard' ? t("Your content workspace") : view === 'create' ? t("Create new content") : view === 'detail' ? t("Content details") : view === 'media' ? t("Media library") : t("Content calendar")}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut />{t("Log out")}</button></div>}<button className="primary compact" onClick={createPost}><Plus />{t("New post")}</button></header>
+      {(postsError ?? auth.error) && <p className="workspace-error" role="alert">{t(postsError ?? auth.error ?? '')}</p>}
       {view === 'dashboard' && <Dashboard posts={posts} drafts={posts.filter((post) => post.status === 'draft').length} approved={posts.filter((post) => post.status === 'approved').length} scheduled={posts.filter((post) => post.status === 'scheduled').length} onCreate={createPost} onEdit={editDraft} onView={(post) => viewPost(post, 'dashboard')} loading={postsLoading} />}
       {view === 'create' && <Generator key={editingPost?.id ?? `new-${composerKey}`} initialPost={editingPost} onSave={savePost} disabled={postsLoading} />}
+      {view === 'media' && <MediaLibrary userId={userId} />}
       {view === 'calendar' && <Calendar posts={posts} onUpdate={persistPost} onView={(post) => viewPost(post, 'calendar')} disabled={postsLoading} />}
       {view === 'detail' && viewingPost && <PostDetail post={viewingPost} onBack={() => { setViewingPost(null); setView(detailBackView) }} onEdit={editApprovedOrScheduledPost} disabled={postsLoading} />}
     </main>
@@ -224,11 +231,13 @@ function Workspace({ auth }: { auth: AuthState }) {
 }
 
 function Nav({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
+
   return <button className={active ? 'nav active' : 'nav'} onClick={onClick}>{icon}<span>{label}</span></button>
 }
 
 function Dashboard({ posts, drafts, approved, scheduled, onCreate, onEdit, onView, loading }: { posts: Post[]; drafts: number; approved: number; scheduled: number; onCreate: () => void; onEdit: (post: Post) => void; onView: (post: Post) => void; loading: boolean }) {
-  return <section className="content"><div className="hero"><div><span className="eyebrow">YOUR CONTENT COMMAND CENTER</span><h2>Turn one idea into<br /><em>platform-ready content.</em></h2><p>Draft with AI, review every word, and approve only when it feels right.</p><button className="primary" onClick={onCreate} disabled={loading}><Sparkles /> Create with AI</button></div><div className="hero-orbit"><div className="orb"><WandSparkles /></div><span>IDEA</span><span>REVIEW</span><span>APPROVE</span></div></div><div className="stats"><Stat icon={<BarChart3 />} value={posts.length} label="Total content" /><Stat icon={<FileText />} value={drafts} label="Drafts" /><Stat icon={<CheckCircle2 />} value={approved} label="Approved" /><Stat icon={<Clock3 />} value={scheduled} label="Scheduled" /></div><div className="panel"><div className="panel-head"><div><span className="eyebrow">WORKSPACE</span><h3>Recent content</h3></div><button className="ghost" onClick={onCreate} disabled={loading}>Create new <Plus /></button></div>{loading ? <div className="empty"><LoaderCircle className="spinner" /><p>Loading your content…</p></div> : posts.length === 0 ? <div className="empty"><div><Sparkles /></div><h3>Your ideas start here</h3><p>Create your first post and keep full control before anything is scheduled.</p><button className="primary" onClick={onCreate}>Create first post</button></div> : <div className="post-list">{posts.slice(0, 6).map((post) => <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.caption.slice(0, 100)}{post.caption.length > 100 ? '…' : ''}</p></div><div className="schedule-controls"><button className="ghost" onClick={() => onView(post)}>View</button>{post.status === 'draft' ? <button className="ghost" onClick={() => onEdit(post)}>Continue draft</button> : <span className={`status ${post.status}`}>{post.status}</span>}</div></article>)}</div>}</div></section>
+  const { t } = useLocale()
+  return <section className="content"><div className="hero"><div><span className="eyebrow">{t("YOUR CONTENT COMMAND CENTER")}</span><h2>{t("Turn one idea into")}<br /><em>{t("platform-ready content.")}</em></h2><p>{t("Draft with AI, review every word, and approve only when it feels right.")}</p><button className="primary" onClick={onCreate} disabled={loading}><Sparkles />{t("Create with AI")}</button></div><div className="hero-orbit"><div className="orb"><WandSparkles /></div><span>{t("IDEA")}</span><span>{t("REVIEW")}</span><span>{t("APPROVE")}</span></div></div><div className="stats"><Stat icon={<BarChart3 />} value={posts.length} label={t("Total content")} /><Stat icon={<FileText />} value={drafts} label={t("Drafts")} /><Stat icon={<CheckCircle2 />} value={approved} label={t("Approved")} /><Stat icon={<Clock3 />} value={scheduled} label={t("Scheduled")} /></div><div className="panel"><div className="panel-head"><div><span className="eyebrow">{t("WORKSPACE")}</span><h3>{t("Recent content")}</h3></div><button className="ghost" onClick={onCreate} disabled={loading}>{t("Create new")}<Plus /></button></div>{loading ? <div className="empty"><LoaderCircle className="spinner" /><p>{t("Loading your content…")}</p></div> : posts.length === 0 ? <div className="empty"><div><Sparkles /></div><h3>{t("Your ideas start here")}</h3><p>{t("Create your first post and keep full control before anything is scheduled.")}</p><button className="primary" onClick={onCreate}>{t("Create first post")}</button></div> : <div className="post-list">{posts.slice(0, 6).map((post) => <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.caption.slice(0, 100)}{post.caption.length > 100 ? t("…") : t("")}</p></div><div className="schedule-controls"><button className="ghost" onClick={() => onView(post)}>{t("View")}</button>{post.status === 'draft' ? <button className="ghost" onClick={() => onEdit(post)}>{t("Continue draft")}</button> : <span className={`status ${post.status}`}>{t(post.status)}</span>}</div></article>)}</div>}</div></section>
 }
 
 function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
@@ -236,6 +245,7 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | n
 }
 
 function PostDetail({ post, onBack, onEdit, disabled }: { post: Post; onBack: () => void; onEdit: (post: Post) => Promise<void>; disabled: boolean }) {
+  const { t } = useLocale()
   const [editing, setEditing] = useState(false)
 
   async function edit() {
@@ -247,13 +257,16 @@ function PostDetail({ post, onBack, onEdit, disabled }: { post: Post; onBack: ()
     }
   }
 
-  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">READ-ONLY CONTENT</span><h2>{post.idea}</h2></div><button className="ghost" onClick={onBack} disabled={editing}>Back</button></div><p><span className={`status ${post.status}`}>{post.status}</span></p><dl><dt>Platform</dt><dd>{post.platform}</dd><dt>Tone</dt><dd>{post.tone}</dd><dt>Created</dt><dd>{new Date(post.createdAt).toLocaleString()}</dd>{post.scheduledFor && <><dt>Scheduled for</dt><dd>{new Date(post.scheduledFor).toLocaleString()}</dd></>}</dl><h3>Caption</h3><p style={{ whiteSpace: 'pre-wrap' }}>{post.caption}</p><h3>Hashtags</h3><p>{post.hashtags.map((tag) => `#${tag}`).join(' ')}</p><button className="primary" onClick={() => { void edit() }} disabled={disabled || editing}>{editing ? 'Preparing draft…' : post.status === 'draft' ? 'Edit draft' : 'Edit'}</button></div></section>
+  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">{t("READ-ONLY CONTENT")}</span><h2>{post.idea}</h2></div><button className="ghost" onClick={onBack} disabled={editing}>{t("Back")}</button></div><p><span className={`status ${post.status}`}>{t(post.status)}</span></p><dl><dt>{t("Platform")}</dt><dd>{post.platform}</dd><dt>{t("Tone")}</dt><dd>{post.tone}</dd><dt>{t("Created")}</dt><dd>{new Date(post.createdAt).toLocaleString()}</dd>{post.scheduledFor && <><dt>{t("Scheduled for")}</dt><dd>{new Date(post.scheduledFor).toLocaleString()}</dd></>}</dl><h3>{t("Caption")}</h3><p dir={post.language === 'ar' ? 'rtl' : 'ltr'} lang={post.language ?? 'en'} style={{ whiteSpace: 'pre-wrap' }}>{post.caption}</p><h3>{t("Hashtags")}</h3><p>{post.hashtags.map((tag) => `#${tag}`).join(' ')}</p><button className="primary" onClick={() => { void edit() }} disabled={disabled || editing}>{editing ? t("Preparing draft…") : post.status === 'draft' ? t("Edit draft") : t("Edit")}</button></div></section>
 }
 
 function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null; onSave: (post: Post) => Promise<void>; disabled: boolean }) {
+  const { t } = useLocale()
   const [idea, setIdea] = useState(initialPost?.idea ?? '')
   const [platform, setPlatform] = useState<Platform>(initialPost?.platform ?? 'Instagram')
   const [tone, setTone] = useState(initialPost?.tone ?? 'Friendly')
+  const [language, setLanguage] = useState<ContentLanguage>(initialPost?.language ?? 'en')
+  const [market, setMarket] = useState<Market>(initialPost?.market ?? 'General')
   const [draft, setDraft] = useState<{ caption: string; hashtags: string[] } | null>(initialPost ? { caption: initialPost.caption, hashtags: initialPost.hashtags } : null)
   const [approved, setApproved] = useState(false)
   const [postId, setPostId] = useState<string | undefined>(initialPost?.id)
@@ -262,11 +275,11 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
   const [generating, setGenerating] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const canGenerate = idea.trim().length >= 10 && idea.trim().length <= 500
-  const [generatedBrief, setGeneratedBrief] = useState<string | null>(initialPost ? JSON.stringify([initialPost.idea, initialPost.platform, initialPost.tone]) : null)
-  const currentBrief = JSON.stringify([idea.trim(), platform, tone])
+  const [generatedBrief, setGeneratedBrief] = useState<string | null>(initialPost ? JSON.stringify([initialPost.idea.trim(), initialPost.platform, initialPost.tone, initialPost.language ?? 'en', initialPost.market ?? 'General']) : null)
+  const currentBrief = JSON.stringify([idea.trim(), platform, tone, language, market])
   const draftMatchesBrief = generatedBrief === currentBrief
   const [reviewedFingerprint, setReviewedFingerprint] = useState<string | null>(null)
-  const fingerprint = JSON.stringify([idea.trim(), platform, tone, draft?.caption, draft?.hashtags])
+  const fingerprint = JSON.stringify([idea.trim(), platform, tone, language, market, draft?.caption, draft?.hashtags])
   const isApproved = approved && reviewedFingerprint === fingerprint && draftMatchesBrief
 
   async function generate() {
@@ -280,8 +293,8 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
     setDraft(null)
     try {
       const result = isSupabaseConfigured
-        ? await generateAiDraft(idea, platform, tone)
-        : createDraft(idea, platform, tone)
+        ? await generateAiDraft(idea, platform, tone, language, market)
+        : createDraft(idea, platform, tone, language)
       setDraft(result)
       setGeneratedBrief(requestedBrief)
     } catch (error) {
@@ -298,7 +311,7 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
     setSaving(true)
     setSaveError(null)
     try {
-      await onSave({ id, idea: idea.trim(), platform, tone, ...draft, status, createdAt: timestamp })
+      await onSave({ id, idea: idea.trim(), platform, tone, language, market, ...draft, status, createdAt: timestamp })
       setPostId(id)
       setCreatedAt(timestamp)
     } catch (error) {
@@ -309,10 +322,11 @@ function Generator({ initialPost, onSave, disabled }: { initialPost: Post | null
   }
 
   const busy = saving || generating || disabled
-  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>1 <b>Brief</b></span><i /><span className={draft ? 'current' : ''}>2 <b>Review</b></span><i /><span>3 <b>Approve</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">STEP 1 — YOUR IDEA</span><h2>What do you want to share?</h2><label>Content idea<textarea value={idea} onChange={(event) => { setIdea(event.target.value); setApproved(false); setReviewedFingerprint(null) }} placeholder="Example: Five simple ways small businesses can create better Instagram posts..." maxLength={500} disabled={busy} /><small>{idea.length}/500 · Minimum 10 characters</small></label><div className="field-row"><label>Platform<select value={platform} onChange={(event) => { setPlatform(event.target.value as Platform); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option}>{option}</option>)}</select></label><label>Tone<select value={tone} onChange={(event) => { setTone(event.target.value); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option}>{option}</option>)}</select></label></div><button className="primary wide" disabled={!canGenerate || busy} onClick={() => { void generate() }}><WandSparkles /> {generating ? 'Generating…' : 'Generate draft'}</button><p className="fineprint">AI drafts use a secure server-side provider when signed in. Local preview mode uses templates. Every post still requires your approval.</p>{saveError && !draft && <p className="form-error" role="alert">{saveError}</p>}</div><div className="panel preview-panel"><span className="eyebrow">STEP 2 — REVIEW & EDIT</span><h2>Your draft</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>Your generated draft will appear here.</p></div> : <><label>Caption<textarea className="caption" value={draft.caption} onChange={(event) => { setDraft({ ...draft, caption: event.target.value }); setApproved(false); setReviewedFingerprint(null) }} disabled={busy} /></label><label>Hashtags<input value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => { setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) }); setApproved(false); setReviewedFingerprint(null) }} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{saveError}</p>}<button className="ghost draft-save" disabled={busy || !draftMatchesBrief} onClick={() => { void save('draft') }}><FileText /> {saving ? 'Saving…' : postId ? 'Update draft' : 'Save draft'}</button><div className="approval"><input id="approve" type="checkbox" checked={isApproved && draftMatchesBrief} onChange={(event) => { setApproved(event.target.checked); setReviewedFingerprint(event.target.checked ? fingerprint : null) }} disabled={busy || !draftMatchesBrief} /><label htmlFor="approve"><strong>I reviewed and approve this content</strong><span>Required before saving as approved or scheduling.</span></label></div><button className="primary wide" disabled={!isApproved || !draftMatchesBrief || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? 'Saving…' : 'Approve & save'}</button></>}</div></div></section>
+  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>{t("1")}<b>{t("Brief")}</b></span><i /><span className={draft ? 'current' : ''}>{t("2")}<b>{t("Review")}</b></span><i /><span>{t("3")}<b>{t("Approve")}</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">{t("STEP 1 — YOUR IDEA")}</span><h2>{t("What do you want to share?")}</h2><label>{t("Content idea")}<textarea value={idea} onChange={(event) => { setIdea(event.target.value); setApproved(false); setReviewedFingerprint(null) }} placeholder={t("Example: Five simple ways small businesses can create better Instagram posts...")} maxLength={500} disabled={busy} /><small>{idea.length}{t("/500 · Minimum 10 characters")}</small></label><div className="field-row"><label>{t("Platform")}<select value={platform} onChange={(event) => { setPlatform(event.target.value as Platform); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option} value={option}>{t(option)}</option>)}</select></label><label>{t("Tone")}<select value={tone} onChange={(event) => { setTone(event.target.value); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option} value={option}>{t(option)}</option>)}</select></label></div><div className="field-row"><label>{t("Content language")}<select aria-label={t("Content language")} value={language} onChange={(event) => { setLanguage(event.target.value as ContentLanguage); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}><option value="en">{t("English")}</option><option value="ar">{t("العربية")}</option></select></label><label>{t("Target market")}<select aria-label={t("Target market")} value={market} onChange={(event) => { setMarket(event.target.value as Market); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['General', 'UAE', 'Saudi Arabia', 'Kuwait', 'Gulf'].map((option) => <option key={option} value={option}>{t(option)}</option>)}</select></label></div><button className="primary wide" disabled={!canGenerate || busy} onClick={() => { void generate() }}><WandSparkles /> {generating ? t("Generating…") : t("Generate draft")}</button><p className="fineprint">{t("AI drafts use a secure server-side provider when signed in. Local preview mode uses templates. Every post still requires your approval.")}</p>{saveError && !draft && <p className="form-error" role="alert">{t(saveError)}</p>}</div><div className="panel preview-panel"><span className="eyebrow">{t("STEP 2 — REVIEW & EDIT")}</span><h2>{t("Your draft")}</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>{t("Your generated draft will appear here.")}</p></div> : <><label>{t("Caption")}<textarea className="caption" dir={language === 'ar' ? 'rtl' : 'ltr'} lang={language} value={draft.caption} onChange={(event) => { setDraft({ ...draft, caption: event.target.value }); setApproved(false); setReviewedFingerprint(null) }} disabled={busy} /></label><label>{t("Hashtags")}<input dir={language === 'ar' ? 'rtl' : 'ltr'} value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => { setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) }); setApproved(false); setReviewedFingerprint(null) }} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{t(saveError)}</p>}<button className="ghost draft-save" disabled={busy || !draftMatchesBrief} onClick={() => { void save('draft') }}><FileText /> {saving ? t("Saving…") : postId ? t("Update draft") : t("Save draft")}</button><div className="approval"><input id="approve" type="checkbox" checked={isApproved && draftMatchesBrief} onChange={(event) => { setApproved(event.target.checked); setReviewedFingerprint(event.target.checked ? fingerprint : null) }} disabled={busy || !draftMatchesBrief} /><label htmlFor="approve"><strong>{t("I reviewed and approve this content")}</strong><span>{t("Required before saving as approved or scheduling.")}</span></label></div><button className="primary wide" disabled={!isApproved || !draftMatchesBrief || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? t("Saving…") : t("Approve & save")}</button></>}</div></div></section>
 }
 
 function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpdate: (post: Post) => Promise<void>; onView: (post: Post) => void; disabled: boolean }) {
+  const { t } = useLocale()
   const approved = useMemo(() => posts.filter((post) => post.status === 'approved' || post.status === 'scheduled'), [posts])
   const [scheduleTimes, setScheduleTimes] = useState<Record<string, string>>({})
   const [savingId, setSavingId] = useState<string | null>(null)
@@ -351,7 +365,7 @@ function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpda
     return scheduleTimes[post.id] ?? (post.scheduledFor ? toDateTimeInput(new Date(post.scheduledFor)) : defaultScheduleTime)
   }
 
-  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">APPROVED CONTENT ONLY</span><h3>Ready to schedule</h3></div></div>{error && <p className="form-error" role="alert">{error}</p>}{approved.length === 0 ? <div className="empty"><CalendarDays /><h3>No approved content yet</h3><p>Review and approve a draft before it can appear here.</p></div> : <div className="post-list">{approved.map((post) => { const busy = disabled || savingId === post.id; return <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.scheduledFor ? `Scheduled for ${new Date(post.scheduledFor).toLocaleString()}` : 'Approved and ready'}</p></div><div className="schedule-controls"><button className="ghost" disabled={busy} onClick={() => onView(post)}>View</button><input aria-label={`Schedule ${post.idea}`} type="datetime-local" value={scheduleTimeFor(post)} onChange={(event) => setScheduleTimes((times) => ({ ...times, [post.id]: event.target.value }))} disabled={busy} /><div><button className="ghost" disabled={busy} onClick={() => schedule(post)}><CalendarDays /> {busy ? 'Saving…' : post.status === 'approved' ? 'Schedule' : 'Reschedule'}</button>{post.status === 'scheduled' && <button className="ghost unschedule" disabled={busy} onClick={() => unschedule(post)}>Unschedule</button>}</div></div></article> })}</div>}</div></section>
+  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">{t("APPROVED CONTENT ONLY")}</span><h3>{t("Ready to schedule")}</h3></div></div>{error && <p className="form-error" role="alert">{t(error)}</p>}{approved.length === 0 ? <div className="empty"><CalendarDays /><h3>{t("No approved content yet")}</h3><p>{t("Review and approve a draft before it can appear here.")}</p></div> : <div className="post-list">{approved.map((post) => { const busy = disabled || savingId === post.id; return <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.scheduledFor ? `Scheduled for ${new Date(post.scheduledFor).toLocaleString()}` : t("Approved and ready")}</p></div><div className="schedule-controls"><button className="ghost" disabled={busy} onClick={() => onView(post)}>{t("View")}</button><input aria-label={`Schedule ${post.idea}`} type="datetime-local" value={scheduleTimeFor(post)} onChange={(event) => setScheduleTimes((times) => ({ ...times, [post.id]: event.target.value }))} disabled={busy} /><div><button className="ghost" disabled={busy} onClick={() => schedule(post)}><CalendarDays /> {busy ? t("Saving…") : post.status === 'approved' ? t("Schedule") : t("Reschedule")}</button>{post.status === 'scheduled' && <button className="ghost unschedule" disabled={busy} onClick={() => unschedule(post)}>{t("Unschedule")}</button>}</div></div></article> })}</div>}</div></section>
 }
 
 function toDateTimeInput(date: Date) {

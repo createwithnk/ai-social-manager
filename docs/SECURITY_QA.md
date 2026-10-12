@@ -16,6 +16,14 @@ This branch contains proposed hardening changes. It is not approved for producti
 
 See the [12 October development report](DEVELOPMENT_REPORT_2026-10-12.md) for verified checks and outstanding project confirmation.
 
+The ongoing roadmap pass adds local PostgreSQL tests for actual approval/usage migrations and private Storage policies. See [current status](PROJECT_STATUS.md) and [test report](TEST_REPORT.md), which supersede that earlier snapshot for new work. No migrations have been applied remotely.
+
+- Verify quota RPC execution is restricted to service_role and uses the server-verified user ID, never a request-body user ID.
+- Verify clients cannot alter attempts or approval identity/timestamps.
+- Verify edits reset scheduled/approved content and scheduled inserts are rejected.
+- Verify private media is isolated by owner folder, cannot be overwritten, and signed preview URLs are never logged.
+- Client media signature validation is defense in depth; add server-side scanning and storage quotas before public access.
+
 ## Deployment restrictions
 - No public deployment, live billing, payment document submission, or social publishing without explicit owner approval.
 - Do not bypass RLS, weaken password requirements, or use unofficial social APIs.

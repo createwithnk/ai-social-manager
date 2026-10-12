@@ -86,8 +86,9 @@ export function useAuth(): AuthState {
     let unsubscribe: (() => void) | undefined
     try {
       const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true)
         if (!active) return
+        if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true)
+        if (event === 'SIGNED_OUT') setRecoveryMode(false)
         settled = true
         window.clearTimeout(timeoutId)
         setError(null)
@@ -144,11 +145,15 @@ export function useAuth(): AuthState {
 
   const signUp = useCallback(async (email: string, password: string): Promise<AuthActionResult> => {
     if (!supabase) return { notice: 'Supabase is not configured for this app.' }
+    if (password.length < 12 || password.length > 128) {
+      setError('Use a password between 12 and 128 characters.')
+      return {}
+    }
 
     setLoading(true)
     setError(null)
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
+      const { data, error: signUpError } = await supabase.auth.signUp({ email: email.trim(), password })
       if (signUpError) {
         setError(signUpError.message)
         return {}
@@ -158,6 +163,7 @@ export function useAuth(): AuthState {
         setStatus('authenticated')
         return {}
       }
+      setUser(null)
       setStatus('unauthenticated')
       return { notice: 'Check your email to confirm your account, then sign in.' }
     } catch (authError) {
@@ -203,7 +209,6 @@ export function useAuth(): AuthState {
         setError(updateError.message)
         return {}
       }
-      setRecoveryMode(false)
       return { notice: 'Your password has been updated successfully.' }
     } catch (updateError) {
       setError(messageFor(updateError))
@@ -227,6 +232,7 @@ export function useAuth(): AuthState {
         return {}
       }
       setUser(null)
+      setRecoveryMode(false)
       setStatus('unauthenticated')
       return {}
     } catch (authError) {

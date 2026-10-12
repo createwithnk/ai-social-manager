@@ -7,6 +7,7 @@ The React app invokes the Supabase Edge Function `generate-content` when signed 
 - `ALLOWED_ORIGINS`: comma-separated exact development and production frontend origins, for example `http://localhost:5173`. Set only trusted origins. This is a browser CORS allowlist, not a substitute for authentication.
 - `GEMINI_MODEL`: optional; defaults to `gemini-2.5-flash`.
 - Supabase's built-in `SUPABASE_URL` and `SUPABASE_ANON_KEY` (or `SUPABASE_PUBLISHABLE_KEY`) must be available to the function.
+- Supabase's built-in `SUPABASE_SERVICE_ROLE_KEY` is used only server-side to reserve an AI attempt through the restricted `consume_ai_credit` RPC. Never place it in frontend configuration. Apply the approval/usage migration before deploying this version of the function; missing usage configuration fails closed.
 - Keep JWT verification enabled for the Edge Function.
 
 ## Before enabling
@@ -16,6 +17,12 @@ The React app invokes the Supabase Edge Function `generate-content` when signed 
 4. Test browser OPTIONS preflight, authenticated POST, expired JWT, malformed JSON, provider errors, and valid caption/hashtags.
 5. Verify Gemini usage limits and cost before allowing public traffic; add per-user rate limits and quotas before launch.
 6. Keep manual approval before saving as approved, scheduling, or any future publishing.
+
+The generator accepts `language` (`en` or `ar`) and `market` (`General`, `UAE`, `Saudi Arabia`, `Kuwait`, `Gulf`). Omitted values default to English/general for older clients. Arabic caption editing uses RTL and Arabic hashtags are validated with Unicode letters/numbers. Each authenticated user may reserve 20 generation attempts per UTC day. Failed provider attempts still count; malformed briefs and rejected authentication do not. This conservative policy avoids automatic retry charges. No paid subscription allowance is enabled.
+
+The Edge adapter requires a verified email user and rejects Supabase anonymous-auth sessions. Ensure email confirmation is actually configured and verified on the confirmed project. No auth settings have been changed by this development pass.
+
+The matching frontend now reads language and server approval metadata from posts. Coordinate schema/function/frontend release after owner approval; it is not compatible with an unmigrated database. Existing approved posts need fresh review rather than fabricated approval timestamps.
 
 ## Offline verification
 

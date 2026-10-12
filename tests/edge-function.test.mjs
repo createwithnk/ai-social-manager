@@ -8,7 +8,7 @@ const provider = (value = draft, finishReason = 'STOP') => Response.json({ candi
 function setup(overrides = {}) {
   const calls = []
   const env = { ALLOWED_ORIGINS: 'http://localhost:5173', SUPABASE_URL: 'https://example.invalid', SUPABASE_ANON_KEY: 'test-public-key', GEMINI_API_KEY: 'test-secret-sentinel', ...overrides.env }
-  const handler = createHandler({ env: (name) => env[name], authenticate: overrides.authenticate ?? (async (_url, _key, token) => token === 'valid-token'), fetch: async (url, options) => { calls.push({ url, options }); return overrides.fetch ? overrides.fetch(url, options) : provider() }, timeoutMs: overrides.timeoutMs })
+  const handler = createHandler({ env: (name) => env[name], authenticate: overrides.authenticate ?? (async (_url, _key, token) => token === 'valid-token' ? 'verified-user-id' : null), consumeCredit: overrides.consumeCredit ?? (async () => true), fetch: async (url, options) => { calls.push({ url, options }); return overrides.fetch ? overrides.fetch(url, options) : provider() }, timeoutMs: overrides.timeoutMs })
   const request = (body = brief, options = {}) => handler(new Request('https://example.invalid/generate', { method: 'POST', headers: { Origin: 'http://localhost:5173', Authorization: 'Bearer valid-token', 'Content-Type': 'application/json', ...options.headers }, body: typeof body === 'string' ? body : JSON.stringify(body), ...options.init }))
   return { handler, request, calls }
 }
@@ -103,4 +103,29 @@ test('provider HTTP, network, JSON, schema and incomplete response errors are sa
 test('timeout stays active while reading provider body', async () => {
   const result = await setup({ timeoutMs: 5, fetch: async (_url, { signal }) => ({ ok: true, json: () => new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true })) }) }).request()
   assert.equal(result.status, 502)
+})
+test('credits use verified user identity, never a body-supplied user ID', async () => {
+  const users = []
+  const result = await setup({ consumeCredit: async (id) => { users.push(id); return true } }).request({ ...brief, user_id: 'forged-user', language: 'ar', market: 'UAE' })
+  assert.equal(result.status, 200)
+  assert.deepEqual(users, ['verified-user-id'])
+})
+test('exhausted quotas and usage-service failures never call Gemini', async () => {
+  for (const [consumeCredit, status] of [[async () => false, 429], [async () => { throw new Error('private-details') }, 503]]) {
+    const { request, calls } = setup({ consumeCredit })
+    const result = await request()
+    assert.equal(result.status, status)
+    assert.equal(calls.length, 0)
+    assert.doesNotMatch(await result.text(), /private-details/)
+  }
+})
+test('Arabic Gulf prompts carry validated preferences and accept Arabic hashtags', async () => {
+  const { request, calls } = setup({ fetch: async () => provider({ ...draft, hashtags: ['تسويق', 'أعمال', 'الإمارات'] }) })
+  assert.equal((await request({ ...brief, language: 'ar', market: 'UAE' })).status, 200)
+  const sent = JSON.parse(calls[0].options.body)
+  assert.match(sent.systemInstruction.parts[0].text, /Modern Standard Arabic/)
+  assert.match(sent.systemInstruction.parts[0].text, /UAE/)
+  for (const invalid of [{ language: 'invalid' }, { market: 'Unknown' }, { language: [] }]) {
+    assert.equal((await request({ ...brief, ...invalid })).status, 400)
+  }
 })
