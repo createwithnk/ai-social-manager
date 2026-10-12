@@ -11,6 +11,11 @@ Human-in-the-loop social media content workspace. Turn an idea into a platform-s
 - Approved-content calendar with custom scheduling, rescheduling, and unscheduling
 - Browser persistence for local MVP data
 - No automatic publishing and no client-side API keys
+- Arabic/English content, Gulf-market targeting, and Arabic interface with RTL support
+- Private media library with server upload validation and expiring previews
+- Server-recorded approval, daily AI attempts, and private upload/storage limits (migrations required)
+
+See [project status](docs/PROJECT_STATUS.md) for local validation, live-project blockers, and release prerequisites. This development version requires coordinated schema and Edge Function updates; it has not been deployed by this agent.
 
 ## Run locally
 

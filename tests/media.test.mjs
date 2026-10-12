@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { loadModule } from './helpers.mjs'
+import { matchesMediaHeader, mediaFormats } from '../supabase/functions/_shared/media-validation.ts'
 
 const user = '11111111-1111-4111-8111-111111111111'
 const other = '22222222-2222-4222-8222-222222222222'
@@ -14,8 +15,8 @@ function setup(overrides = {}) {
     createSignedUrl: async (path, expires) => { calls.push(['sign', path, expires]); return { data: { signedUrl: 'https://private.example.invalid/preview' }, error: null } },
     ...overrides.bucket,
   }
-  const client = { auth: { getUser: async () => ({ data: { user: { id: overrides.userId ?? user } }, error: null }) }, storage: { from: () => bucket } }
-  return { ...loadModule('../src/lib/media.ts', { './supabase': { supabase: client } }, '', { File }), calls }
+  const client = { auth: { getUser: async () => ({ data: { user: { id: overrides.userId ?? user } }, error: null }) }, storage: { from: () => bucket }, functions: { invoke: async (name, options) => { calls.push(['invoke', name, options]); return { data: { path: `${user}/opaque.png` }, error: overrides.invokeError ?? null } } } }
+  return { ...loadModule('../src/lib/media.ts', { './supabase': { supabase: client }, '../../supabase/functions/_shared/media-validation': { matchesMediaHeader, mediaFormats } }, '', { File }), calls }
 }
 test('media validates size, MIME and file signature before uploads', async () => {
   const { validateMedia } = setup()
@@ -26,13 +27,13 @@ test('media validates size, MIME and file signature before uploads', async () =>
   await assert.rejects(validateMedia({ type: 'video/mp4', size: 50 * 1024 * 1024 + 1 }))
   await assert.rejects(validateMedia(new File([], 'empty.png', { type: 'image/png' })))
 })
-test('uploads use owner-specific opaque names and never overwrite existing objects', async () => {
+test('uploads go through the server validation endpoint instead of direct Storage', async () => {
   const { uploadMedia, calls } = setup()
   await uploadMedia(user, png)
-  assert.equal(calls[0][0], 'upload')
-  assert.equal(calls[0][1].startsWith(`${user}/`), true)
-  assert.equal(calls[0][1].includes('private-name'), false)
-  assert.equal(calls[0][3].upsert, false)
+  assert.equal(calls[0][0], 'invoke')
+  assert.equal(calls[0][1], 'upload-media')
+  assert.equal(calls[0][2].headers['Content-Type'], 'image/png')
+  assert.equal(calls.some((call) => call[0] === 'upload'), false)
 })
 test('expired/mismatched sessions and cross-owner deletion never reach storage', async () => {
   const { uploadMedia, deleteMedia, calls } = setup({ userId: other })
@@ -45,6 +46,6 @@ test('private previews use expiring signed URLs and storage failures are sanitiz
   const { listMedia, calls } = setup()
   assert.equal((await listMedia(user)).length, 1)
   assert.equal(calls[0][2], 300)
-  const failing = setup({ bucket: { upload: async () => ({ error: new Error('private-storage-detail') }) } })
+  const failing = setup({ invokeError: new Error('private-storage-detail') })
   await assert.rejects(failing.uploadMedia(user, png), (error) => !error.message.includes('private-storage-detail'))
 })

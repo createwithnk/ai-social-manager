@@ -1,26 +1,15 @@
 import { supabase } from './supabase'
+import { matchesMediaHeader, mediaFormats } from '../../supabase/functions/_shared/media-validation'
 
 export interface MediaItem { path: string; name: string; url: string; kind: 'image' | 'video' }
 export const MEDIA_BUCKET = 'aasiflow-media'
-const types: Record<string, { extension: string; max: number }> = {
-  'image/jpeg': { extension: 'jpg', max: 10 * 1024 * 1024 },
-  'image/png': { extension: 'png', max: 10 * 1024 * 1024 },
-  'image/webp': { extension: 'webp', max: 10 * 1024 * 1024 },
-  'video/mp4': { extension: 'mp4', max: 50 * 1024 * 1024 },
-  'video/webm': { extension: 'webm', max: 50 * 1024 * 1024 },
-}
 
 export async function validateMedia(file: File): Promise<string> {
-  const format = types[file.type]
+  const format = Object.hasOwn(mediaFormats, file.type) ? mediaFormats[file.type] : undefined
   if (!format) throw new Error('Choose a JPEG, PNG, WebP, MP4, or WebM file.')
   if (!file.size || file.size > format.max) throw new Error('Images must be at most 10 MiB and videos at most 50 MiB.')
   const header = new Uint8Array(await file.slice(0, 16).arrayBuffer())
-  const matches = (bytes: number[], offset = 0) => bytes.every((byte, index) => header[offset + index] === byte)
-  const valid = file.type === 'image/jpeg' ? matches([0xff, 0xd8, 0xff])
-    : file.type === 'image/png' ? matches([137, 80, 78, 71, 13, 10, 26, 10])
-    : file.type === 'image/webp' ? matches([82, 73, 70, 70]) && matches([87, 69, 66, 80], 8)
-    : file.type === 'video/mp4' ? matches([102, 116, 121, 112], 4)
-    : matches([26, 69, 223, 163])
+  const valid = matchesMediaHeader(file.type, header)
   if (!valid) throw new Error('File contents do not match the selected media type.')
   return format.extension
 }
@@ -45,11 +34,14 @@ export async function listMedia(userId: string): Promise<MediaItem[]> {
 }
 
 export async function uploadMedia(userId: string, file: File): Promise<void> {
-  const extension = await validateMedia(file)
-  const bucket = await clientForUser(userId)
-  const path = `${userId}/${crypto.randomUUID()}.${extension}`
-  const { error } = await bucket.upload(path, file, { contentType: file.type, upsert: false, cacheControl: '300' })
+  await validateMedia(file)
+  await clientForUser(userId)
+  if (!supabase) throw new Error('Sign in to upload media.')
+  const { data, error } = await supabase.functions.invoke('upload-media', { body: file, headers: { 'Content-Type': file.type } })
+  if (error?.context?.status === 429) throw new Error('Daily upload or storage limit reached. Delete unused media or try tomorrow.')
+  if (error?.context?.status === 503) throw new Error('Upload service unavailable or tracking delayed. Refresh your library before retrying.')
   if (error) throw new Error('Upload failed. Check your connection and the media size, then retry.')
+  if (typeof data?.path !== 'string' || !data.path.startsWith(`${userId}/`)) throw new Error('Upload response was invalid. Refresh your media library.')
 }
 
 export async function deleteMedia(userId: string, path: string): Promise<void> {

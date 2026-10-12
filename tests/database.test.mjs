@@ -23,7 +23,7 @@ test('PostgreSQL RLS, approval transitions and server-only quotas', async (t) =>
       insert into auth.users values ('${userA}'), ('${userB}');
       create schema storage;
       create table storage.buckets(id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
-      create table storage.objects(id uuid primary key default gen_random_uuid(), bucket_id text references storage.buckets(id), name text unique);
+      create table storage.objects(id uuid primary key default gen_random_uuid(), bucket_id text references storage.buckets(id), name text unique, metadata jsonb default '{}');
       alter table storage.objects enable row level security;
       create function storage.foldername(name text) returns text[] language sql immutable as
       $$ select string_to_array(regexp_replace(name, '/[^/]+$', ''), '/') $$;
@@ -92,8 +92,10 @@ test('PostgreSQL RLS, approval transitions and server-only quotas', async (t) =>
       await assert.rejects(db.query('select public.consume_ai_credit($1)', [userA]))
     })
     await t.test('private storage allows only the owners folder and blocks object replacement', async () => {
-      await asUser(userA)
+      await db.exec('reset role')
       await db.query("insert into storage.objects(bucket_id,name) values ('aasiflow-media',$1)", [`${userA}/photo.png`])
+      await asUser(userA)
+      await assert.rejects(db.query("insert into storage.objects(bucket_id,name) values ('aasiflow-media',$1)", [`${userA}/client-upload.png`]))
       await assert.rejects(db.query("insert into storage.objects(bucket_id,name) values ('aasiflow-media',$1)", [`${userB}/photo.png`]))
       assert.equal((await db.query("update storage.objects set name=$1 returning id", [`${userA}/replaced.png`])).rows.length, 0)
       await asUser(userB)
@@ -106,6 +108,27 @@ test('PostgreSQL RLS, approval transitions and server-only quotas', async (t) =>
       assert.equal(bucket.public, false)
       assert.equal(Number(bucket.file_size_limit), 52428800)
       assert.equal(bucket.allowed_mime_types.includes('image/svg+xml'), false)
+    })
+    await t.test('media reservations enforce daily attempts, per-file size and storage capacity', async () => {
+      await asUser(userA)
+      await assert.rejects(db.query("select public.reserve_media_upload($1,1,'png')", [userA]))
+      await db.exec('reset role; set role service_role')
+      await assert.rejects(db.query("select public.reserve_media_upload($1,10485761,'png')", [userA]))
+      await assert.rejects(db.query("select public.reserve_media_upload($1,10,'svg')", [userA]))
+      const first = (await db.query("select public.reserve_media_upload($1,52428800,'mp4') as value", [userA])).rows[0].value
+      assert.equal(first.path.startsWith(`${userA}/`), true)
+      const second = (await db.query("select public.reserve_media_upload($1,52428800,'mp4') as value", [userA])).rows[0].value
+      assert.equal((await db.query("select public.reserve_media_upload($1,1,'png') as value", [userA])).rows[0].value, null)
+      await db.query('select public.finish_media_upload($1,false)', [first.id])
+      await db.query('select public.finish_media_upload($1,false)', [second.id])
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const next = (await db.query("select public.reserve_media_upload($1,1,'png') as value", [userA])).rows[0].value
+        assert.ok(next)
+        await db.query('select public.finish_media_upload($1,false)', [next.id])
+      }
+      assert.equal((await db.query("select public.reserve_media_upload($1,1,'png') as value", [userA])).rows[0].value, null)
+      await asUser(userB)
+      assert.equal((await db.query('select * from public.media_upload_attempts')).rows.length, 0)
     })
   } finally { await db.close() }
 })

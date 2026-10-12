@@ -22,7 +22,7 @@ The ongoing roadmap pass adds local PostgreSQL tests for actual approval/usage m
 - Verify clients cannot alter attempts or approval identity/timestamps.
 - Verify edits reset scheduled/approved content and scheduled inserts are rejected.
 - Verify private media is isolated by owner folder, cannot be overwritten, and signed preview URLs are never logged.
-- Client media signature validation is defense in depth; add server-side scanning and storage quotas before public access.
+- Server upload signatures/byte limits and storage reservations are implemented and tested locally. Verify real Storage behavior and add scanning/quarantine before public access.
 
 ## Deployment restrictions
 - No public deployment, live billing, payment document submission, or social publishing without explicit owner approval.

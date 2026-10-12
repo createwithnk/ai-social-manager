@@ -36,6 +36,7 @@ export default function MediaLibrary({ userId }: { userId?: string }) {
   return <section className="content"><div className="panel">
     <div className="panel-head"><div><span className="eyebrow">{t("PRIVATE MEDIA")}</span><h2>{t("Your images and videos")}</h2></div><button className="ghost" onClick={refresh} disabled={!userId || busy || loading}>{t("Refresh previews")}</button></div>
     <p>{t("JPEG, PNG, WebP up to 10 MiB. MP4 and WebM up to 50 MiB. Previews expire after five minutes; refresh to renew them.")}</p>
+    <p>{t('Five upload attempts per UTC day. Private storage limit: 100 MiB.')}</p>
     {!userId && <p className="form-notice">{t("Sign in to upload and manage private media.")}</p>}
     <label>{t("Upload media")}<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" disabled={!userId || busy || loading} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; void upload(file) }} /></label>
     {busy && <p role="status">{t("Saving media…")}</p>}{loading && <p role="status">{t("Loading private previews…")}</p>}

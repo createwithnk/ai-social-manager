@@ -10,8 +10,8 @@
 - [ ] Confirm email delivery, verification, recovery redirects, password policy, secure logout and expired sessions.
 - [ ] Verify Deno entrypoints, JWT gateway configuration, exact allowed frontend origins, real Gemini response format and model access.
 - [ ] Confirm server-only Gemini/service-role keys, no secret logging, quotas and provider-spend safeguards. Never place server keys in VITE variables.
-- [ ] Add server-side media signature validation/quarantine, storage quotas and abuse controls before public uploads.
-- [ ] Complete Arabic interface/accessibility/mobile browser verification.
+- [ ] Verify the implemented server-side signatures, bounded reads and storage quotas against live Storage. Add scanning/quarantine and abuse monitoring before public uploads.
+- [ ] Complete native-speaker review, remaining dynamic-message translations and broader accessibility/device checks. Local desktop/mobile Arabic workflows and keyboard navigation already pass.
 - [ ] Verify media privacy, expired previews, deletion confirmation and any draft attachment ownership.
 - [ ] Review privacy/retention/customer support requirements with the business owner; do not infer legal compliance from code.
 - [ ] Establish monitoring for failure rates, timeouts, quota denials and storage growth without logging ideas, content, credentials, signed URLs or personal information.

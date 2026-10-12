@@ -1,6 +1,9 @@
 export type Locale = 'en' | 'ar'
 export const arabic: Record<string, string> = {
   'Create new content': 'إنشاء محتوى جديد', '…': '…', '': '',
+  'Five upload attempts per UTC day. Private storage limit: 100 MiB.': 'خمس محاولات رفع يوميًا بالتوقيت العالمي. حد التخزين الخاص: 100 ميبيبايت.',
+  'Daily upload or storage limit reached. Delete unused media or try tomorrow.': 'بلغت حد الرفع اليومي أو التخزين. احذف وسائط غير مستخدمة أو حاول غدًا.',
+  'Upload service unavailable or tracking delayed. Refresh your library before retrying.': 'خدمة الرفع غير متاحة أو تأخر تسجيل الملف. حدّث المكتبة قبل المحاولة مجددًا.',
   'Loading AasiFlowAI': 'جارٍ تحميل AasiFlowAI', 'Checking your session securely.': 'جارٍ التحقق من جلستك بأمان.',
   'CONNECTION ISSUE': 'مشكلة في الاتصال', 'We couldn’t start your secure session': 'تعذر بدء جلستك الآمنة', 'Retry session check': 'إعادة التحقق من الجلسة',
   'ACCOUNT RECOVERY': 'استعادة الحساب', 'Set a new password': 'تعيين كلمة مرور جديدة', 'Choose a new password of at least 12 characters.': 'اختر كلمة مرور جديدة لا تقل عن 12 حرفًا.',

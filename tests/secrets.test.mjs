@@ -20,7 +20,7 @@ test('frontend source and built assets contain no Gemini keys or server secret a
   }
 })
 test('Edge Function has no logging calls and local provider secrets cannot enter Vite', () => {
-  for (const file of files(path.join(root, 'supabase/functions/generate-content'))) {
+  for (const file of files(path.join(root, 'supabase/functions'))) {
     if (!file.endsWith('.ts')) continue
     assert.equal(/console\s*\.|\blogger\s*\./.test(fs.readFileSync(file, 'utf8')), false, `Logging call found in ${path.relative(root, file)}`)
   }

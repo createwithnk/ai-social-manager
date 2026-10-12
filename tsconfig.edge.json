@@ -3,10 +3,20 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ES2022", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "strict": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "npm:@supabase/supabase-js@2.112.4": ["./node_modules/@supabase/supabase-js/dist/index.d.mts"]
+    }
   },
-  "include": ["supabase/functions/generate-content/handler.ts"]
+  "include": [
+    "supabase/functions/**/*.ts",
+    "tests/types/edge-runtime.d.ts"
+  ]
 }
