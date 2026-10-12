@@ -5,7 +5,12 @@ const allowedTones = ['Friendly', 'Professional', 'Bold', 'Educational']
 
 Deno.serve(async (request) => {
   const origin = request.headers.get('origin') ?? ''
-  const headers = { 'Content-Type': 'application/json', 'Vary': 'Origin' }
+  const allowedOrigins = (Deno.env.get('ALLOWED_ORIGINS') ?? '').split(',').map((item) => item.trim()).filter(Boolean)
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : ''
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Vary': 'Origin', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
+  if (corsOrigin) headers['Access-Control-Allow-Origin'] = corsOrigin
+  if (request.method === 'OPTIONS') return new Response(null, { status: corsOrigin ? 204 : 403, headers })
+  if (origin && !corsOrigin) return new Response(JSON.stringify({ error: 'Origin not allowed' }), { status: 403, headers })
   const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers })
   if (request.method !== 'POST') return reply(405, { error: 'Method not allowed' })
   if (request.headers.get('content-type')?.split(';')[0] !== 'application/json') return reply(415, { error: 'Expected JSON' })
@@ -27,7 +32,7 @@ Deno.serve(async (request) => {
     return reply(400, { error: 'Invalid content brief' })
   }
   try {
-    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-3.8-flash'
+    const model = Deno.env.get('GEMINI_MODEL') ?? 'gemini-2.5-flash'
     if (!/^gemini-[a-z0-9.-]+$/.test(model)) return reply(503, { error: 'Invalid model configuration' })
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 25000)
