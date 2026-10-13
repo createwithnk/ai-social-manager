@@ -1,0 +1,55 @@
+{
+  "projectRef": "nkfecpdegcmsapvbviky",
+  "branch": "chore/security-and-approval-hardening",
+  "approved": false,
+  "defaults": {
+    "aiEnabled": false,
+    "uploadsEnabled": false,
+    "dailyCallLimit": 0,
+    "dailyBudgetUsd": 0
+  },
+  "firstApproval": "Review isolated staging/backup evidence before authorizing these exact SQL payloads. No blanket database push.",
+  "separateApprovals": [
+    "Hosted Auth settings",
+    "Owner UUID privileges",
+    "Test UUID membership",
+    "Frontend and generator release",
+    "Provider usage with verified no-charge configuration",
+    "Real user invitations"
+  ],
+  "normalization": "UTF-8 content with CRLF normalized to LF",
+  "files": [
+    {
+      "path": "supabase/migrations/20261013000000_require_prior_approval.sql",
+      "sha256": "1f9bc3e229183d5df1f1d7f80d28d688218e4e9c4726d2a920689ce84a38c756"
+    },
+    {
+      "path": "supabase/migrations/20261014000000_owner_monitoring.sql",
+      "sha256": "6c306c0c7b6c93b7a84ae613c019bd93d6bef7865c35b3027b4a9f192131e6ed"
+    },
+    {
+      "path": "supabase/proposals/20261015000000_private_beta_safety.sql",
+      "sha256": "bbc5892b77a6371d2c73d5dbebdd98db24707c61c3aec0259109bb67368f573c"
+    },
+    {
+      "path": "supabase/proposals/20261015000000_private_beta_safety.rollback.sql",
+      "sha256": "35ab8186c4a5a7055428a5ef905320cc5a4615fb4c680b80b8145b98ccbd88a1"
+    },
+    {
+      "path": "supabase/functions/generate-content/index.ts",
+      "sha256": "8b33b50e13e6415778a2aacae4247f2c31e890b1294fa18714eef8cc2effa25d"
+    },
+    {
+      "path": "supabase/functions/generate-content/handler.ts",
+      "sha256": "ff02e07897f6ce053c04a5adeb4c133f752cc1ed10c34abbbc1f62274b7e574f"
+    },
+    {
+      "path": "supabase/functions/generate-content/gemini.ts",
+      "sha256": "114a0d1591688a8c5c9219343a1f2fc4a02e8639a848dd6946c614379a893f81"
+    },
+    {
+      "path": "supabase/functions/generate-content/monitoring.ts",
+      "sha256": "8743280c13b91c37cc2891c7aa11c00879ff42fafc225cbde73ea4f921a01dd1"
+    }
+  ]
+}

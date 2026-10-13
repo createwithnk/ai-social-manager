@@ -1,5 +1,13 @@
 # AasiFlowAI Beta launch preparation
 
+## Current release candidate — 13 October 2026
+
+Checkpoint c246e2f is pushed and both push/PR CI passed. The latest safety continuation prepares expiring invite-only database access, trusted AI usage/cost estimates with conservative configurable limits, bounded coded runtime reports and a reviewed operational rollback. New uploads and voice recording are disabled for the first text-draft Beta; existing objects are retained. No live changes or deployment occurred.
+
+The exact current handoff is [PRIVATE_BETA_RELEASE_REVIEW.md](PRIVATE_BETA_RELEASE_REVIEW.md), with source hashes in deployment/beta-review.json. It supersedes older table entries below concerning public signup, unavailable local instrumentation and pushing c246e2f. Hosted instrumentation is still unavailable until approved SQL/runtime changes are applied. Native concurrency, hosted Auth/Storage/gateway checks, provider no-charge proof and native Arabic/accessibility acceptance remain blockers.
+
+Next live approval: after recoverable-backup/history/impact review, apply only the three named SQL files to nkfecpdegcmsapvbviky with AI/uploads disabled, zero request/budget limits and no membership/admin assignment. Restrictive access immediately blocks unlisted current accounts. Auth settings, test memberships, owner privileges, deployment, provider use and real invitations require separate approval.
+
 Status: NOT approved to launch. Confirmed project: nkfecpdegcmsapvbviky. Read-only GitHub verification found compatibility commit 4f4790ac63e1ab3ad86a39903a3b9e29096302e4 on chore/security-and-approval-hardening; CI run 38288727459 succeeded. PR #2 remains draft/unmerged.
 
 ## Proposed first Beta scope

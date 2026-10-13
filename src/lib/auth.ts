@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { supabase, supabaseConfigurationError } from './supabase'
+import { supabase, supabaseConfigurationError, isInvitationCallback } from './supabase'
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated' | 'unconfigured' | 'error'
 
@@ -43,7 +43,7 @@ export function useAuth(): AuthState {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(supabaseConfigurationError)
   const [sessionAttempt, setSessionAttempt] = useState(0)
-  const [recoveryMode, setRecoveryMode] = useState(false)
+  const [recoveryMode, setRecoveryMode] = useState(Boolean(isInvitationCallback))
 
   useEffect(() => {
     if (!supabase) return
@@ -144,36 +144,9 @@ export function useAuth(): AuthState {
   }, [])
 
   const signUp = useCallback(async (email: string, password: string): Promise<AuthActionResult> => {
-    if (!supabase) return { notice: 'Supabase is not configured for this app.' }
-    if (password.length < 12 || password.length > 128) {
-      setError('Use a password between 12 and 128 characters.')
-      return {}
-    }
-
-    setLoading(true)
-    setError(null)
-    try {
-      const { data, error: signUpError } = await supabase.auth.signUp({ email: email.trim(), password })
-      if (signUpError) {
-        setError(signUpError.message)
-        return {}
-      }
-      if (data.session) {
-        setUser(data.user)
-        setStatus('authenticated')
-        return {}
-      }
-      setUser(null)
-      setStatus('unauthenticated')
-      return { notice: 'Check your email to confirm your account, then sign in.' }
-    } catch (authError) {
-      setError(messageFor(authError))
-      return {}
-    } finally {
-      setLoading(false)
-    }
+    void email; void password
+    return { notice: 'The Private Beta is invite-only. Contact the owner for access.' }
   }, [])
-
   const requestPasswordReset = useCallback(async (email: string): Promise<AuthActionResult> => {
     if (!supabase) return { notice: 'Supabase is not configured for this app.' }
     const normalizedEmail = email.trim()

@@ -2,6 +2,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Capture only the flow flag before the Auth SDK removes callback parameters.
+export const isInvitationCallback = new URLSearchParams(window.location.hash.slice(1)).get('type') === 'invite'
 
 const usesExampleValues =
   supabaseUrl?.includes('your-project.supabase.co') ||

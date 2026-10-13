@@ -1,5 +1,7 @@
 # Backend compatibility reconciliation
 
+13 October continuation: canonical payload hashes remain unchanged. In addition to the pending scheduling guard and owner-monitoring migration, a separately reviewed proposal in supabase/proposals adds restrictive invite access and budget reservation/telemetry RPCs. It closes the legacy public quota path and uses the new project reservation gate while keeping the existing private per-user accounting. The runtime uses caller credentials for reservations and a server-only fixed completion RPC for numeric telemetry. AI attachments/new uploads are disabled for the first Beta. See PRIVATE_BETA_RELEASE_REVIEW.md for exact scope, impact and operational rollback. Earlier descriptions below record the compatibility baseline.
+
 Target: createwithnk/ai-social-manager, development branch chore/security-and-approval-hardening. Baseline: work/content-system-2026-10-03, commit 9c97e60. Project nkfecpdegcmsapvbviky was confirmed using owner confirmation and read-only metadata/schema/history checks on 12 October 2026.
 
 | Contract | Previous development proposal | Retained live/work implementation |

@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { loadModule } from './helpers.mjs'
 
-function harness(overrides = {}) {
+function harness(overrides = {}, invitation = false) {
   const states = []
   let cursor = 0
   let callback
@@ -23,22 +23,20 @@ function harness(overrides = {}) {
     useCallback: (fn) => fn,
     useEffect: (fn) => { if (!mounted) { cleanup = fn(); mounted = true } },
   }
-  const { useAuth } = loadModule('../src/lib/auth.ts', { react, './supabase': { supabase: client, supabaseConfigurationError: null } }, '', { window: { setTimeout, clearTimeout, location: { origin: 'https://app.example.invalid', pathname: '/' } } })
+  const { useAuth } = loadModule('../src/lib/auth.ts', { react, './supabase': { supabase: client, supabaseConfigurationError: null, isInvitationCallback: invitation } }, '', { window: { setTimeout, clearTimeout, location: { origin: 'https://app.example.invalid', pathname: '/' } } })
   const render = () => { cursor = 0; return useAuth() }
   return { render, calls, emit: (event, session) => callback(event, session), cleanup: () => cleanup?.(), user }
 }
-test('signup validates passwords before the API and requires email confirmation without a session', async () => {
+test('Private Beta signup never calls the public account-creation API', async () => {
   const h = harness()
   h.render()
   try {
     await Promise.resolve()
     await h.render().signUp(' test@example.invalid ', 'short')
     assert.equal(h.calls.length, 0)
-    assert.match(h.render().error, /12 and 128/)
     const result = await h.render().signUp(' test@example.invalid ', 'a-valid-long-password')
-    assert.match(result.notice, /confirm/)
-    assert.equal(h.render().status, 'unauthenticated')
-    assert.equal(h.calls[0].email, 'test@example.invalid')
+    assert.match(result.notice, /invite-only/)
+    assert.equal(h.calls.length, 0)
   } finally { h.cleanup() }
 })
 test('password recovery remains visible until explicitly continued and logout clears recovery', async () => {
@@ -76,4 +74,16 @@ test('late recovery callbacks after unmount do not change state', () => {
   h.emit('PASSWORD_RECOVERY', { user: h.user })
   assert.equal(h.render().recoveryMode, false)
   assert.equal(h.calls[0], 'unsubscribe')
+})
+
+test('invitation callback requires password setup before explicitly continuing', async () => {
+  const h = harness({},true)
+  h.render()
+  try {
+    assert.equal(h.render().recoveryMode,true)
+    await h.render().updatePassword('a-valid-long-password')
+    assert.equal(h.render().recoveryMode,true)
+    h.render().exitRecovery()
+    assert.equal(h.render().recoveryMode,false)
+  } finally { h.cleanup() }
 })

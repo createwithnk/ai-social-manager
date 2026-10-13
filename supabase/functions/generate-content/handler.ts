@@ -1,5 +1,6 @@
 import { createGeminiProvider } from './gemini.ts'
 import { readBody } from '../_shared/security.ts'
+import { readUsage, validReservation, type AiReservation, type AiUsage, type AiOutcome } from './monitoring.ts'
 
 interface Dependencies {
   env: (name: string) => string | undefined
@@ -9,6 +10,8 @@ interface Dependencies {
   timeoutMs?: number
   readTimeoutMs?: number
   readMedia?: (path: string, type: string, token: string) => Promise<{ mimeType: string; data: string }>
+  reserveAi?: (model: string, token: string) => Promise<AiReservation | null>
+  finishAi?: (id: string, outcome: AiOutcome, usage: AiUsage | null, latencyMs: number) => Promise<void>
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -92,8 +95,18 @@ export function createHandler(dependencies: Dependencies) {
     if (media != null && (!isRecord(media) || typeof media.path !== 'string' || !media.path.startsWith(`${userId}/`) ||
       !/^[A-Za-z0-9][A-Za-z0-9._-]{0,150}$/.test(media.path.slice(userId.length + 1)) ||
       typeof media.type !== 'string' || !['image/jpeg','image/png','image/webp','video/mp4','video/webm','audio/webm','audio/mp4','audio/mpeg','audio/wav','audio/ogg'].includes(media.type))) return reply(400, { error: 'Invalid attachment' })
+    // The runtime adapter always supplies the reservation path. Legacy dependency
+    // fixtures may still use consumeCredit; it is never an automatic RPC fallback.
+    let reservation: AiReservation | null = null
+    if (dependencies.reserveAi && (!dependencies.finishAi || model !== 'gemini-2.5-flash')) return reply(503, { error: 'AI monitoring is not configured' })
+    if (dependencies.reserveAi && media != null) return reply(400, { error: 'AI attachments are disabled for this Beta.' })
     try {
-      if (!await dependencies.consumeCredit(userId, token)) return reply(429, { error: 'Daily AI limit reached. Try again after midnight UTC.' })
+      if (dependencies.reserveAi) {
+        const result = await dependencies.reserveAi(model, token)
+        if (!result) return reply(429, { error: 'AI is paused or the Beta usage limit was reached.' })
+        if (!validReservation(result)) return reply(503, { error: 'AI usage checks unavailable. Please retry later.' })
+        reservation = result
+      } else if (!await dependencies.consumeCredit(userId, token)) return reply(429, { error: 'Daily AI limit reached. Try again after midnight UTC.' })
     } catch {
       return reply(503, { error: 'AI usage checks unavailable. Please retry later.' })
     }
@@ -106,13 +119,18 @@ export function createHandler(dependencies: Dependencies) {
     }
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), dependencies.timeoutMs ?? 25000)
+    const started = Date.now()
+    let outcome: AiOutcome = 'provider_error'
+    let usage: AiUsage | null = null
     try {
-      const response = await createGeminiProvider(dependencies.fetch, geminiKey, model).generate({ idea: idea.trim(), platform, tone, language, market, attachment }, controller.signal)
+      const response = await createGeminiProvider(dependencies.fetch, geminiKey, model, reservation?.maxOutputTokens).generate({ idea: idea.trim(), platform, tone, language, market, attachment }, controller.signal)
       if (!response.ok) {
         await response.body?.cancel().catch(() => {})
         return reply(502, { error: 'AI provider unavailable. Try again later.' })
       }
+      outcome = 'invalid_response'
       const result: unknown = JSON.parse(new TextDecoder().decode(await readBody(response, 128 * 1024)))
+      usage = readUsage(result)
       if (!isRecord(result) || !Array.isArray(result.candidates)) return reply(502, { error: 'AI returned no content' })
       const candidate: unknown = result.candidates[0]
       if (!isRecord(candidate) || candidate.finishReason !== 'STOP' || !isRecord(candidate.content) || !Array.isArray(candidate.content.parts)) return reply(502, { error: 'AI returned incomplete content' })
@@ -125,12 +143,18 @@ export function createHandler(dependencies: Dependencies) {
       const limits: Record<string, number> = { Instagram: 2200, LinkedIn: 3000, Facebook: 63206, X: 280 }
       const fullText = `${draft.caption.trim()}\n\n${draft.hashtags.map((tag) => `#${tag}`).join(' ')}`.trim()
       if ([...fullText].length > limits[platform]) return reply(502, { error: 'AI response exceeds the platform limit' })
+      outcome = 'success'
       return reply(200, { caption: draft.caption.trim(), hashtags: draft.hashtags })
     } catch {
+      if (controller.signal.aborted) outcome = 'timeout'
       return reply(502, { error: 'AI generation failed. Please retry.' })
     } finally {
       // Keep the timeout active through response-body reading, not just response headers.
       clearTimeout(timeout)
+      if (reservation && dependencies.finishAi) {
+        try { await dependencies.finishAi(reservation.id, outcome, usage, Math.min(120000,Math.max(0,Date.now()-started))) }
+        catch { /* Leave the durable reservation pending; never release unknown spend or log payloads. */ }
+      }
     }
   }
 }

@@ -1,5 +1,13 @@
 # AasiFlowAI project status
 
+## Current checkpoint — 13 October 2026
+
+Remote checkpoint `c246e2f` is confirmed pushed; push CI 38330765999 and PR CI 38330770147 passed. The subsequent local Beta-safety candidate adds coded runtime monitoring, trusted numeric AI token/outcome measurements, cost estimates with atomic/configurable reservations (including unresolved UTC carryover), expiring invite membership guards, blocked self-signup, disabled new uploads/recording, Arabic owner/recovery screens and mobile accessibility improvements.
+
+No live SQL, memberships/admin assignments, deployment, provider calls, charges, main merge, publishing or billing activation occurred. AI/media default off and request/budget limits default zero. Prices are owner-configured estimates, not verified invoices. Existing canonical hashes, ownership/session protections, quota accounting and revision/approval workflows are preserved. The new restrictive policies will deny unlisted existing accounts after approved application, so review that impact first.
+
+The new proposal stays in supabase/proposals for explicit review, outside the active CLI migration directory. Its tested operational rollback pauses new RPCs while keeping invite guards and all data. See [release review](PRIVATE_BETA_RELEASE_REVIEW.md) and deployment/beta-review.json for exact SQL hashes, staged acceptance, remaining provider/no-charge and native Arabic/accessibility checks, and separate approvals. This section supersedes older continuation instructions below; the earlier checkpoints remain as history.
+
 Updated: 12 October 2026. Compatibility reconciliation is local development work; no live project changes or deployment were performed.
 
 The owner-confirmed project is `nkfecpdegcmsapvbviky`. Read-only checks matched the local URL, base posts schema, deployed functions and all four historical migration mappings in `work/content-system-2026-10-03`. Remote development commit `4f4790a` is confirmed on the branch; CI run 38288727459 passed. PR #2 remains draft and unmerged.

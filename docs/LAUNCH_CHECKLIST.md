@@ -1,5 +1,21 @@
 # Release checklist — separate owner approval required
 
+## Current Beta safety handoff — 13 October 2026
+
+- [x] Verify c246e2f pushed; push CI 38330765999 and PR CI 38330770147 successful.
+- [x] Prepare expiring invite membership, restrictive RLS, safe coded monitoring and atomic AI usage/budget reservations locally.
+- [x] Disable new uploads/recording and public signup in this candidate; add Arabic owner/recovery/access screens and mobile controls.
+- [x] Prepare/test operational rollback retaining access guards, schema and all content/media data.
+- [x] Prepare exact migration hashes and staged acceptance in PRIVATE_BETA_RELEASE_REVIEW.md / deployment/beta-review.json.
+- [ ] Confirm backup/restore evidence, canonical mappings and impact on existing unlisted accounts before exact database-change approval.
+- [ ] Separately approve hosted Auth/signup/redirect configuration, exact test UUID memberships/expiry and owner UUID privileges.
+- [ ] Separately approve the exact pushed frontend/generator commit, host and origin configuration while AI/media remain paused.
+- [ ] Approve bounded hosted test-data writes; verify isolation, revocation, conflicts, direct upload rejection and actual headers/gateway.
+- [ ] Establish provider no-charge configuration and approve finite provider tests/limits separately. Rates in tests are synthetic.
+- [ ] Sign off native Arabic/screen-reader/mobile acceptance and support/privacy/retention arrangements before real invitations.
+
+These items supersede older continuation items below. No hosted action is authorized by local completion.
+
 - [x] Confirm project identity: nkfecpdegcmsapvbviky, matching repository history and metadata.
 - [x] Reconcile code with existing tables/RPCs/bucket and preserve current RLS/lifecycle/gated functions locally.
 - [x] Verify compatibility commit 4f4790a and its CI (run 38288727459 passed). PR #2 remains draft/unmerged.

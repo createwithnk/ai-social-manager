@@ -11,6 +11,8 @@ import { fetchPosts, savePostForUser } from './lib/posts'
 import { isSupabaseConfigured } from './lib/supabase'
 import MediaLibrary from './MediaLibrary'
 import AdminDashboard from './AdminDashboard'
+import BetaGate from './BetaGate'
+import { reportRuntimeError } from './lib/monitoring'
 import type { ContentLanguage, Market, Platform, Post } from './types'
 
 type View = 'dashboard' | 'create' | 'calendar' | 'detail' | 'media' | 'admin'
@@ -43,7 +45,8 @@ function App() {
   if (auth.status === 'error') return <AuthBootstrapError auth={auth} />
   if (isSupabaseConfigured && !auth.user) return <AuthScreen auth={auth} />
 
-  return <Workspace key={auth.user?.id ?? 'local-preview'} auth={auth} />
+  const workspace = <Workspace key={auth.user?.id ?? 'local-preview'} auth={auth} />
+  return isSupabaseConfigured && auth.user ? <BetaGate key={auth.user.id} auth={auth}>{workspace}</BetaGate> : workspace
 }
 
 function AuthLoading() {
@@ -96,23 +99,28 @@ function PasswordRecovery({ auth }: { auth: AuthState }) {
 
 function AuthScreen({ auth }: { auth: AuthState }) {
   const { t } = useLocale()
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [notice, setNotice] = useState<string | null>(null)
-
   async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setNotice(null)
-    const result = mode === 'login'
-      ? await auth.signIn(email, password)
-      : await auth.signUp(email, password)
+    event.preventDefault(); setNotice(null)
+    const result = await auth.signIn(email, password)
     setNotice(result.notice ?? null)
+    setPassword('')
   }
-
-  return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-title"><LanguageSwitcher /><div className="brand auth-brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>{t("AasiFlowAI")}</strong><small>{t("Content workspace")}</small></div></div><span className="eyebrow">{t("SECURE WORKSPACE")}</span><h1 id="auth-title">{mode === 'login' ? t("Welcome back") : t("Create your account")}</h1><p>{mode === 'login' ? t("Sign in to access your content workspace.") : t("Use your email to create a protected workspace.")}</p><form onSubmit={submit}><label>{t("Email")}<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required disabled={auth.loading} /></label><label>{t("Password")}<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'signup' ? 12 : undefined} maxLength={128} required disabled={auth.loading} /></label>{auth.error && <p className="form-error" role="alert">{t(auth.error)}</p>}{notice && <p className="form-notice" role="status">{t(notice ?? '')}</p>}<button className="primary wide" disabled={auth.loading}>{auth.loading ? <><LoaderCircle className="spinner" />{t("Please wait")}</> : mode === 'login' ? t("Log in") : t("Sign up")}</button></form><button className="auth-switch" type="button" onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setNotice(null) }} disabled={auth.loading}>{mode === 'login' ? t("Need an account? Sign up") : t("Already have an account? Log in")}</button>{mode === 'login' && <button className="auth-switch" type="button" onClick={() => { setNotice(null); void auth.requestPasswordReset(email).then((result) => setNotice(result.notice ?? null)) }} disabled={auth.loading}>{t("Forgot password?")}</button>}</section></main>
+  return <main className="auth-shell"><section className="auth-card" aria-labelledby="auth-title"><LanguageSwitcher />
+    <span className="eyebrow">{t('UAE Private Beta')}</span><h1 id="auth-title">{t('Welcome back')}</h1>
+    <p>{t('The Private Beta is invite-only. Contact the owner for access.')}</p>
+    <form onSubmit={event => { void submit(event) }}>
+      <label>{t('Email')}<input type="email" value={email} onChange={event => setEmail(event.target.value)} autoComplete="email" autoCapitalize="none" required disabled={auth.loading} /></label>
+      <label>{t('Password')}<input type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" maxLength={128} required disabled={auth.loading} /></label>
+      {auth.error && <p className="form-error" role="alert">{t(auth.error)}</p>}
+      {notice && <p className="form-notice" role="status">{t(notice)}</p>}
+      <button className="primary wide" disabled={auth.loading}>{auth.loading ? t('Please wait') : t('Log in')}</button>
+    </form>
+    <button className="auth-switch" type="button" onClick={() => { setNotice(null); void auth.requestPasswordReset(email).then(result => setNotice(result.notice ?? null)) }} disabled={auth.loading}>{t('Forgot password?')}</button>
+  </section></main>
 }
-
 function Workspace({ auth }: { auth: AuthState }) {
   const { t } = useLocale()
   const [view, setView] = useState<View>('dashboard')
@@ -244,13 +252,13 @@ function Workspace({ auth }: { auth: AuthState }) {
         <Nav active={view === 'dashboard'} icon={<LayoutDashboard />} label={t("Dashboard")} onClick={() => { setView('dashboard'); setMobile(false) }} />
         <Nav active={view === 'create'} icon={<Sparkles />} label={t("Create content")} onClick={() => { createPost(); setMobile(false) }} />
         <Nav active={view === 'calendar'} icon={<CalendarDays />} label={t("Content calendar")} onClick={() => { setView('calendar'); setMobile(false) }} />
-        {auth.user && <Nav active={view === 'admin'} icon={<BarChart3 />} label="Owner monitoring" onClick={() => { setView('admin'); setMobile(false) }} />}
+        {auth.user && <Nav active={view === 'admin'} icon={<BarChart3 />} label={t("Owner monitoring")} onClick={() => { setView('admin'); setMobile(false) }} />}
         <Nav active={view === 'media'} icon={<FileText />} label={t("Media library")} onClick={() => { setView('media'); setMobile(false) }} />
       </nav>
       <div className="guardrail"><CheckCircle2 /><div><strong>{t("Approval protected")}</strong><span>{t("Nothing is published without your approval.")}</span></div></div>
     </aside>
     <main>
-      <header><LanguageSwitcher /><button ref={menuButton} aria-controls="workspace-navigation" aria-expanded={mobile} className="menu" onClick={() => setMobile(true)} aria-label={t("Open navigation")}><Menu /></button><div><small>{t("AI SOCIAL MEDIA WORKSPACE")}</small><h1>{view === 'dashboard' ? t("Your content workspace") : view === 'create' ? t("Create new content") : view === 'detail' ? t("Content details") : view === 'media' ? t("Media library") : t("Content calendar")}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut />{t("Log out")}</button></div>}<button className="primary compact" onClick={createPost}><Plus />{t("New post")}</button></header>
+      <header><LanguageSwitcher /><button ref={menuButton} aria-controls="workspace-navigation" aria-expanded={mobile} className="menu" onClick={() => setMobile(true)} aria-label={t("Open navigation")}><Menu /></button><div><small>{t("AI SOCIAL MEDIA WORKSPACE")}</small><h1>{view === 'dashboard' ? t("Your content workspace") : view === 'create' ? t("Create new content") : view === 'detail' ? t("Content details") : view === 'admin' ? t("Owner monitoring") : view === 'media' ? t("Media library") : t("Content calendar")}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut />{t("Log out")}</button></div>}<button className="primary compact" onClick={createPost}><Plus />{t("New post")}</button></header>
       {(postsError ?? auth.error) && <p className="workspace-error" role="alert">{t(postsError ?? auth.error ?? '')}</p>}
       {view === 'dashboard' && <Dashboard posts={posts} drafts={posts.filter((post) => post.status === 'draft').length} approved={posts.filter((post) => post.status === 'approved').length} scheduled={posts.filter((post) => post.status === 'scheduled').length} onCreate={createPost} onEdit={editDraft} onView={(post) => viewPost(post, 'dashboard')} loading={postsLoading} />}
       {view === 'create' && <Generator key={editingPost?.id ?? `new-${composerKey}`} initialPost={editingPost} userId={userId} onSave={savePost} disabled={postsLoading} />}
@@ -301,7 +309,7 @@ function Generator({ initialPost, onSave, disabled, userId }: { userId?: string;
   const [platform, setPlatform] = useState<Platform>(initialPost?.platform ?? 'Instagram')
   const [tone, setTone] = useState(initialPost?.tone ?? 'Friendly')
   const [language, setLanguage] = useState<ContentLanguage>(initialPost?.language ?? 'en')
-  const [market, setMarket] = useState<Market>(initialPost?.market ?? 'General')
+  const [market, setMarket] = useState<Market>(initialPost ? initialPost.market ?? 'General' : 'UAE')
   const [media, setMedia] = useState(initialPost?.media)
   const [uploading, setUploading] = useState(false)
   const [draft, setDraft] = useState<{ caption: string; hashtags: string[] } | null>(initialPost ? { caption: initialPost.caption, hashtags: initialPost.hashtags } : null)
@@ -336,6 +344,7 @@ function Generator({ initialPost, onSave, disabled, userId }: { userId?: string;
       setDraft(result)
       setGeneratedBrief(requestedBrief)
     } catch (error) {
+      void reportRuntimeError('ai_failed')
       setSaveError(errorMessage(error))
     } finally {
       setGenerating(false)
@@ -354,6 +363,7 @@ function Generator({ initialPost, onSave, disabled, userId }: { userId?: string;
       setPostId(id)
       setCreatedAt(saved?.createdAt ?? timestamp)
     } catch (error) {
+      void reportRuntimeError('save_failed')
       setSaveError(errorMessage(error))
     } finally {
       setSaving(false)

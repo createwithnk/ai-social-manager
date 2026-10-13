@@ -17,7 +17,7 @@ function setup(overrides = {}) {
   }
   const client = { auth: { getUser: async () => ({ data: { user: { id: overrides.userId ?? user } }, error: null }) }, rpc: async () => ({ data: overrides.active !== false, error: null }), storage: { from: name => { assert.equal(name, 'post-media'); return bucket } }, functions: { invoke: async (name, options) => { calls.push(['invoke', name, options]); return { data: { path: `${user}/opaque.png` }, error: overrides.invokeError ?? null } } } }
   if (overrides.invokeError) bucket.upload = async () => ({ error: overrides.invokeError })
-  return { ...loadModule('../src/lib/media.ts', { './supabase': { supabase: client }, '../../supabase/functions/_shared/media-validation': { matchesMediaHeader, mediaFormats } }, '', { File }), calls }
+  return { ...loadModule('../src/lib/media.ts', { './supabase': { supabase: client }, './beta-policy': { betaUploadsEnabled: overrides.uploads !== false, betaUploadNotice: 'Uploads are paused for the Private Beta safety review.' }, './monitoring': { reportRuntimeError: async () => {} }, '../../supabase/functions/_shared/media-validation': { matchesMediaHeader, mediaFormats } }, '', { File }), calls }
 }
 test('media validates size, MIME and file signature before uploads', async () => {
   const { validateMedia } = setup()
@@ -27,6 +27,12 @@ test('media validates size, MIME and file signature before uploads', async () =>
   await assert.rejects(validateMedia({ type: 'image/png', size: 10 * 1024 * 1024 + 1 }))
   await assert.rejects(validateMedia({ type: 'video/mp4', size: 50 * 1024 * 1024 + 1 }))
   await assert.rejects(validateMedia(new File([], 'empty.png', { type: 'image/png' })))
+})
+
+test('Private Beta blocks new uploads before authentication or storage calls', async () => {
+  const { uploadMedia, calls } = setup({ uploads: false })
+  await assert.rejects(uploadMedia(user,png), /paused/)
+  assert.equal(calls.length,0)
 })
 test('uploads reuse private post-media storage with opaque owner paths and no upsert', async () => {
   const { uploadMedia, calls } = setup()

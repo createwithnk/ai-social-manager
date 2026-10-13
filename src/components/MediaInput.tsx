@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { uploadMedia, mediaUrl, mediaTypes } from '../lib/media'
 import type { Media } from '../types'
 import { useLocale } from '../lib/locale'
+import { betaUploadsEnabled, betaUploadNotice } from '../lib/beta-policy'
 export function MediaPreview({ media }: { media: Media }) {
   const { t } = useLocale()
   const [preview,setPreview] = useState<{path:string;url:string;error:string}>({path:'',url:'',error:''})
@@ -33,6 +34,7 @@ export function MediaInput({ media, onChange, disabled, onBusy, userId }: { user
     try { const value = await uploadMedia(userId ?? '', file); if (active.current) onChange(value) } catch (e) { if (active.current) setError(e instanceof Error ? e.message : 'Upload failed.') } finally { if (active.current) onBusy(false) }
   }
   async function record() {
+    if (!betaUploadsEnabled) return
     setError(''); onBusy(true)
     try {
       const input = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -46,5 +48,6 @@ export function MediaInput({ media, onChange, disabled, onBusy, userId }: { user
       rec.start(); setRecording(true); timer.current = setTimeout(() => { if (rec.state === 'recording') rec.stop() }, 60000)
     } catch { setError('Microphone unavailable. Allow microphone access or upload an audio file.'); onBusy(false) }
   }
+  if (!betaUploadsEnabled) return <div className="media-input"><p role="status">{t(betaUploadNotice)}</p>{media && <button className="ghost" disabled={disabled} onClick={() => onChange(undefined)}>{t("Remove attachment")}</button>}</div>
   return <div className="media-input"><label>{t("Photo, video or voice note (up to 10 MB)")}<input type="file" accept={mediaTypes.join(',')} disabled={disabled || recording} onChange={event => { const file = event.target.files?.[0]; if (file) void upload(file); event.target.value = '' }} /></label>{recording ? <button className="ghost" onClick={() => recorder.current?.stop()}>{t("Stop recording")}</button> : <button className="ghost" disabled={disabled} onClick={() => { void record() }}>{t("Record voice (up to 60 seconds)")}</button>}{media && <><MediaPreview key={media.path} media={media} /><button className="ghost" disabled={disabled || recording} onClick={() => onChange(undefined)}>{t("Remove attachment")}</button></>}{error && <p role="alert" className="form-error">{t(error)}</p>}</div>
 }

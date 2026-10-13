@@ -1,6 +1,7 @@
 import { useLocale } from './lib/locale'
 import { useCallback, useEffect, useState } from 'react'
 import { listMedia, uploadMedia, type MediaItem } from './lib/media'
+import { betaUploadsEnabled, betaUploadNotice } from './lib/beta-policy'
 
 export default function MediaLibrary({ userId }: { userId?: string }) {
   const { t } = useLocale()
@@ -31,7 +32,8 @@ export default function MediaLibrary({ userId }: { userId?: string }) {
     <p>{t("Images, videos and audio up to 10 MiB. Private previews expire after five minutes; refresh to renew them.")}</p>
     <p>{t('Existing storage limits: 20 files per user and 80 files per project. Media deletion requires owner maintenance.')}</p>
     {!userId && <p className="form-notice">{t("Sign in to upload and manage private media.")}</p>}
-    <label>{t("Upload media")}<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,audio/webm,audio/mp4,audio/mpeg,audio/wav,audio/ogg" disabled={!userId || busy || loading} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; void upload(file) }} /></label>
+    {!betaUploadsEnabled && <p role="status">{t(betaUploadNotice)}</p>}
+    {betaUploadsEnabled && <label>{t("Upload media")}<input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,audio/webm,audio/mp4,audio/mpeg,audio/wav,audio/ogg" disabled={!userId || busy || loading} onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; void upload(file) }} /></label>}
     {busy && <p role="status">{t("Saving media…")}</p>}{loading && <p role="status">{t("Loading private previews…")}</p>}
     {error && <p className="form-error" role="alert">{t(error)}</p>}{notice && <p className="form-notice" role="status">{t(notice)}</p>}
     <div className="media-grid">{items.map((item) => <article key={item.path} className="media-card">

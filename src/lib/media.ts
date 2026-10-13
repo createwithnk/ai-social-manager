@@ -1,5 +1,7 @@
 import { supabase } from './supabase'
 import type { Media } from '../types'
+import { betaUploadsEnabled, betaUploadNotice } from './beta-policy'
+import { reportRuntimeError } from './monitoring'
 import { matchesMediaHeader, mediaFormats } from '../../supabase/functions/_shared/media-validation'
 
 export interface MediaItem extends Media { url: string; kind: 'image' | 'video' | 'audio' }
@@ -35,6 +37,7 @@ export async function listMedia(userId: string): Promise<MediaItem[]> {
   }))
 }
 export async function uploadMedia(userId: string, file: File): Promise<Media> {
+  if (!betaUploadsEnabled) throw new Error(betaUploadNotice)
   await validateMedia(file)
   const bucket = await clientForUser(userId)
   const type = file.type.split(';')[0]
@@ -43,7 +46,7 @@ export async function uploadMedia(userId: string, file: File): Promise<Media> {
   // Existing private Storage policies enforce the authenticated owner, active
   // session and serialized object-count limits. Never upsert an existing object.
   const { error } = await bucket.upload(path, normalized, { contentType: type, upsert: false })
-  if (error) throw new Error('Upload failed. Check your connection and the media size, then retry.')
+  if (error) { void reportRuntimeError('upload_failed'); throw new Error('Upload failed. Check your connection and the media size, then retry.') }
   return { path, name: file.name.slice(0,200), type, size: file.size }
 }
 // The live post-media bucket has no client DELETE policy. Never claim deletion

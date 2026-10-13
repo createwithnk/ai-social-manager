@@ -12,6 +12,16 @@ function userClient(url: string, key: string, token: string) {
     global: { headers: { Authorization: `Bearer ${token}` }, fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(10_000) }) },
   })
 }
+function monitoringClient() {
+  // This credential stays in the Edge runtime. It is used only for the fixed
+  // completion RPC after a caller-authorized reservation, never for customer reads.
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (!key) throw new Error('Monitoring unavailable')
+  return createClient(Deno.env.get('SUPABASE_URL') ?? '', key, {
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+    global: { fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(5000) }) },
+  })
+}
 Deno.serve(createHandler({
   env: (name) => Deno.env.get(name),
   authenticate: async (url, key, token) => {
@@ -27,6 +37,21 @@ Deno.serve(createHandler({
     const { data, error } = await client.rpc('consume_ai_quota')
     if (error || typeof data !== 'boolean') throw new Error('Usage check failed')
     return data
+  },
+  reserveAi: async (model, token) => {
+    // Fail before provider usage if trusted completion credentials are absent.
+    monitoringClient()
+    const client = userClient(Deno.env.get('SUPABASE_URL') ?? '', publicKey(), token)
+    const { data, error } = await client.rpc('reserve_ai_request', { requested_model: model })
+    if (error) throw new Error('Budget unavailable')
+    return data
+  },
+  finishAi: async (id, outcome, usage, latencyMs) => {
+    const { data, error } = await monitoringClient().rpc('finish_ai_request', {
+      request_id: id, result_code: outcome, prompt_tokens: usage?.inputTokens ?? null,
+      completion_tokens: usage?.outputTokens ?? null, duration_ms: latencyMs,
+    })
+    if (error || data !== true) throw new Error('Monitoring write unavailable')
   },
   readMedia: async (path, type, token) => {
     const client = userClient(Deno.env.get('SUPABASE_URL') ?? '', publicKey(), token)

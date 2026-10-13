@@ -1,5 +1,15 @@
 # Compatibility test report
 
+## Current Beta-safety candidate — 13 October 2026
+
+84 Node tests passed, including isolated PostgreSQL Beta migration/rollback acceptance; 81 additional canonical local PostgreSQL checks passed. 18 desktop/mobile browser cases passed. Production build, lint, app/Edge/browser TypeScript and pinned Deno check passed; 24 Deno security tests and 15 payment steps passed. Final checks will be verified on the pushed candidate independently of the earlier checkpoint CI.
+
+New acceptance covers exact caller/server RPC credentials, no provider call after reservation denial/failure or missing monitoring setup, thinking-inclusive token measurement, unknown/failed telemetry preserving reservations, budget carryover across UTC days, project/per-user limits, no client completion forgery, invite expiry/revocation, coded counter allowlists/caps, disabled direct uploads, Arabic owner/recovery layouts, keyboard/touch controls and operational rollback preserving data/access guards. The deployment manifest records reviewed payload hashes. No keys, raw errors or prompts are sent to monitoring.
+
+All API/provider requests in tests are synthetic/intercepted. Browser requests outside localhost are blocked. Local PGlite queues do not certify native concurrent PostgreSQL or hosted gateway/Auth/Storage behavior. Hosted configuration, live email/invitations, native-speaker/screen-reader acceptance, provider no-charge proof and real usage measurements remain pending separate approval. The new upload path is disabled; retained legacy validation is regression-tested with an explicit enabled fixture, not enabled at runtime.
+
+Remote c246e2f is verified with successful push run 38330765999 and PR run 38330770147. Earlier reports below are checkpoint history. See PRIVATE_BETA_RELEASE_REVIEW.md for the test/release sequence.
+
 Date: 12 October 2026. Confirmed backend: nkfecpdegcmsapvbviky. This reconciliation used local fixtures only; no live mutation, provider usage, social publication or payment activation.
 
 | Check | Latest outcome |

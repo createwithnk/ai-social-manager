@@ -15,6 +15,7 @@ test('media library does not offer deletion without a Storage DELETE policy', as
       useEffect: (fn) => { if (!mounted) { fn(); mounted = true } },
     },
     'react/jsx-runtime': { jsx, jsxs: jsx }, './lib/locale': { useLocale: () => ({ t: (text) => text }) },
+    './lib/beta-policy': { betaUploadsEnabled: false, betaUploadNotice: 'Uploads paused' },
     './lib/media': { listMedia: async () => [item], deleteMedia: async (...args) => deleted.push(args), uploadMedia: async () => {} },
   }, '', { window: { confirm: () => { throw new Error('Deletion must not be offered') } } })
   function render() {
