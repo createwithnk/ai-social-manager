@@ -7,7 +7,7 @@ import AdminDashboard from './AdminDashboard'
 
 export default function BetaGate({ auth, children }: { auth: AuthState; children: ReactNode }) {
   const { t } = useLocale()
-  const [state, setState] = useState<'checking' | 'allowed' | 'denied'>('checking')
+  const [state, setState] = useState<'checking' | 'allowed' | 'denied' | 'unavailable'>('checking')
   const [attempt, setAttempt] = useState(0)
   const [monitoring, setMonitoring] = useState(false)
   useEffect(() => {
@@ -21,8 +21,8 @@ export default function BetaGate({ auth, children }: { auth: AuthState; children
       try {
         if (!supabase) throw new Error()
         const { data, error } = await supabase.rpc('beta_access').abortSignal(controller.signal)
-        if (active) setState(!error && data === true ? 'allowed' : 'denied')
-      } catch { if (active) setState('denied') }
+        if (active) setState(error || typeof data !== 'boolean' ? 'unavailable' : data ? 'allowed' : 'denied')
+      } catch { if (active) setState('unavailable') }
       finally { window.clearTimeout(timer); controller = undefined }
     }
     void check()
@@ -33,9 +33,10 @@ export default function BetaGate({ auth, children }: { auth: AuthState; children
   }, [attempt])
   if (state === 'allowed') return children
   return <main className="auth-shell"><section className="auth-card"><LanguageSwitcher /><h1>{t('UAE Private Beta')}</h1>
-    <p role={state === 'checking' ? 'status' : 'alert'}>{t(state === 'checking' ? 'Checking your Beta invitation…' : 'An active invitation is required. Contact the owner if you were invited.')}</p>
+    <p role={state === 'checking' ? 'status' : 'alert'}>{t(state === 'checking' ? 'Checking your Beta invitation…' : state === 'unavailable' ? 'Beta access could not be verified. Check your connection and retry.' : 'An active invitation is required. Contact the owner if you were invited.')}</p>
     <button className="primary wide" disabled={state === 'checking'} onClick={() => { setState('checking'); setAttempt(value => value + 1) }}>{t('Retry access check')}</button>
     <button className="ghost" disabled={auth.loading} onClick={() => { void auth.signOut() }}>{t('Log out')}</button>
+    {auth.error && <p role="alert">{t(auth.error)}</p>}
     <button className="ghost" onClick={() => setMonitoring(value => !value)}>{t('Owner monitoring')}</button>
     {monitoring && <AdminDashboard />}
   </section></main>

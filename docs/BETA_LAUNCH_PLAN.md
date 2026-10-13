@@ -2,6 +2,8 @@
 
 ## Current release candidate — 13 October 2026
 
+The synchronized 3f1ca14 checkpoint is pushed and CI passed. Final local hardening includes sanitized Auth/AI errors, translated access-outage recovery, bounded browser requests and a read-only source-manifest CI gate. The proposed first Beta remains free text generation/drafts/editing/review with new media uploads disabled. This completes the current local preparation; the live approval/acceptance stages below remain pending.
+
 Checkpoint c246e2f is pushed and both push/PR CI passed. The latest safety continuation prepares expiring invite-only database access, trusted AI usage/cost estimates with conservative configurable limits, bounded coded runtime reports and a reviewed operational rollback. New uploads and voice recording are disabled for the first text-draft Beta; existing objects are retained. No live changes or deployment occurred.
 
 The exact current handoff is [PRIVATE_BETA_RELEASE_REVIEW.md](PRIVATE_BETA_RELEASE_REVIEW.md), with source hashes in deployment/beta-review.json. It supersedes older table entries below concerning public signup, unavailable local instrumentation and pushing c246e2f. Hosted instrumentation is still unavailable until approved SQL/runtime changes are applied. Native concurrency, hosted Auth/Storage/gateway checks, provider no-charge proof and native Arabic/accessibility acceptance remain blockers.

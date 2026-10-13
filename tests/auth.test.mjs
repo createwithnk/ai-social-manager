@@ -63,7 +63,7 @@ test('network failures during logout retain the user and present an error', asyn
     await h.render().signOut()
     assert.equal(h.render().status, 'authenticated')
     assert.equal(h.render().user.id, h.user.id)
-    assert.match(h.render().error, /Connection unavailable/)
+    assert.equal(h.render().error, 'Authentication is unavailable. Please retry.')
     assert.equal(h.render().loading, false)
   } finally { h.cleanup() }
 })
@@ -86,4 +86,28 @@ test('invitation callback requires password setup before explicitly continuing',
     h.render().exitRecovery()
     assert.equal(h.render().recoveryMode,false)
   } finally { h.cleanup() }
+})
+
+test('authentication actions suppress raw errors and use only approved error-code messages', async () => {
+  for(const code of ['invalid_credentials','over_request_rate_limit','weak_password','unexpected']) {
+    const error={code,message:'private-sentinel user@example.invalid token=do-not-display'}
+    const h=harness({signInWithPassword:async()=>({data:{user:null},error}),resetPasswordForEmail:async()=>({error}),updateUser:async()=>({error}),signOut:async()=>({error})})
+    h.render()
+    try {
+      for(const action of [()=>h.render().signIn('test@example.invalid','password'),()=>h.render().requestPasswordReset('test@example.invalid'),()=>h.render().updatePassword('long-valid-password'),()=>h.render().signOut()]) {
+        await action()
+        assert.doesNotMatch(h.render().error,/private-sentinel|user@example|token=/)
+        assert.equal(h.render().loading,false)
+      }
+      const message=h.render().error
+      assert.equal(message,code==='invalid_credentials'?'Sign-in failed. Check your email and password or try again later.':code==='over_request_rate_limit'?'Too many authentication attempts. Please wait and retry.':code==='weak_password'?'Choose a new, stronger password between 12 and 128 characters.':'Authentication is unavailable. Please retry.')
+    } finally {h.cleanup()}
+  }
+})
+
+test('session bootstrap errors never expose SDK details', async()=>{
+  const h=harness({getSession:async()=>({data:{session:null},error:new Error('private-sentinel')})})
+  h.render()
+  try {await new Promise(resolve=>setImmediate(resolve));assert.equal(h.render().status,'error');assert.equal(h.render().error,'We couldn’t check your session. Check your connection and retry.')}
+  finally {h.cleanup()}
 })

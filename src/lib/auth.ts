@@ -26,12 +26,15 @@ export interface AuthState {
 const SESSION_BOOTSTRAP_TIMEOUT_MS = 10_000
 
 function messageFor(error: unknown) {
-  return error instanceof Error ? error.message : 'Something went wrong. Please try again.'
+  const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined
+  if (code === 'invalid_credentials') return 'Sign-in failed. Check your email and password or try again later.'
+  if (code === 'over_request_rate_limit' || code === 'over_email_send_rate_limit') return 'Too many authentication attempts. Please wait and retry.'
+  if (code === 'weak_password' || code === 'same_password') return 'Choose a new, stronger password between 12 and 128 characters.'
+  return 'Authentication is unavailable. Please retry.'
 }
 
-function sessionBootstrapMessage(error?: unknown) {
-  const detail = error ? ` ${messageFor(error)}` : ''
-  return `We couldn’t check your session.${detail} Check your connection and Supabase configuration, then retry.`
+function sessionBootstrapMessage() {
+  return 'We couldn’t check your session. Check your connection and retry.'
 }
 
 export function useAuth(): AuthState {
@@ -50,12 +53,12 @@ export function useAuth(): AuthState {
 
     let active = true
     let settled = false
-    const finishWithError = (sessionError?: unknown) => {
+    const finishWithError = () => {
       if (!active || settled) return
       settled = true
       window.clearTimeout(timeoutId)
       setUser(null)
-      setError(sessionBootstrapMessage(sessionError))
+      setError(sessionBootstrapMessage())
       setStatus('error')
     }
     const timeoutId = window.setTimeout(() => {
@@ -69,18 +72,18 @@ export function useAuth(): AuthState {
         window.clearTimeout(timeoutId)
         if (sessionError) {
           setUser(null)
-          setError(sessionBootstrapMessage(sessionError))
+          setError(sessionBootstrapMessage())
           setStatus('error')
           return
         }
         setError(null)
         setUser(data.session?.user ?? null)
         setStatus(data.session ? 'authenticated' : 'unauthenticated')
-      }).catch((sessionError) => {
-        finishWithError(sessionError)
+      }).catch(() => {
+        finishWithError()
       })
-    } catch (sessionError) {
-      finishWithError(sessionError)
+    } catch {
+      finishWithError()
     }
 
     let unsubscribe: (() => void) | undefined
@@ -96,8 +99,8 @@ export function useAuth(): AuthState {
         setStatus(session ? 'authenticated' : 'unauthenticated')
       })
       unsubscribe = () => listener.subscription.unsubscribe()
-    } catch (sessionError) {
-      finishWithError(sessionError)
+    } catch {
+      finishWithError()
     }
 
     return () => {
@@ -129,7 +132,7 @@ export function useAuth(): AuthState {
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) {
-        setError(signInError.message)
+        setError(messageFor(signInError))
         return {}
       }
       setUser(data.user)
@@ -156,7 +159,7 @@ export function useAuth(): AuthState {
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo: window.location.origin + window.location.pathname })
       if (resetError) {
-        setError(resetError.message)
+        setError(messageFor(resetError))
         return {}
       }
       return { notice: 'If an account exists for this email, a password reset link will be sent.' }
@@ -179,7 +182,7 @@ export function useAuth(): AuthState {
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password })
       if (updateError) {
-        setError(updateError.message)
+        setError(messageFor(updateError))
         return {}
       }
       return { notice: 'Your password has been updated successfully.' }
@@ -201,7 +204,7 @@ export function useAuth(): AuthState {
     try {
       const { error: signOutError } = await supabase.auth.signOut()
       if (signOutError) {
-        setError(signOutError.message)
+        setError(messageFor(signOutError))
         return {}
       }
       setUser(null)

@@ -16,6 +16,7 @@ for(const mode of ['allowed','denied','unavailable']) test(`Beta UI fails closed
   const cleanup=effect();await new Promise(resolve=>setImmediate(resolve))
   assert.equal(render()==='protected-workspace',mode==='allowed')
   assert.equal(JSON.stringify(render()).includes('secret'),false)
+  if(mode==='unavailable') assert.ok(JSON.stringify(render()).includes('Beta access could not be verified'))
   if(mode==='allowed'){allowed=false;listeners.get('focus')();await new Promise(resolve=>setImmediate(resolve));assert.equal(render()==='protected-workspace',false)}
   cleanup();assert.equal(listeners.size,0)
 })

@@ -2,6 +2,11 @@
 
 ## Current Beta safety handoff — 13 October 2026
 
+- [x] Verify synchronized 3f1ca14 and retain original 02b1ec1 on a backup branch.
+- [x] Sanitize authentication/AI SDK failures and add Arabic retry guidance for unavailable access checks.
+- [x] Bound browser AI requests without automatic retries; remove the incorrect midnight-reset promise.
+- [x] Verify critical frontend, backend, policy and header hashes through a read-only CI review gate.
+
 - [x] Verify c246e2f pushed; push CI 38330765999 and PR CI 38330770147 successful.
 - [x] Prepare expiring invite membership, restrictive RLS, safe coded monitoring and atomic AI usage/budget reservations locally.
 - [x] Disable new uploads/recording and public signup in this candidate; add Arabic owner/recovery/access screens and mobile controls.

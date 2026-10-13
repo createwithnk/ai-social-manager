@@ -2,6 +2,10 @@
 
 ## Current Beta-safety candidate — 13 October 2026
 
+Final local continuation: 87 Node tests passed, including additional raw-Auth-error redaction, session-bootstrap redaction and bounded AI transport/limit-message checks; 81 canonical PostgreSQL checks remain passed, with the separate Beta proposal/rollback fixture covered by the Node suite. All 20 desktop/mobile cases passed, including Arabic access-service retry in addition to denial/revocation and recovery. Build, lint, app/Edge/browser TypeScript, Deno check, 24 Deno tests (15 payment steps) and read-only manifest verification pass. No hosted/provider calls or secret inspection occur in these fixtures.
+
+Synchronized checkpoint 3f1ca14 passed push CI 38333292992 and PR CI 38333296235. The continuation must pass its own branch CI. Local backup preservation/tree equality were verified before synchronization; no destructive Git operation was used.
+
 84 Node tests passed, including isolated PostgreSQL Beta migration/rollback acceptance; 81 additional canonical local PostgreSQL checks passed. 18 desktop/mobile browser cases passed. Production build, lint, app/Edge/browser TypeScript and pinned Deno check passed; 24 Deno security tests and 15 payment steps passed. Final checks will be verified on the pushed candidate independently of the earlier checkpoint CI.
 
 New acceptance covers exact caller/server RPC credentials, no provider call after reservation denial/failure or missing monitoring setup, thinking-inclusive token measurement, unknown/failed telemetry preserving reservations, budget carryover across UTC days, project/per-user limits, no client completion forgery, invite expiry/revocation, coded counter allowlists/caps, disabled direct uploads, Arabic owner/recovery layouts, keyboard/touch controls and operational rollback preserving data/access guards. The deployment manifest records reviewed payload hashes. No keys, raw errors or prompts are sent to monitoring.

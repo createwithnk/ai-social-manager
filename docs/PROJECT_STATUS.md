@@ -2,6 +2,10 @@
 
 ## Current checkpoint — 13 October 2026
 
+Continuation from synchronized `3f1ca14`: both push CI 38333292992 and PR CI 38333296235 passed; backup branch codex/beta-safety-local-02b1ec1 preserves the prior local checkpoint. The final local hardening removes raw Auth/SDK error details, distinguishes access-service outages from invitation denials, bounds browser AI transport to 60 seconds without retry, and avoids promising a midnight reset while unknown usage carries forward. Arabic messages and denial/recovery acceptance are extended. `npm run review:beta` verifies the source/policy/header manifest without writes or networking; CI uses this gate.
+
+The local preparation is complete for this text-draft candidate. Remaining blockers require hosted approval/evidence or human acceptance: recoverable backup/native PostgreSQL review, exact SQL, hosted Auth/membership/owner setup, deployment and test-data permission, verified provider no-charge configuration, native Arabic/screen-reader review and cohort/support/privacy/retention decisions. See PRIVATE_BETA_RELEASE_REVIEW.md. Earlier checkpoint entries below are historical.
+
 Remote checkpoint `c246e2f` is confirmed pushed; push CI 38330765999 and PR CI 38330770147 passed. The subsequent local Beta-safety candidate adds coded runtime monitoring, trusted numeric AI token/outcome measurements, cost estimates with atomic/configurable reservations (including unresolved UTC carryover), expiring invite membership guards, blocked self-signup, disabled new uploads/recording, Arabic owner/recovery screens and mobile accessibility improvements.
 
 No live SQL, memberships/admin assignments, deployment, provider calls, charges, main merge, publishing or billing activation occurred. AI/media default off and request/budget limits default zero. Prices are owner-configured estimates, not verified invoices. Existing canonical hashes, ownership/session protections, quota accounting and revision/approval workflows are preserved. The new restrictive policies will deny unlisted existing accounts after approved application, so review that impact first.

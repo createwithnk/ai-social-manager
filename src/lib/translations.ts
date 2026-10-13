@@ -1,5 +1,12 @@
 export type Locale = 'en' | 'ar'
 export const arabic: Record<string, string> = {
+  'Sign-in failed. Check your email and password or try again later.': 'تعذّر تسجيل الدخول. تحقق من بريدك الإلكتروني وكلمة المرور أو حاول لاحقًا.',
+  'Too many authentication attempts. Please wait and retry.': 'محاولات تسجيل الدخول كثيرة. انتظر قليلًا وحاول مجددًا.',
+  'Choose a new, stronger password between 12 and 128 characters.': 'اختر كلمة مرور جديدة وأقوى يتراوح طولها بين 12 و128 حرفًا.',
+  'Authentication is unavailable. Please retry.': 'خدمة تسجيل الدخول غير متاحة. حاول مجددًا.',
+  'We couldn’t check your session. Check your connection and retry.': 'تعذّر التحقق من جلستك. تحقق من اتصالك وحاول مجددًا.',
+  'Beta access could not be verified. Check your connection and retry.': 'تعذّر التحقق من الدخول إلى النسخة التجريبية. تحقق من اتصالك وحاول مجددًا.',
+  'AI is paused or a Beta usage limit was reached. Contact the owner or try again later.': 'الذكاء الاصطناعي متوقف مؤقتًا أو تم بلوغ حد الاستخدام للنسخة التجريبية. تواصل مع المالك أو حاول لاحقًا.',
   'UAE Private Beta': 'النسخة التجريبية الخاصة في الإمارات',
   'The Private Beta is invite-only. Contact the owner for access.': 'النسخة التجريبية الخاصة متاحة بالدعوة فقط. تواصل مع المالك للحصول على إمكانية الدخول.',
   'Checking your Beta invitation…': 'جارٍ التحقق من دعوتك للنسخة التجريبية…',

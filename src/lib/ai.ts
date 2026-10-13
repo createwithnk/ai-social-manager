@@ -11,15 +11,23 @@ export async function generateAiDraft(idea: string, platform: Platform, tone: st
       !['en', 'ar', 'hi', 'ur'].includes(language) || !['General', 'UAE', 'Saudi Arabia', 'Kuwait', 'Gulf'].includes(market)) {
     throw new Error('Provide a valid idea, platform, and tone.')
   }
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+  const client = supabase
+  const { data: sessionData, error: sessionError } = await (async () => {
+    try { return await client.auth.getSession() }
+    catch { throw new Error('Sign in again to use AI generation.') }
+  })()
   if (sessionError || !sessionData.session) throw new Error('Sign in again to use AI generation.')
-  const { data, error } = await supabase.functions.invoke('generate-content', {
-    body: { idea: idea.trim(), platform, tone, language: { en: 'English', ar: 'Arabic', hi: 'Hindi', ur: 'Urdu' }[language], market, ...(media ? { media } : {}) }
-  })
+  const { data, error } = await (async () => {
+    try { return await client.functions.invoke('generate-content', {
+    body: { idea: idea.trim(), platform, tone, language: { en: 'English', ar: 'Arabic', hi: 'Hindi', ur: 'Urdu' }[language], market, ...(media ? { media } : {}) },
+    timeout: 60000,
+    }) }
+    catch { throw new Error('AI generation is unavailable. Please check the server setup and try again.') }
+  })()
   if (error) {
     const status = error.context?.status
     if (status === 401) throw new Error('Your session expired. Sign in again to generate content.')
-    if (status === 429) throw new Error('Daily AI limit reached. Try again after midnight UTC.')
+    if (status === 429) throw new Error('AI is paused or a Beta usage limit was reached. Contact the owner or try again later.')
     throw new Error('AI generation is unavailable. Please check the server setup and try again.')
   }
   if (!data || typeof data.caption !== 'string' || !data.caption.trim() || data.caption.length > 10000 ||

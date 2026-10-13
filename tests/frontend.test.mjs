@@ -3,6 +3,16 @@ import assert from 'node:assert/strict'
 import { loadModule } from './helpers.mjs'
 
 const draft = { caption: 'A draft to review', hashtags: ['Business', 'Tips', 'Growth'] }
+
+test('AI transport is bounded, suppresses thrown SDK details and does not promise a quota reset',async()=>{
+  for(const mode of ['session_throw','invoke_throw','limit']) {
+    let calls=0
+    const client={auth:{getSession:async()=>{if(mode==='session_throw')throw new Error('private-sentinel');return {data:{session:{}},error:null}}},functions:{invoke:async(_name,options)=>{calls++;assert.equal(options.timeout,60000);if(mode==='invoke_throw')throw new Error('private-sentinel');return {data:null,error:{context:{status:429}}}}}}
+    const {generateAiDraft}=loadModule('../src/lib/ai.ts',{'./supabase':{supabase:client}})
+    await assert.rejects(generateAiDraft('UAE business content tips','Instagram','Friendly'),error=>!error.message.includes('private-sentinel')&&!error.message.includes('midnight')&&(mode!=='limit'||error.message.includes('AI is paused')))
+    assert.equal(calls,mode==='session_throw'?0:1)
+  }
+})
 test('frontend rejects missing sessions, bad briefs, provider failures and malformed drafts', async () => {
   for (const scenario of ['no-session', 'bad-brief', 'provider-error', 'empty-caption', 'bad-tags', 'valid']) {
     let calls = 0

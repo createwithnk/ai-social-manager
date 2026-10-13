@@ -60,6 +60,16 @@ test('Arabic owner monitoring is readable on mobile and keyboard accessible',asy
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true)
 })
 
+test('access-service failure offers retry without displaying protected content',async({page})=>{
+  await fixture(page,'gate','ar')
+  await page.evaluate(()=>{Object.assign(window,{betaAllowed:null});window.dispatchEvent(new Event('focus'))})
+  await expect(page.getByRole('alert')).toContainText('تعذّر التحقق من الدخول')
+  await expect(page.getByText('Protected workspace')).toHaveCount(0)
+  await page.evaluate(()=>Object.assign(window,{betaAllowed:true}))
+  await page.getByRole('button',{name:'إعادة التحقق من الدخول'}).click()
+  await expect(page.getByText('Protected workspace')).toBeVisible()
+})
+
 test('render failure shows Arabic recovery and reports only a fixed code',async({page})=>{
   await fixture(page,'boundary','ar')
   await expect(page.getByRole('heading',{name:'تعذّر عرض مساحة العمل.'})).toBeVisible()

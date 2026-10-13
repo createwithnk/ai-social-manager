@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "node --test tests/*.test.mjs tests/workflow.test.ts && node tests/database.mjs",
     "check:edge": "tsc -p tsconfig.edge.json",
+    "review:beta": "node scripts/release-review.mjs --check",
     "test:e2e": "playwright test",
     "check:e2e": "tsc -p tsconfig.e2e.json",
     "test:edge": "node scripts/run-deno.mjs test",
