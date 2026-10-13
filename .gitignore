@@ -1,4 +1,8 @@
 node_modules
+.npm-cache/
+supabase/.temp/
+test-results/
+playwright-report/
 dist
 *.tsbuildinfo
 vite.config.js

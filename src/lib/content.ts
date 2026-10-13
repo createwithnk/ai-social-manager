@@ -1,4 +1,4 @@
-import type { Platform } from '../types'
+import type { ContentLanguage, Platform } from '../types'
 
 const tags: Record<Platform,string[]> = {
   Instagram:['ContentCreator','SocialMediaTips','AIGrowth','DigitalMarketing','CreateBetter'],
@@ -7,8 +7,12 @@ const tags: Record<Platform,string[]> = {
   X:['BuildInPublic','AI','Marketing']
 }
 
-export function createDraft(idea:string, platform:Platform, tone:string) {
+export function createDraft(idea:string, platform:Platform, tone:string, language:ContentLanguage = 'en') {
+  if (language === 'hi' || language === 'ur') throw new Error('Hindi and Urdu drafts require signed-in AI generation.')
   const clean = idea.trim().replace(/\s+/g,' ')
+  if (language === 'ar') {
+    return { caption: `فكرة بسيطة تصنع فرقًا:\n\n${clean}\n\n${platform === 'LinkedIn' ? 'ما رأيك في هذا النهج؟' : 'احفظ المنشور وشاركنا رأيك.'}`, hashtags: ['محتوى', 'تسويق', 'أعمال'] }
+  }
   const hooks:Record<string,string> = {
     Professional:'A practical idea worth paying attention to:',
     Friendly:'Here is something simple that can make a real difference:',

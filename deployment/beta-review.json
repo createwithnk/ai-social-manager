@@ -1,0 +1,131 @@
+{
+  "projectRef": "nkfecpdegcmsapvbviky",
+  "branch": "chore/security-and-approval-hardening",
+  "approved": false,
+  "defaults": {
+    "aiEnabled": false,
+    "uploadsEnabled": false,
+    "dailyCallLimit": 0,
+    "dailyBudgetUsd": 0
+  },
+  "firstApproval": "Review isolated staging/backup evidence before authorizing these exact SQL payloads. No blanket database push.",
+  "separateApprovals": [
+    "Hosted Auth settings",
+    "Owner UUID privileges",
+    "Test UUID membership",
+    "Frontend and generator release",
+    "Provider usage with verified no-charge configuration",
+    "Real user invitations"
+  ],
+  "normalization": "UTF-8 content with CRLF normalized to LF",
+  "files": [
+    {
+      "path": "supabase/migrations/20261013000000_require_prior_approval.sql",
+      "sha256": "1f9bc3e229183d5df1f1d7f80d28d688218e4e9c4726d2a920689ce84a38c756"
+    },
+    {
+      "path": "supabase/migrations/20261014000000_owner_monitoring.sql",
+      "sha256": "6c306c0c7b6c93b7a84ae613c019bd93d6bef7865c35b3027b4a9f192131e6ed"
+    },
+    {
+      "path": "supabase/proposals/20261015000000_private_beta_safety.sql",
+      "sha256": "bbc5892b77a6371d2c73d5dbebdd98db24707c61c3aec0259109bb67368f573c"
+    },
+    {
+      "path": "supabase/proposals/20261015000000_private_beta_safety.rollback.sql",
+      "sha256": "35ab8186c4a5a7055428a5ef905320cc5a4615fb4c680b80b8145b98ccbd88a1"
+    },
+    {
+      "path": "supabase/functions/generate-content/index.ts",
+      "sha256": "8b33b50e13e6415778a2aacae4247f2c31e890b1294fa18714eef8cc2effa25d"
+    },
+    {
+      "path": "supabase/functions/generate-content/handler.ts",
+      "sha256": "ff02e07897f6ce053c04a5adeb4c133f752cc1ed10c34abbbc1f62274b7e574f"
+    },
+    {
+      "path": "supabase/functions/generate-content/gemini.ts",
+      "sha256": "114a0d1591688a8c5c9219343a1f2fc4a02e8639a848dd6946c614379a893f81"
+    },
+    {
+      "path": "supabase/functions/generate-content/monitoring.ts",
+      "sha256": "8743280c13b91c37cc2891c7aa11c00879ff42fafc225cbde73ea4f921a01dd1"
+    },
+    {
+      "path": "src/App.tsx",
+      "sha256": "cd5fabe112a5e56b9c3a0e0701cb493eafa3cec5a7efe73dfa326a1498e2e513"
+    },
+    {
+      "path": "src/BetaGate.tsx",
+      "sha256": "d28d69b6899c11015c68bb2b8233887450778a327229400c154af85eec62b577"
+    },
+    {
+      "path": "src/AdminDashboard.tsx",
+      "sha256": "0623f10c6395de7e9eebdeb733968b79a922cb7286728c38099404d6a9a1143e"
+    },
+    {
+      "path": "src/RuntimeBoundary.tsx",
+      "sha256": "6bcb739b5ae5927c4739a3a7f662b47dbcc21e457fc82cc30dea349873ad4c22"
+    },
+    {
+      "path": "src/lib/auth.ts",
+      "sha256": "1c930c524a9a9779931fad114015e42199f29a2d4e07209f59168b17b61cd6b9"
+    },
+    {
+      "path": "src/lib/ai.ts",
+      "sha256": "12612aaa3aa1eb0d9bf6be072b96737cef49434b1803e84ef0a02e508a803b6b"
+    },
+    {
+      "path": "src/lib/beta-policy.ts",
+      "sha256": "e74fd6a1d7f4feb50a9f9cb59502d1e63b861e785a7220ed95fdd21ea7d03365"
+    },
+    {
+      "path": "src/lib/monitoring.ts",
+      "sha256": "90f8d51aeb6bbc5ce81ed54c7e56e1341cf3c831fd629c5cd696b270f823974d"
+    },
+    {
+      "path": "src/lib/media.ts",
+      "sha256": "04962a3013fbf2366fa3b4549ac4a2f83a071c6522a27a591b5f13198110da59"
+    },
+    {
+      "path": "src/lib/supabase.ts",
+      "sha256": "6c84ba103d64922c07e1fa1e214f5814d7c2447e1a4ca5cbc73f81f6171b6f85"
+    },
+    {
+      "path": "src/lib/translations.ts",
+      "sha256": "c711e94acae5a9a502f3e833e975ec4249c3ffafabaf6134f1fd2b0d17c2572e"
+    },
+    {
+      "path": "src/styles.css",
+      "sha256": "d926582e7d16684333b9210f029d446905678892a8c2cbf77fbb12b2ec07efc1"
+    },
+    {
+      "path": "src/main.tsx",
+      "sha256": "e12a519249e0ad1d53450da18161d1505feb98affaf732a3ddc898a21b400271"
+    },
+    {
+      "path": "src/components/MediaInput.tsx",
+      "sha256": "b096710ac434056d08c68444d11d6a472e69c31ed351dbb470e19fc8ea23cf24"
+    },
+    {
+      "path": "src/MediaLibrary.tsx",
+      "sha256": "9676f3365bd793d21dccc8f7f6de2f975560d10698b4988b41d9df894c93508f"
+    },
+    {
+      "path": "scripts/release-review.mjs",
+      "sha256": "3720cf3b17c2b50c60ab097c560240a81a8c2bd1b0f3bcef7458d622d30a0276"
+    },
+    {
+      "path": "deployment/target.json",
+      "sha256": "30939493fa6fe3f611845a3062ac890b0d7378bcd514d1b86e31d27475b38b83"
+    },
+    {
+      "path": "public/_headers",
+      "sha256": "7659bd8c1d56e3d451eab521603f559a366d57771cd9d4c9b5736851271d8146"
+    },
+    {
+      "path": "deployment/security-headers.json",
+      "sha256": "e7b32decf8857b342549dfefb88f30189d6a4fb6b51edb67c0206f6f2514f8dd"
+    }
+  ]
+}
