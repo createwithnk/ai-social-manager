@@ -26,3 +26,9 @@ Run npm ci, npm run lint, npm run check:edge, npm run check:deno, npm run check:
 Browser tests start a local preview at 127.0.0.1:4179 with placeholder Supabase values and block external page requests. Local language/browser storage is isolated. Real new-function tests, email delivery, native-speaker/full accessibility review, malware scanning, retention and hosted-log auditing remain pending owner-approved release work.
 
 Beta preparation added four header-policy tests and four desktop/mobile CSP browser cases. All 60 Node/workflow tests and 71 local PostgreSQL checks passed; all eight browser tests, build, lint and browser TypeScript passed. Deno/backend code is unchanged since the verified compatibility CI. No live mutations or provider calls were made. The host-header artifacts are prepared, not deployed.
+
+## 13 October owner monitoring checks
+
+63 Node tests, 81 isolated PostgreSQL checks and 24 Deno security tests (15 payment steps) passed. Edge/Deno and browser TypeScript checks passed. Existing eight desktop/mobile browser cases passed; final suite includes two added owner access-denial cases. Local admin checks cover ordinary users, self-grants, removed membership, revoked sessions, anonymous access, exact aggregate output and safe malformed/error UI. New successful owner rendering is tested with a component fixture; hosted owner acceptance remains pending. No provider calls or live data changes.
+
+Final verification: all 10 desktop/mobile browser cases passed, including dashboard denial/refresh/viewport checks. Final production build, lint, app/Edge/browser TypeScript, Deno checks and whitespace verification passed. Sandbox process-spawn failures were rerun with approved local execution. No hosted acceptance is implied.

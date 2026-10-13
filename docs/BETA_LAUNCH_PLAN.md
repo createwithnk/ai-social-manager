@@ -37,3 +37,7 @@ If acceptance fails, stop inviting users and use the approved previous frontend/
 ## Not blockers for the proposed draft/review Beta
 
 Provider app reviews/OAuth credentials, paid plans, merchant documents, real social publication and payment activation are optional later phases. They remain disabled and require separate owner permission. Full native concurrency/load certification and broad accessibility certification are later scaling work; critical Beta flows and ownership/approval checks still must pass release acceptance.
+
+## Owner monitoring continuation — 13 October 2026
+
+Fetched development branch and verified checkpoint 06776a6 was already pushed (HEAD/origin divergence 0/0). Added a read-only, mobile-friendly aggregate dashboard with private server-managed admin membership and active-session authorization. Existing customer policies and backend protections are preserved. The new monitoring migration and owner assignment are NOT applied live. See OWNER_MONITORING.md for scope, rollback and acceptance. Cost/subscription/runtime-error instrumentation is still unavailable; do not interpret quota attempts as spend. No deployment, production data access, paid request, social/billing activation or main merge occurred.

@@ -17,3 +17,6 @@
 This reconciliation made no live migrations, policy changes, production-data writes, Edge deployments, merges, social posts or billing activation. Deployment approval does not implicitly authorize publishing or billing. See BACKEND_COMPATIBILITY.md for migration scope and proposed rollback.
 
 See BETA_LAUNCH_PLAN.md. Publishing and billing database gates were read-only verified false. They remain outside the proposed core Beta and do not need activation for it.
+
+- [ ] Separately approve reviewed owner monitoring migration and exact owner Auth UUID membership assignment; verify authorized/unauthorized hosted access. See OWNER_MONITORING.md.
+- [ ] Complete measured spend and redacted runtime-error monitoring before release acceptance.

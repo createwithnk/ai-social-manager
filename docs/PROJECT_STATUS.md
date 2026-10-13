@@ -32,3 +32,7 @@ See [compatibility plan](BACKEND_COMPATIBILITY.md) and [test report](TEST_REPORT
 6. Use BETA_LAUNCH_PLAN.md for the exact core Beta blockers. Social-provider and merchant credentials do not block a free draft/review Beta with those features disabled. Upload safety/maintenance and critical Arabic/accessibility acceptance still need scope-specific review.
 
 The pre-session local work remains in its named Git stash; do not blindly reapply it. No existing customer data was read or changed; inspection used catalog/configuration metadata only.
+
+## Owner monitoring continuation — 13 October 2026
+
+Fetched development branch and verified checkpoint 06776a6 was already pushed (HEAD/origin divergence 0/0). Added a read-only, mobile-friendly aggregate dashboard with private server-managed admin membership and active-session authorization. Existing customer policies and backend protections are preserved. The new monitoring migration and owner assignment are NOT applied live. See OWNER_MONITORING.md for scope, rollback and acceptance. Cost/subscription/runtime-error instrumentation is still unavailable; do not interpret quota attempts as spend. No deployment, production data access, paid request, social/billing activation or main merge occurred.

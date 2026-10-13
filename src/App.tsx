@@ -10,9 +10,10 @@ import { generateAiDraft } from './lib/ai'
 import { fetchPosts, savePostForUser } from './lib/posts'
 import { isSupabaseConfigured } from './lib/supabase'
 import MediaLibrary from './MediaLibrary'
+import AdminDashboard from './AdminDashboard'
 import type { ContentLanguage, Market, Platform, Post } from './types'
 
-type View = 'dashboard' | 'create' | 'calendar' | 'detail' | 'media'
+type View = 'dashboard' | 'create' | 'calendar' | 'detail' | 'media' | 'admin'
 
 function loadLocalPosts(): Post[] {
   try {
@@ -243,6 +244,7 @@ function Workspace({ auth }: { auth: AuthState }) {
         <Nav active={view === 'dashboard'} icon={<LayoutDashboard />} label={t("Dashboard")} onClick={() => { setView('dashboard'); setMobile(false) }} />
         <Nav active={view === 'create'} icon={<Sparkles />} label={t("Create content")} onClick={() => { createPost(); setMobile(false) }} />
         <Nav active={view === 'calendar'} icon={<CalendarDays />} label={t("Content calendar")} onClick={() => { setView('calendar'); setMobile(false) }} />
+        {auth.user && <Nav active={view === 'admin'} icon={<BarChart3 />} label="Owner monitoring" onClick={() => { setView('admin'); setMobile(false) }} />}
         <Nav active={view === 'media'} icon={<FileText />} label={t("Media library")} onClick={() => { setView('media'); setMobile(false) }} />
       </nav>
       <div className="guardrail"><CheckCircle2 /><div><strong>{t("Approval protected")}</strong><span>{t("Nothing is published without your approval.")}</span></div></div>
@@ -252,6 +254,7 @@ function Workspace({ auth }: { auth: AuthState }) {
       {(postsError ?? auth.error) && <p className="workspace-error" role="alert">{t(postsError ?? auth.error ?? '')}</p>}
       {view === 'dashboard' && <Dashboard posts={posts} drafts={posts.filter((post) => post.status === 'draft').length} approved={posts.filter((post) => post.status === 'approved').length} scheduled={posts.filter((post) => post.status === 'scheduled').length} onCreate={createPost} onEdit={editDraft} onView={(post) => viewPost(post, 'dashboard')} loading={postsLoading} />}
       {view === 'create' && <Generator key={editingPost?.id ?? `new-${composerKey}`} initialPost={editingPost} userId={userId} onSave={savePost} disabled={postsLoading} />}
+      {view === 'admin' && <AdminDashboard />}
       {view === 'media' && <MediaLibrary userId={userId} />}
       {view === 'calendar' && <Calendar posts={posts} onUpdate={persistPost} onView={(post) => viewPost(post, 'calendar')} disabled={postsLoading} />}
       {view === 'detail' && viewingPost && <PostDetail post={viewingPost} onBack={() => { setViewingPost(null); setView(detailBackView) }} onEdit={editApprovedOrScheduledPost} disabled={postsLoading} />}
