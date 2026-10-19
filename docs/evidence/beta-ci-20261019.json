@@ -3,21 +3,21 @@
   "date": "2026-10-19",
   "repository": "https://github.com/createwithnk/ai-social-manager",
   "branch": "fix/beta-readiness-20261019",
-  "sourceCommit": "6deb6f02128913e02ace82c39bd8437b376778ab",
-  "sourceTree": "36115384a8fab1700b7b9d1c7c56394d78f18910",
+  "sourceCommit": "3c617adfb2eeb008b90a363a447797bbc236a240",
+  "sourceTree": "1ec8df95614fe02d0233056711ecdaa9732c4d3d",
   "workflow": {
-    "id": 39260804248,
-    "url": "https://github.com/createwithnk/ai-social-manager/actions/runs/39260804248",
+    "id": 39267865055,
+    "url": "https://github.com/createwithnk/ai-social-manager/actions/runs/39267865055",
     "status": "completed",
     "conclusion": "success",
     "jobs": [
       {
-        "id": 118087882209,
+        "id": 118112077711,
         "name": "validate",
         "conclusion": "success"
       },
       {
-        "id": 118087882449,
+        "id": 118112077141,
         "name": "native-beta",
         "conclusion": "success"
       }
@@ -37,9 +37,9 @@
     "dependencyAuditKnownVulnerabilities": 0
   },
   "nativeReport": {
-    "checkedAt": "2026-10-19T13:31:48.177Z",
+    "checkedAt": "2026-10-19T14:19:30.840Z",
     "status": "passed",
-    "scope": "Disposable socket-only native PostgreSQL with synthetic Auth/Storage",
+    "scope": "Two disposable socket-only native PostgreSQL clusters with synthetic Auth/Storage",
     "checks": [
       "native cluster has no TCP listener",
       "live-database.sql passes on native PostgreSQL",
@@ -51,7 +51,7 @@
       "eight independent overlapping sessions cannot overspend the two-request project budget",
       "client completion forgery fails and server completion remains idempotent",
       "operational rollback pauses runtime grants without deleting content or weakening invites",
-      "native logical backup restores synthetic rows, RLS, policies and functions into a fresh database"
+      "native logical backup restores synthetic roles, rows, RLS and privileges into a separate cluster"
     ],
     "sourceHashes": [
       {
@@ -104,18 +104,23 @@
       }
     ],
     "stopped": true,
+    "restoreStopped": true,
     "syntheticLogicalRestoreVerified": true,
+    "separateClusterRestoreVerified": true,
     "hostedBackupVerified": false,
     "liveChanges": false,
     "providerCalls": false,
     "version": "postgres (PostgreSQL) 17.6 (Debian 17.6-2.pgdg12+1)",
-    "archiveSha256": "1a37143efe3212ef8bfb88a95c5a8c6e5dedd84f70ba413bde7a97eaf8265a08",
-    "rolesSha256": "7b7882ecf80f5df410e4d066b3de9988f3178cf301f0ee450a07ecb7694b869d",
-    "snapshotSha256": "962e9d2d2aa6106d72f127d9964d2f7b6ff083af7aceaffe21087816708b554d"
+    "archiveSha256": "9de176d7ffe26a088c7045b95eb266a46b89990e02c0e4b441b7f0e9cae7b2ad",
+    "rolesSha256": "ee91d79526262fe93930178f728b4ec69eaf304c4418cfbc4268eb4221f9e003",
+    "restoreRolesSha256": "a8e5ae6392e0347336cb68f8dd7fc38990fe1ff372c9d345c3c2f6f707321388",
+    "bootstrapRoleCreateOmitted": true,
+    "snapshotSha256": "bac8227dc610a2bf7be0d2889e48550f75bb58214df916607d69dbdf79ca6e25"
   },
   "limits": [
     "Auth/Storage catalogs and all identities/data are synthetic.",
-    "Logical restore targets a fresh database in the same disposable cluster; exported password-free roles are reused, not restored to a separate cluster.",
+    "Logical restore uses a separate fresh native PostgreSQL cluster; only the duplicate CREATE ROLE postgres is omitted in a derived roles script. Every dumped ALTER/grant is retained with error-stop behavior.",
+    "Effective built-in ACL defaults normalize equivalent NULL/owner grants. Role attributes, memberships, owners, grantors, PUBLIC grants and grant options are compared; a rolled-back extra PUBLIC execute grant is detected.",
     "Hosted backup recovery, actual Auth/Storage services and stored-object bytes are unverified.",
     "No live SQL, memberships, provider calls, invitations, deployment, main merge, publishing or billing activation occurred.",
     "SQL and runtime release approvals remain false; no launch permission is implied."

@@ -2,7 +2,7 @@
 
 ## Verified development CI — 19 October 2026
 
-Code commit `6deb6f02128913e02ace82c39bd8437b376778ab` on `fix/beta-readiness-20261019` passed [run 39260804248](https://github.com/createwithnk/ai-social-manager/actions/runs/39260804248). Both `validate` and `native-beta` jobs succeeded. [Machine-readable evidence](evidence/beta-ci-20261019.json) records the exact source commit, native report and verification limits.
+Code commit `3c617adfb2eeb008b90a363a447797bbc236a240` on `fix/beta-readiness-20261019` passed [run 39267865055](https://github.com/createwithnk/ai-social-manager/actions/runs/39267865055). Both `validate` and `native-beta` jobs succeeded. [Machine-readable evidence](evidence/beta-ci-20261019.json) records the exact source commit, native report and verification limits.
 
 | Check | Verified result |
 | --- | --- |
@@ -10,17 +10,17 @@ Code commit `6deb6f02128913e02ace82c39bd8437b376778ab` on `fix/beta-readiness-20
 | Canonical isolated PGlite SQL checks | 81 passed |
 | Desktop/mobile Playwright cases | 26 passed |
 | Pinned Deno 2.9.6 security/endpoint tests | 24 passed, 15 payment substeps, 0 failed; no test network permission |
-| Native PostgreSQL 17.6 acceptance | 11 passed; socket-only synthetic cluster stopped successfully |
+| Native PostgreSQL 17.6 acceptance | 11 passed; both socket-only synthetic clusters stopped successfully |
 | Lint, app/Edge/browser/Deno types, production build, review manifest | Passed |
 | Dependency audit during CI installation | 0 known vulnerabilities reported |
 
 The browser fixtures cover single-use draft review, read-only View/Back, fresh conversion confirmation, revision/approval behavior, unchanged rescheduling, Arabic/mobile layouts, invitation revocation and CSP enforcement. Backend/provider requests are intercepted; these are not hosted integration results.
 
-The native job runs the canonical fixture SQL, then the three exact reviewed payloads and operational rollback. It verifies retained synthetic posts/revisions/media metadata, closed defaults, invitation isolation, direct-upload denial, prior-approval enforcement, eight independent sessions contending on the budget lock, and idempotent service completion/client-forgery denial. pg_dump/pg_dumpall/pg_restore then restore synthetic data, RLS, policies and functions into a fresh database; revoked access and closed runtime grants remain enforced.
+The native job runs the canonical fixture SQL, then the three exact reviewed payloads and operational rollback. It verifies retained synthetic posts/revisions/media metadata, closed defaults, invitation isolation, direct-upload denial, prior-approval enforcement, eight independent sessions contending on the budget lock, and idempotent service completion/client-forgery denial. pg_dump/pg_dumpall/psql/pg_restore then restore synthetic roles, data, RLS, policies, functions and effective privileges into a separate fresh cluster. Role attributes and memberships match; schema/table/function/default grants match; revoked access, scheduling approval and closed runtime grants remain enforced. A rolled-back PUBLIC execute grant is detected as a mismatch.
 
-Backup scope is deliberately limited: roles are exported without passwords and reused in the same isolated cluster. Actual hosted backup recovery, independent-cluster role restoration, real Auth/Storage service state and stored-object bytes remain unverified. No hosted database, provider API, customer data or credentials are used.
+The fresh restore cluster has its own bootstrap postgres role. A derived roles script omits only that duplicate CREATE ROLE; every dumped ALTER and membership grant is retained and applied with psql startup files disabled and ON_ERROR_STOP enabled. Raw and derived script hashes are recorded. Passwords are deliberately excluded. Actual hosted backup recovery, real Auth/Storage service state and stored-object bytes remain unverified. No hosted database, provider API, customer data or credentials are used.
 
-The first native CI attempt failed at pg_dump because an inherited-service isolation sentinel was invalid for libpq. The corrected environment helper omits service configuration entirely, permits only necessary system variables and fixes the local socket/user/database. Two regression cases verify inherited credentials, connection services and preload hooks are excluded. The successful run above is the acceptance result; the failed attempt is not counted as passed.
+The first native CI attempt failed at pg_dump because an inherited-service isolation sentinel was invalid for libpq. The corrected environment helper omits service configuration entirely, permits only necessary system variables and fixes the local socket/user/database. Two regression cases verify inherited credentials, connection services and preload hooks are excluded. Subsequent separate-cluster rehearsal caught a bootstrap-grantor mismatch and explicit-versus-implicit owner ACL representation differences. The final runner restores using the fresh matching bootstrap role and compares effective built-in ACL defaults, preserving owners, grantors, PUBLIC permissions and grant options. The PUBLIC-grant negative control confirms that permission expansion still fails comparison. See the PostgreSQL [dump/restore guidance](https://www.postgresql.org/docs/17/app-pg-dumpall.html) and [ACL functions](https://www.postgresql.org/docs/17/functions-info.html). The successful run above is the acceptance result; failed attempts are not counted as passed.
 
 Earlier local verification passed all 26 browser cases using complete Chromium 153 and pinned Deno 2.9.6. A fresh local clone of `35b047a` installed from the lockfile with lifecycle scripts disabled, built and passed its then-current 94 Node/81 PGlite checks with a clean worktree. The local root-only native startup failure was not bypassed; normal isolated GitHub CI supplied the verified native run.
 

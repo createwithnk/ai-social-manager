@@ -2,9 +2,9 @@
 
 ## Current development candidate — 19 October 2026
 
-The authorized development branch [fix/beta-readiness-20261019](https://github.com/createwithnk/ai-social-manager/tree/fix/beta-readiness-20261019) is pushed. Source commit `6deb6f0` passed [CI 39260804248](https://github.com/createwithnk/ai-social-manager/actions/runs/39260804248): 96 Node tests, 81 PGlite checks, 26 browser cases, 24 Deno tests/15 payment substeps and 11 native PostgreSQL 17.6 checks. Exact evidence is in [evidence/beta-ci-20261019.json](evidence/beta-ci-20261019.json).
+The authorized development branch [fix/beta-readiness-20261019](https://github.com/createwithnk/ai-social-manager/tree/fix/beta-readiness-20261019) is pushed. Source commit `3c617ad` passed [CI 39267865055](https://github.com/createwithnk/ai-social-manager/actions/runs/39267865055): 96 Node tests, 81 PGlite checks, 26 browser cases, 24 Deno tests/15 payment substeps and 11 native PostgreSQL 17.6 checks. Exact evidence is in [evidence/beta-ci-20261019.json](evidence/beta-ci-20261019.json).
 
-Native concurrency and synthetic pg_dump/pg_restore are now verified in an isolated CI cluster. Hosted backup recovery, separate-cluster role restoration, actual Auth/Storage services and object bytes are not. The current frontend requires still-unapplied Beta RPCs; do not deploy it against the unchanged hosted database.
+Native concurrency and synthetic role/data/privilege backup restoration into a separate fresh PostgreSQL cluster are now verified in CI. Both clusters stop and a PUBLIC-grant negative control passes. Actual hosted backup recovery, Auth/Storage services and object bytes remain unverified. The current frontend requires still-unapplied Beta RPCs; do not deploy it against the unchanged hosted database.
 
 This is development preparation, not launch approval. PR #2 remains draft, main is unchanged, and no hosted write, runtime deployment, provider request, invitation, publishing or billing activation occurred. [The current handoff](LOCAL_BETA_HANDOFF_20261019.md) supersedes the historical delivery/test status below. The exact SQL/runtime/identity/provider stages in [PRIVATE_BETA_RELEASE_REVIEW.md](PRIVATE_BETA_RELEASE_REVIEW.md) remain unapproved.
 
@@ -28,7 +28,7 @@ An invited free cohort testing signed-in AI drafts, editing/manual approval and 
 
 | Blocker | Evidence / current state | Required next action |
 | --- | --- | --- |
-| Development candidate delivery | New branch pushed; source 6deb6f0 passes both CI jobs, including native acceptance | Complete: keep the verified source isolated from main and deployment |
+| Development candidate delivery | New branch pushed; source 3c617ad passes both CI jobs, including native acceptance | Complete: keep the verified source isolated from main and deployment |
 | Hosted recovery | Synthetic native dump/restore passes; actual hosted backup/services/object bytes remain unverified | Obtain authorized hosted backup/recovery evidence before hosted SQL |
 | Beta access and destination | Signup is removed from the prepared UI; no approved Beta URL/cohort and hosted invite-only enforcement is not applied | Owner chooses the URL and invited cohort; review hosted signup/email/CAPTCHA/rate controls and approve any configuration changes |
 | Server scheduling protection | Read-only catalog check finds no aa_require_prior_approval trigger | Review backup/restore and historical migration mappings, then separately approve applying ONLY 20261013000000_require_prior_approval.sql. No blind db push/history repair |

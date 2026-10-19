@@ -2,7 +2,7 @@
 
 ## Delivery and preservation
 
-The user authorized a development push. [fix/beta-readiness-20261019](https://github.com/createwithnk/ai-social-manager/tree/fix/beta-readiness-20261019) now contains the reviewed work; source commit `6deb6f02128913e02ace82c39bd8437b376778ab` passed [CI 39260804248](https://github.com/createwithnk/ai-social-manager/actions/runs/39260804248). Documentation commits may follow that tested source. PR #2 remains draft on its previous branch, main is unchanged, and there was no deployment.
+The user authorized a development push. [fix/beta-readiness-20261019](https://github.com/createwithnk/ai-social-manager/tree/fix/beta-readiness-20261019) now contains the reviewed work; source commit `3c617adfb2eeb008b90a363a447797bbc236a240` passed [CI 39267865055](https://github.com/createwithnk/ai-social-manager/actions/runs/39267865055). Documentation commits may follow that tested source. PR #2 remains draft on its previous branch, main is unchanged, and there was no deployment.
 
 Base development candidate: `beabded`. Local checkpoints `35b047a`, `4b70d7f` and subsequent local commits remain preserved. Connector commits have different metadata/SHAs, but complete source-tree equality was verified before every remote update. The unavailable laptop-only `21e8dce` was not overwritten or claimed synchronized.
 
@@ -17,16 +17,18 @@ Verified GitHub CI results:
 - 96 Node tests, 81 isolated PGlite SQL checks and 26 desktop/mobile browser cases.
 - Pinned Deno 2.9.6 type check and 24 endpoint/security tests with 15 payment substeps; no test network permission.
 - Lint; app, Edge and browser TypeScript; production build; read-only review manifest.
-- 11 native PostgreSQL 17.6 checks, including eight independently overlapping budget requests and synthetic logical backup/restore. The disposable cluster stopped.
+- 11 native PostgreSQL 17.6 checks, including eight independently overlapping budget requests and synthetic logical backup/restore. Both disposable clusters stopped.
 - Dependency installation reported zero known vulnerabilities.
 
 See [test report](TEST_REPORT.md) and [exact CI evidence](evidence/beta-ci-20261019.json). Browser/provider behavior is mocked; no provider request or hosted mutation is implied.
 
 ## Native test and recovery scope
 
-CI pins the official PostgreSQL 17.6 container by digest, matching the hosted engine version observed on 19 October. `npm run test:native-beta` creates its own socket-only temporary cluster, loads synthetic Auth/Storage catalogs and verifies exact historical/pending SQL hashes. It exercises invite/approval/budget/rollback protections, exports a password-free role file and custom logical archive, then restores into a fresh database in the same disposable cluster.
+CI pins the official PostgreSQL 17.6 container by digest, matching the hosted engine version observed on 19 October. `npm run test:native-beta` creates its own socket-only temporary cluster, loads synthetic Auth/Storage catalogs and verifies exact historical/pending SQL hashes. It exercises invite/approval/budget/rollback protections, exports a password-free role file and custom logical archive, then restores them into a separate fresh cluster. It compares role attributes/memberships, schema/table/function/default grants, retained rows, RLS/policies and function bodies. An added PUBLIC execute grant must produce a mismatch and is rolled back. Restored access revocation, scheduling approval and closed grants are tested again.
 
-The result certifies this synthetic rehearsal only. It does not verify separate-cluster role restoration, an actual recoverable hosted backup, real Auth/Storage service state or stored-object bytes. Hosted backup/recovery evidence remains a launch blocker.
+Only the fresh cluster's duplicate CREATE ROLE postgres is omitted in a derived roles script; its dumped attributes and all other role/grant commands are retained with strict error-stop behavior. Effective built-in ACL defaults normalize equivalent NULL/explicit owner grants without discarding PUBLIC/grantor/grant-option differences. Both clusters stop; raw/derived/archive/snapshot hashes are recorded.
+
+The result certifies this synthetic rehearsal only. It does not verify an actual recoverable hosted backup, real Auth/Storage service state or stored-object bytes. Hosted backup/recovery evidence remains a launch blocker.
 
 The local workspace maps only UID 0, so it cannot provision an unprivileged PostgreSQL cluster. Its earlier startup failure remains a local environment limitation. GitHub CI supplies native acceptance without disabling PostgreSQL root protection, changing user mappings or falling back to hosted resources.
 
@@ -34,7 +36,7 @@ The local workspace maps only UID 0, so it cannot provision an unprivileged Post
 
 Use Node 24 and `npm ci`, followed by `npm test`, `npm run lint`, `npm run check:edge`, `npm run check:e2e`, `npm run build`, `npm run review:beta`, `npm run check:deno`, `npm run test:edge` and `npm run test:e2e`. Deno remains pinned to 2.9.6. The optional `AASIFLOW_TEST_DENO_BIN` must be absolute and that exact version; `AASIFLOW_TEST_BROWSER` can select an installed Chromium binary without changing production configuration.
 
-Native acceptance requires an absolute `AASIFLOW_TEST_PG_BIN` pointing to PostgreSQL 17 server and dump/restore tools on Linux/macOS/WSL, with permission to create an unprivileged disposable cluster. No hosted URL input exists. The runner stops only its own cluster and writes ignored synthetic evidence under `test-results/native-beta.json`.
+Native acceptance requires an absolute `AASIFLOW_TEST_PG_BIN` pointing to PostgreSQL 17 server, psql and dump/restore tools on Linux/macOS/WSL, with permission to create unprivileged disposable clusters. No hosted URL input exists. The runner stops both clusters it created and writes ignored synthetic evidence under `test-results/native-beta.json`.
 
 ## Remaining release order
 
