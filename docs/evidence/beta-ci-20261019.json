@@ -1,0 +1,123 @@
+{
+  "scope": "Development CI only. Not hosted release approval or hosted backup certification.",
+  "date": "2026-10-19",
+  "repository": "https://github.com/createwithnk/ai-social-manager",
+  "branch": "fix/beta-readiness-20261019",
+  "sourceCommit": "6deb6f02128913e02ace82c39bd8437b376778ab",
+  "sourceTree": "36115384a8fab1700b7b9d1c7c56394d78f18910",
+  "workflow": {
+    "id": 39260804248,
+    "url": "https://github.com/createwithnk/ai-social-manager/actions/runs/39260804248",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 118087882209,
+        "name": "validate",
+        "conclusion": "success"
+      },
+      {
+        "id": 118087882449,
+        "name": "native-beta",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "validation": {
+    "nodeTestsPassed": 96,
+    "pgliteChecksPassed": 81,
+    "browserCasesPassed": 26,
+    "denoTestsPassed": 24,
+    "denoPaymentSubsteps": 15,
+    "denoVersion": "2.9.6",
+    "lint": "passed",
+    "typescript": "passed",
+    "build": "passed",
+    "manifest": "passed",
+    "dependencyAuditKnownVulnerabilities": 0
+  },
+  "nativeReport": {
+    "checkedAt": "2026-10-19T13:31:48.177Z",
+    "status": "passed",
+    "scope": "Disposable socket-only native PostgreSQL with synthetic Auth/Storage",
+    "checks": [
+      "native cluster has no TCP listener",
+      "live-database.sql passes on native PostgreSQL",
+      "live-payment-database.sql passes on native PostgreSQL",
+      "three exact reviewed payloads preserve old posts, revisions and media",
+      "all release gates start closed and memberships start empty",
+      "synthetic invite membership preserves two-user isolation and disabled direct uploads",
+      "prior approval is required for direct scheduled inserts",
+      "eight independent overlapping sessions cannot overspend the two-request project budget",
+      "client completion forgery fails and server completion remains idempotent",
+      "operational rollback pauses runtime grants without deleting content or weakening invites",
+      "native logical backup restores synthetic rows, RLS, policies and functions into a fresh database"
+    ],
+    "sourceHashes": [
+      {
+        "path": "tests/local-bootstrap.sql",
+        "sha256": "6dbfae5d721ca521b03d9f62b903c1783fc6a4bf9730cab6fa61b2a2190a79e2"
+      },
+      {
+        "path": "supabase/migrations/20260901000000_create_posts.sql",
+        "sha256": "72429e79aa77c7d47df76baf1e82a2e8ea370dcc4dc3dad96f37f0fc9368c5fe"
+      },
+      {
+        "path": "supabase/migrations/20261003000000_content_system.sql",
+        "sha256": "b5d3b87ef0c025e493ae8751ea7165253df5727ad7547ed9dcbf065a15fd2a8b"
+      },
+      {
+        "path": "supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql",
+        "sha256": "4cd66f287b558404ddd999bb6db80b58b21f685e864a78bea75a340606e8557d"
+      },
+      {
+        "path": "supabase/migrations/20261008073141_index_payment_events_order.sql",
+        "sha256": "47e60d804fdb12516fc3b9b3b7487a318de013dc0137a9d02de0b29cd88c1f8c"
+      },
+      {
+        "path": "supabase/migrations/20261008170431_publication_claim_lock_order.sql",
+        "sha256": "7946e8aa74b3b20ed2f570d100ac0272c7dfbdf881a167088cc6b1932d5acc8c"
+      },
+      {
+        "path": "tests/live-database.sql",
+        "sha256": "e6829af36c72f994ce8db6c4f9d1b1adfe80d3d0529ad576b27860a6def000c4"
+      },
+      {
+        "path": "tests/live-payment-database.sql",
+        "sha256": "150794c04c815f6ddcdcbcc5fa658c32634ea18bb439c0f791e513a89326595e"
+      },
+      {
+        "path": "supabase/migrations/20261013000000_require_prior_approval.sql",
+        "sha256": "1f9bc3e229183d5df1f1d7f80d28d688218e4e9c4726d2a920689ce84a38c756"
+      },
+      {
+        "path": "supabase/migrations/20261014000000_owner_monitoring.sql",
+        "sha256": "6c306c0c7b6c93b7a84ae613c019bd93d6bef7865c35b3027b4a9f192131e6ed"
+      },
+      {
+        "path": "supabase/proposals/20261015000000_private_beta_safety.sql",
+        "sha256": "bbc5892b77a6371d2c73d5dbebdd98db24707c61c3aec0259109bb67368f573c"
+      },
+      {
+        "path": "supabase/proposals/20261015000000_private_beta_safety.rollback.sql",
+        "sha256": "35ab8186c4a5a7055428a5ef905320cc5a4615fb4c680b80b8145b98ccbd88a1"
+      }
+    ],
+    "stopped": true,
+    "syntheticLogicalRestoreVerified": true,
+    "hostedBackupVerified": false,
+    "liveChanges": false,
+    "providerCalls": false,
+    "version": "postgres (PostgreSQL) 17.6 (Debian 17.6-2.pgdg12+1)",
+    "archiveSha256": "1a37143efe3212ef8bfb88a95c5a8c6e5dedd84f70ba413bde7a97eaf8265a08",
+    "rolesSha256": "7b7882ecf80f5df410e4d066b3de9988f3178cf301f0ee450a07ecb7694b869d",
+    "snapshotSha256": "962e9d2d2aa6106d72f127d9964d2f7b6ff083af7aceaffe21087816708b554d"
+  },
+  "limits": [
+    "Auth/Storage catalogs and all identities/data are synthetic.",
+    "Logical restore targets a fresh database in the same disposable cluster; exported password-free roles are reused, not restored to a separate cluster.",
+    "Hosted backup recovery, actual Auth/Storage services and stored-object bytes are unverified.",
+    "No live SQL, memberships, provider calls, invitations, deployment, main merge, publishing or billing activation occurred.",
+    "SQL and runtime release approvals remain false; no launch permission is implied."
+  ]
+}

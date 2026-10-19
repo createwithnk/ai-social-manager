@@ -1,4 +1,14 @@
-# Private Beta release review — 13 October 2026
+# Private Beta release review — 19 October 2026
+
+## Current development evidence
+
+Development push is authorized and completed on [fix/beta-readiness-20261019](https://github.com/createwithnk/ai-social-manager/tree/fix/beta-readiness-20261019). Tested source `6deb6f02128913e02ace82c39bd8437b376778ab` passed both jobs in [CI 39260804248](https://github.com/createwithnk/ai-social-manager/actions/runs/39260804248). The current manifest names this development branch, remains unapproved, and retains the same three SQL payload hashes. PR #2 is still draft on its prior branch; no main merge or deployment occurred.
+
+Eleven native PostgreSQL 17.6 checks now verify synthetic SQL/rollback, retained data/revisions/media metadata, invite isolation, eight independently overlapping budget reservations and logical backup/restore. [Recorded evidence](evidence/beta-ci-20261019.json) includes source hashes and confirms the disposable cluster stopped. Restore uses a fresh database in the same cluster with reused roles; actual hosted recovery, independent-cluster role restoration, Auth/Storage service state and object bytes remain unverified.
+
+This closes the synthetic native-test gap only. Stage 1 below still requires authorized hosted/sanitized backup evidence; all subsequent hosted SQL, identities, runtime, provider and invitation stages remain unapproved. Continue safe local work without treating development push permission as permission for those actions.
+
+## Earlier checkpoint history — 13 October 2026
 
 Status: local release candidate, not approved for hosted changes. Project `nkfecpdegcmsapvbviky`, development branch `chore/security-and-approval-hardening`. Checkpoint `c246e2fc70dc5b6737b178bb184d7145055612e8` is verified on GitHub; [push CI 38330765999](https://github.com/createwithnk/ai-social-manager/actions/runs/38330765999) and [PR CI 38330770147](https://github.com/createwithnk/ai-social-manager/actions/runs/38330770147) both succeeded. Later work must pass its own CI after push.
 

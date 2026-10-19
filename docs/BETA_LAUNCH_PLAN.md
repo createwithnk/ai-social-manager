@@ -1,5 +1,13 @@
 # AasiFlowAI Beta launch preparation
 
+## Current development candidate — 19 October 2026
+
+The authorized development branch [fix/beta-readiness-20261019](https://github.com/createwithnk/ai-social-manager/tree/fix/beta-readiness-20261019) is pushed. Source commit `6deb6f0` passed [CI 39260804248](https://github.com/createwithnk/ai-social-manager/actions/runs/39260804248): 96 Node tests, 81 PGlite checks, 26 browser cases, 24 Deno tests/15 payment substeps and 11 native PostgreSQL 17.6 checks. Exact evidence is in [evidence/beta-ci-20261019.json](evidence/beta-ci-20261019.json).
+
+Native concurrency and synthetic pg_dump/pg_restore are now verified in an isolated CI cluster. Hosted backup recovery, separate-cluster role restoration, actual Auth/Storage services and object bytes are not. The current frontend requires still-unapplied Beta RPCs; do not deploy it against the unchanged hosted database.
+
+This is development preparation, not launch approval. PR #2 remains draft, main is unchanged, and no hosted write, runtime deployment, provider request, invitation, publishing or billing activation occurred. [The current handoff](LOCAL_BETA_HANDOFF_20261019.md) supersedes the historical delivery/test status below. The exact SQL/runtime/identity/provider stages in [PRIVATE_BETA_RELEASE_REVIEW.md](PRIVATE_BETA_RELEASE_REVIEW.md) remain unapproved.
+
 ## Current release candidate — 13 October 2026
 
 The synchronized 3f1ca14 checkpoint is pushed and CI passed. Final local hardening includes sanitized Auth/AI errors, translated access-outage recovery, bounded browser requests and a read-only source-manifest CI gate. The proposed first Beta remains free text generation/drafts/editing/review with new media uploads disabled. This completes the current local preparation; the live approval/acceptance stages below remain pending.
@@ -20,11 +28,12 @@ An invited free cohort testing signed-in AI drafts, editing/manual approval and 
 
 | Blocker | Evidence / current state | Required next action |
 | --- | --- | --- |
-| Latest release candidate delivery | Compatibility commit/CI verified; later Beta header/docs changes are local until pushed | Push with GitHub Desktop and verify the new CI. No transfer helper is needed |
-| Beta access and destination | No approved Beta URL/cohort/access model supplied; current UI offers signup, and hosted invite-only enforcement is unverified | Owner chooses the URL and invited cohort; review signup/email/CAPTCHA/rate controls and approve any hosted configuration changes |
+| Development candidate delivery | New branch pushed; source 6deb6f0 passes both CI jobs, including native acceptance | Complete: keep the verified source isolated from main and deployment |
+| Hosted recovery | Synthetic native dump/restore passes; actual hosted backup/services/object bytes remain unverified | Obtain authorized hosted backup/recovery evidence before hosted SQL |
+| Beta access and destination | Signup is removed from the prepared UI; no approved Beta URL/cohort and hosted invite-only enforcement is not applied | Owner chooses the URL and invited cohort; review hosted signup/email/CAPTCHA/rate controls and approve any configuration changes |
 | Server scheduling protection | Read-only catalog check finds no aa_require_prior_approval trigger | Review backup/restore and historical migration mappings, then separately approve applying ONLY 20261013000000_require_prior_approval.sql. No blind db push/history repair |
 | Runtime release permission | Prepared frontend/generator changes are not deployed; existing hosted generator is a different version | Approve exact release commit, host, origin/redirect configuration and staged/limited deployment separately. A main merge is not technically required for a branch-based Beta |
-| Integration acceptance | Local Node/PostgreSQL/Deno/browser checks pass, but not the newly deployed hosted runtime | After approval, use authorized test accounts/data to verify email confirmation/recovery, revoked sessions, two-user RLS, revision conflicts, quota/CORS, actual Storage limits and real Gemini output. These tests can write test data/consume quota, so are not read-only |
+| Integration acceptance | Node/PGlite/Deno/browser/native CI passes; hosted runtime acceptance is pending | After approval, use authorized test accounts/data to verify email confirmation/recovery, revoked sessions, two-user RLS, revision conflicts, quota/CORS, actual Storage limits and real Gemini output. These tests can write test data/consume quota, so are not read-only |
 | Media safety/maintenance | Container checks exist; quarantine/scanning is not live; owner-side deletion/retention is needed because there is no client DELETE policy | Approve a controlled upload/maintenance plan and applicable safety checks, or disable uploads for this Beta. Never run a cleanup worker or delete files without permission |
 | User acceptance and operations | Native Arabic/critical accessibility acceptance, approved support/privacy/data-retention arrangements and measured provider-spend limits are not signed off | Review critical flows with Beta users, publish only owner-approved user information, and approve monitoring/limits. Per-user quotas are not a verified total-project spend cap |
 

@@ -1,16 +1,32 @@
 # Compatibility test report
 
-## Local verification — 19 October 2026
+## Verified development CI — 19 October 2026
 
-94 Node tests and 81 PGlite database checks pass; 26 desktop/mobile Playwright cases pass with a complete Chromium 153 test binary. The new browser cases cover single-use draft review, read-only View/Back, fresh conversion confirmation and unchanged rescheduling times. Pinned Deno 2.9.6 check and all 24 security/endpoint tests (15 payment steps) pass with no network permission for tests. Lint, app/Edge/browser TypeScript, production build, source-manifest verification and whitespace checks pass.
+Code commit `6deb6f02128913e02ace82c39bd8437b376778ab` on `fix/beta-readiness-20261019` passed [run 39260804248](https://github.com/createwithnk/ai-social-manager/actions/runs/39260804248). Both `validate` and `native-beta` jobs succeeded. [Machine-readable evidence](evidence/beta-ci-20261019.json) records the exact source commit, native report and verification limits.
 
-A fresh local Git clone of checkpoint `35b047a`, with no local environment file or existing node_modules, also passes `npm ci --ignore-scripts --no-audit --no-fund`, production build, all 94 Node/81 PGlite checks and `review:beta`; its worktree stays clean. This verifies the committed source/lockfile, not a remote push or release. Production-only npm audit reports zero known vulnerabilities.
+| Check | Verified result |
+| --- | --- |
+| Node regression/tooling tests | 96 passed, 0 failed |
+| Canonical isolated PGlite SQL checks | 81 passed |
+| Desktop/mobile Playwright cases | 26 passed |
+| Pinned Deno 2.9.6 security/endpoint tests | 24 passed, 15 payment substeps, 0 failed; no test network permission |
+| Native PostgreSQL 17.6 acceptance | 11 passed; socket-only synthetic cluster stopped successfully |
+| Lint, app/Edge/browser/Deno types, production build, review manifest | Passed |
+| Dependency audit during CI installation | 0 known vulnerabilities reported |
 
-The initial browser binary was truncated and the standard browser download failed; neither was counted as a passing run. A complete existing Brotli-packaged Chromium binary was extracted to a new temporary path without replacing existing assets, then all 26 cases passed. The default npm Deno launcher hit `ECOMPROMISED: Lock compromised`; the added absolute-path override verifies exactly Deno 2.9.6 before execution. This does not suppress npm integrity checks or relax test network permissions. New tests reject missing/relative native tool paths and invalid Deno versions.
+The browser fixtures cover single-use draft review, read-only View/Back, fresh conversion confirmation, revision/approval behavior, unchanged rescheduling, Arabic/mobile layouts, invitation revocation and CSP enforcement. Backend/provider requests are intercepted; these are not hosted integration results.
 
-Native PostgreSQL remains **blocked before cluster creation**, not passed. PostgreSQL 17.10 binaries were prepared outside the repository with install scripts disabled and reviewed symlink hydration, but the container only maps UID 0 and `chown` to an unprivileged identity fails with EINVAL. The new `test:native-beta` runner records this blocker, never substitutes a hosted database and has no production URL input. Its native SQL/concurrency path still needs execution in a suitable isolated environment. No native pg_dump/pg_restore or hosted backup recovery is certified.
+The native job runs the canonical fixture SQL, then the three exact reviewed payloads and operational rollback. It verifies retained synthetic posts/revisions/media metadata, closed defaults, invitation isolation, direct-upload denial, prior-approval enforcement, eight independent sessions contending on the budget lock, and idempotent service completion/client-forgery denial. pg_dump/pg_dumpall/pg_restore then restore synthetic data, RLS, policies and functions into a fresh database; revoked access and closed runtime grants remain enforced.
 
-Read-only hosted checks confirm the unchanged four historical migrations, missing proposed Beta/owner/scheduling additions, RLS enabled and publishing/billing false. These catalog checks do not certify email delivery, hosted isolation, provider free-tier settings or applied runtime behavior. No live SQL writes, deployed code, provider request, charge, invitation, push or main merge occurred.
+Backup scope is deliberately limited: roles are exported without passwords and reused in the same isolated cluster. Actual hosted backup recovery, independent-cluster role restoration, real Auth/Storage service state and stored-object bytes remain unverified. No hosted database, provider API, customer data or credentials are used.
+
+The first native CI attempt failed at pg_dump because an inherited-service isolation sentinel was invalid for libpq. The corrected environment helper omits service configuration entirely, permits only necessary system variables and fixes the local socket/user/database. Two regression cases verify inherited credentials, connection services and preload hooks are excluded. The successful run above is the acceptance result; the failed attempt is not counted as passed.
+
+Earlier local verification passed all 26 browser cases using complete Chromium 153 and pinned Deno 2.9.6. A fresh local clone of `35b047a` installed from the lockfile with lifecycle scripts disabled, built and passed its then-current 94 Node/81 PGlite checks with a clean worktree. The local root-only native startup failure was not bypassed; normal isolated GitHub CI supplied the verified native run.
+
+Read-only hosted checks earlier on 19 October confirmed unchanged historical migrations, missing proposed Beta/owner/scheduling additions, RLS enabled and publishing/billing false. Hosted email, gateway, runtime, isolation and provider free-tier acceptance remain pending. Pushing development code did not apply SQL, deploy, invite anyone, call a provider, activate billing/publishing or merge main.
+
+Earlier checkpoint results below are historical.
 
 ## Current Beta-safety candidate — 13 October 2026
 

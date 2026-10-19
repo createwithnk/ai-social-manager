@@ -1,18 +1,20 @@
 # AasiFlowAI project status
 
-## Local continuation — 19 October 2026
+## Development checkpoint — 19 October 2026
 
-Remote PR #2 remains draft at `beabded`; no push, main merge, deployment or hosted mutation was performed. Work continues in the isolated review copy, preserving its prior three-file save/edit-consent changes. The separately reported laptop-only `21e8dce` is not available here and was not overwritten or claimed as synchronized.
+The authorized development work is pushed to [fix/beta-readiness-20261019](https://github.com/createwithnk/ai-social-manager/tree/fix/beta-readiness-20261019). Code commit `6deb6f02128913e02ace82c39bd8437b376778ab` passed [GitHub CI 39260804248](https://github.com/createwithnk/ai-social-manager/actions/runs/39260804248), including both validation and native PostgreSQL jobs. PR #2 remains draft on its previous branch; main was not merged and nothing was deployed.
 
-Verified locally: explicit review before either save action, consumed review after successful draft save, explicit confirmation before converting approved/scheduled content to a draft, View/Back without mutation, revision-conflict retention and rescheduling using the displayed time. An event-only schedule validator fixes the Calendar lint failure. Supabase SDK is pinned to the existing exact version. The release review now also hashes post persistence, workflow validation, types and dependency manifests; approval remains false and all SQL payloads are unchanged.
+Completed: fresh review before saving, single-use draft consent, confirmation before approved/scheduled content becomes a draft, read-only View/Back, revision-conflict retention, displayed-time rescheduling, and disabled concurrent Calendar actions during a write. Existing save/edit changes were preserved. The source manifest covers persistence/workflow/dependencies and native CI tooling; approval stays false and the three reviewed SQL payload hashes are unchanged.
 
-Passed: 94 Node tests, 81 isolated PGlite SQL checks, 26 desktop/mobile browser cases, 24 pinned Deno tests (15 payment steps), Deno/Edge/browser/app type checks, build, lint and manifest verification. Browser requests outside localhost were blocked; provider calls were mocked. These are not hosted acceptance results.
+Verified in CI: 96 Node tests, 81 isolated PGlite SQL checks, 26 desktop/mobile browser cases, 24 pinned Deno tests (15 payment steps), build, lint, type checks and manifest verification. The PostgreSQL 17.6 job passes 11 additional native checks: exact SQL application/rollback, retained synthetic rows/media/revisions, invite isolation, eight independently overlapping budget requests, and pg_dump/pg_restore into a fresh database. Its temporary cluster stopped successfully. See [test report](TEST_REPORT.md) and [recorded evidence](evidence/beta-ci-20261019.json).
 
-A native PostgreSQL 17.10 test runner is prepared with socket-only disposable databases, exact SQL hashes and independent-session budget checks. Its actual native run is **blocked**, not passed: this container maps only root and cannot chown a disposable directory to the required unprivileged PostgreSQL user. No root-check bypass or hosted fallback was used. Native pg_dump/pg_restore and a recoverable hosted backup remain unverified. See [local handoff](LOCAL_BETA_HANDOFF_20261019.md).
+The native rehearsal uses synthetic Auth/Storage catalogs and reuses roles in the same disposable cluster. It does not certify a recoverable hosted backup, separate-cluster role restoration, actual Auth/Storage services or stored-object bytes. The earlier root-only local-container blocker was resolved by running native acceptance in isolated GitHub CI, without bypassing PostgreSQL protections.
 
-Fresh read-only Supabase metadata confirms ACTIVE_HEALTHY, PostgreSQL 17.6, unchanged four historical migration versions and RLS on posts/ai_usage/storage.objects. Publishing/billing remain false. The three pending scheduling/monitoring/Beta SQL additions are still absent. No customer content, credentials, memberships or provider account data was read.
+Read-only hosted metadata earlier on 19 October confirmed ACTIVE_HEALTHY, PostgreSQL 17.6, unchanged four historical migration versions, RLS on posts/ai_usage/storage.objects, and publishing/billing false. The three proposed scheduling/monitoring/Beta additions are still unapplied. No live SQL writes, memberships, provider calls, charges, invitations or deployment occurred.
 
-Remaining release boundaries: native/backup evidence, exact SQL approval, hosted Auth/identity/runtime/test-data approvals, provider no-charge proof, native Arabic/screen-reader acceptance and an explicitly approved cohort/privacy/support plan. The existing staged release review remains authoritative. Do not deploy this frontend against the unchanged hosted database: required Beta RPCs are not present.
+Remaining release work: authorized hosted backup/recovery and integration acceptance; exact SQL/history/existing-user-impact review; approved Auth/identity/runtime setup; provider no-charge proof; and human Arabic/screen-reader/cohort/privacy/support acceptance. Do not deploy this frontend against the unchanged hosted database: required Beta RPCs are absent. The release review remains unapproved.
+
+The unavailable laptop-only `21e8dce` was not overwritten or claimed synchronized. Earlier checkpoints below are history; [the current handoff](LOCAL_BETA_HANDOFF_20261019.md) supersedes their delivery/native-test status.
 
 ## Current checkpoint — 13 October 2026
 
