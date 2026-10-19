@@ -39,13 +39,12 @@ function run(name, args, socketDirectory = directory) {
   })
 }
 
-async function connect(role = 'postgres', uid, session, database = 'postgres', socketDirectory = directory, loginUser = 'postgres') {
+async function connect(role = 'postgres', uid, session, database = 'postgres', socketDirectory = directory) {
   assert.ok(['postgres', 'authenticated', 'service_role', 'anon'].includes(role))
   assert.ok(['postgres', 'aasiflow_beta_restore'].includes(database))
   assert.ok(socketDirectory === directory || socketDirectory === restoreDirectory)
-  assert.ok(loginUser === 'postgres' || loginUser === 'aasiflow_restore_bootstrap')
   // Explicit socket/user/database. PGHOST, DATABASE_URL and saved Supabase settings are ignored.
-  const client = new pg.Client({ host: socketDirectory, port: 5432, database, user: loginUser, password: '', ssl: false, connectionTimeoutMillis: 2000, query_timeout: 10000, options: '-c statement_timeout=8000 -c lock_timeout=5000' })
+  const client = new pg.Client({ host: socketDirectory, port: 5432, database, user: 'postgres', password: '', ssl: false, connectionTimeoutMillis: 2000, query_timeout: 10000, options: '-c statement_timeout=8000 -c lock_timeout=5000' })
   client.on('error', () => {})
   try { await client.connect() } catch (error) { await client.end().catch(() => {}); throw error }
   clients.add(client)
@@ -54,9 +53,9 @@ async function connect(role = 'postgres', uid, session, database = 'postgres', s
   return client
 }
 
-async function startCluster(socketDirectory, loginUser = 'postgres') {
+async function startCluster(socketDirectory) {
   const data = path.join(socketDirectory, 'data')
-  await run('initdb', ['-D', data, '-U', loginUser, '-A', 'trust', '--no-locale', '--encoding=UTF8', '--no-sync'], socketDirectory)
+  await run('initdb', ['-D', data, '-U', 'postgres', '-A', 'trust', '--no-locale', '--encoding=UTF8', '--no-sync'], socketDirectory)
   const server = spawn(path.join(bin, 'postgres'), ['-D', data, '-k', socketDirectory, '-c', 'listen_addresses=', '-c', 'unix_socket_permissions=0700', '-c', 'max_connections=32', '-c', 'log_min_messages=error'], { ...identity, cwd: socketDirectory, env: isolatedPgEnvironment(process.env, socketDirectory), stdio: ['ignore', 'pipe', 'pipe'] })
   clusters.push({ server, data, socketDirectory })
   let serverLog = '', startupError
@@ -66,7 +65,7 @@ async function startCluster(socketDirectory, loginUser = 'postgres') {
   const deadline = Date.now() + 15000
   while (true) {
     if (startupError) throw startupError
-    try { return await connect('postgres', undefined, undefined, 'postgres', socketDirectory, loginUser) } catch (error) {
+    try { return await connect('postgres', undefined, undefined, 'postgres', socketDirectory) } catch (error) {
       if (Date.now() > deadline || server.exitCode !== null) throw new Error(`Isolated database did not start: ${error.message}. ${serverLog}`)
       await delay(100)
     }
@@ -94,7 +93,7 @@ async function restoreSnapshot(client) {
   const policies = (await client.query("select schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check from pg_policies where schemaname in ('public','private','storage','auth') order by schemaname,tablename,policyname")).rows
   const rls = (await client.query("select n.nspname,c.relname,c.relrowsecurity,c.relforcerowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind='r' and n.nspname in ('public','private','storage','auth') order by n.nspname,c.relname")).rows
   const functions = (await client.query("select n.nspname,p.proname,pg_get_function_identity_arguments(p.oid) as args,md5(pg_get_functiondef(p.oid)) as body_hash from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.prokind='f' and n.nspname in ('public','private','storage','auth') order by n.nspname,p.proname,args")).rows
-  const roles = (await client.query("select rolname,rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication,rolbypassrls,rolconnlimit,rolvaliduntil from pg_roles where rolname !~ '^pg_' and rolname<>'aasiflow_restore_bootstrap' order by rolname")).rows
+  const roles = (await client.query("select rolname,rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication,rolbypassrls,rolconnlimit,rolvaliduntil from pg_roles where rolname !~ '^pg_' order by rolname")).rows
   const memberships = (await client.query("select parent.rolname as parent,member.rolname as member,grantor.rolname as grantor,m.admin_option,m.inherit_option,m.set_option from pg_auth_members m join pg_roles parent on parent.oid=m.roleid join pg_roles member on member.oid=m.member join pg_roles grantor on grantor.oid=m.grantor order by parent.rolname,member.rolname,grantor.rolname")).rows
   const schemas = (await client.query("select n.nspname,pg_get_userbyid(n.nspowner) as owner,array(select a::text from unnest(n.nspacl) a order by a::text) as grants from pg_namespace n where n.nspname in ('public','private','storage','auth') order by n.nspname")).rows
   const relations = (await client.query("select n.nspname,c.relname,c.relkind,pg_get_userbyid(c.relowner) as owner,array(select a::text from unnest(c.relacl) a order by a::text) as grants from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind in ('r','v','m','S','f') and n.nspname in ('public','private','storage','auth') order by n.nspname,c.relname")).rows
@@ -224,13 +223,20 @@ try {
     assert.doesNotMatch(rolesSQL, /PASSWORD\s+'/i)
     restoreDirectory = await mkdtemp(path.join(directory, 'restore-'))
     if (identity.uid !== undefined) await chown(restoreDirectory, identity.uid, identity.gid)
-    const bootstrap = await startCluster(restoreDirectory, 'aasiflow_restore_bootstrap')
+    const bootstrap = await startCluster(restoreDirectory)
     assert.equal(await scalar(bootstrap, 'show listen_addresses'), '')
     assert.notEqual(await scalar(bootstrap, 'show data_directory'), await scalar(admin, 'show data_directory'))
-    assert.equal(await scalar(bootstrap, "select count(*)::int from pg_roles where rolname in ('postgres','anon','authenticated','service_role','beta_restore_probe')"), 0)
-    // Separate bootstrap avoids silently reusing the original cluster's roles.
-    // -X and the minimal environment exclude personal psql startup/service files.
-    await run('psql', ['--host', restoreDirectory, '--port', '5432', '--username', 'aasiflow_restore_bootstrap', '--no-password', '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--dbname', 'postgres', '--file', roles], restoreDirectory)
+    assert.equal(await scalar(bootstrap, "select count(*)::int from pg_roles where rolname in ('anon','authenticated','service_role','beta_restore_probe')"), 0)
+    // A fresh cluster has its own bootstrap postgres role. Omit ONLY its duplicate
+    // CREATE, keep every ALTER/grant, and restore as the original bootstrap name:
+    // PostgreSQL 17 role grants preserve the original bootstrap grantor identity.
+    // See https://www.postgresql.org/docs/17/app-pg-dumpall.html.
+    assert.equal(rolesSQL.split('\n').filter(line => line === 'CREATE ROLE postgres;').length, 1)
+    const restoreRolesSQL = rolesSQL.replace(/^CREATE ROLE postgres;$/m, '-- Fresh-cluster bootstrap role already exists; all dumped attributes follow.')
+    const restoreRolesFile = path.join(restoreDirectory, 'synthetic-roles-restore.sql')
+    await writeFile(restoreRolesFile, restoreRolesSQL, { mode: 0o600 })
+    if (identity.uid !== undefined) await chown(restoreRolesFile, identity.uid, identity.gid)
+    await run('psql', ['--host', restoreDirectory, '--port', '5432', '--username', 'postgres', '--no-password', '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--dbname', 'postgres', '--file', restoreRolesFile], restoreDirectory)
     await bootstrap.query('create database aasiflow_beta_restore with owner postgres template template0')
     await run('pg_restore', ['--host', restoreDirectory, '--port', '5432', '--username', 'postgres', '--no-password', '--exit-on-error', '--dbname', 'aasiflow_beta_restore', archive], restoreDirectory)
     const restored = await connect('postgres', undefined, undefined, 'aasiflow_beta_restore', restoreDirectory)
@@ -248,6 +254,8 @@ try {
     report.separateClusterRestoreVerified = true
     report.archiveSha256 = createHash('sha256').update(archiveBytes).digest('hex')
     report.rolesSha256 = createHash('sha256').update(rolesSQL).digest('hex')
+    report.restoreRolesSha256 = createHash('sha256').update(restoreRolesSQL).digest('hex')
+    report.bootstrapRoleCreateOmitted = true
     report.snapshotSha256 = createHash('sha256').update(JSON.stringify(before)).digest('hex')
     // Actual hosted backups, Auth/Storage services and stored-object bytes remain unverified.
   })
