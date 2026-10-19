@@ -1,5 +1,19 @@
 # AasiFlowAI project status
 
+## Local continuation — 19 October 2026
+
+Remote PR #2 remains draft at `beabded`; no push, main merge, deployment or hosted mutation was performed. Work continues in the isolated review copy, preserving its prior three-file save/edit-consent changes. The separately reported laptop-only `21e8dce` is not available here and was not overwritten or claimed as synchronized.
+
+Verified locally: explicit review before either save action, consumed review after successful draft save, explicit confirmation before converting approved/scheduled content to a draft, View/Back without mutation, revision-conflict retention and rescheduling using the displayed time. An event-only schedule validator fixes the Calendar lint failure. Supabase SDK is pinned to the existing exact version. The release review now also hashes post persistence, workflow validation, types and dependency manifests; approval remains false and all SQL payloads are unchanged.
+
+Passed: 94 Node tests, 81 isolated PGlite SQL checks, 26 desktop/mobile browser cases, 24 pinned Deno tests (15 payment steps), Deno/Edge/browser/app type checks, build, lint and manifest verification. Browser requests outside localhost were blocked; provider calls were mocked. These are not hosted acceptance results.
+
+A native PostgreSQL 17.10 test runner is prepared with socket-only disposable databases, exact SQL hashes and independent-session budget checks. Its actual native run is **blocked**, not passed: this container maps only root and cannot chown a disposable directory to the required unprivileged PostgreSQL user. No root-check bypass or hosted fallback was used. Native pg_dump/pg_restore and a recoverable hosted backup remain unverified. See [local handoff](LOCAL_BETA_HANDOFF_20261019.md).
+
+Fresh read-only Supabase metadata confirms ACTIVE_HEALTHY, PostgreSQL 17.6, unchanged four historical migration versions and RLS on posts/ai_usage/storage.objects. Publishing/billing remain false. The three pending scheduling/monitoring/Beta SQL additions are still absent. No customer content, credentials, memberships or provider account data was read.
+
+Remaining release boundaries: native/backup evidence, exact SQL approval, hosted Auth/identity/runtime/test-data approvals, provider no-charge proof, native Arabic/screen-reader acceptance and an explicitly approved cohort/privacy/support plan. The existing staged release review remains authoritative. Do not deploy this frontend against the unchanged hosted database: required Beta RPCs are not present.
+
 ## Current checkpoint — 13 October 2026
 
 Continuation from synchronized `3f1ca14`: both push CI 38333292992 and PR CI 38333296235 passed; backup branch codex/beta-safety-local-02b1ec1 preserves the prior local checkpoint. The final local hardening removes raw Auth/SDK error details, distinguishes access-service outages from invitation denials, bounds browser AI transport to 60 seconds without retry, and avoids promising a midnight reset while unknown usage carries forward. Arabic messages and denial/recovery acceptance are extended. `npm run review:beta` verifies the source/policy/header manifest without writes or networking; CI uses this gate.

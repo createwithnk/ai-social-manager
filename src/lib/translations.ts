@@ -1,5 +1,8 @@
 export type Locale = 'en' | 'ar'
 export const arabic: Record<string, string> = {
+  'Required before every save. Saving a draft does not schedule or publish it.': 'الموافقة مطلوبة قبل كل عملية حفظ. حفظ المسودة لا يؤدي إلى جدولتها أو نشرها.',
+  'I approve converting this post to a draft': 'أوافق على تحويل هذا المنشور إلى مسودة',
+  'This removes its approval and schedule. Changed content must be reviewed and approved again before saving.': 'سيؤدي ذلك إلى إلغاء الموافقة والجدولة. يجب مراجعة المحتوى المعدّل والموافقة عليه مجددًا قبل الحفظ.',
   'Sign-in failed. Check your email and password or try again later.': 'تعذّر تسجيل الدخول. تحقق من بريدك الإلكتروني وكلمة المرور أو حاول لاحقًا.',
   'Too many authentication attempts. Please wait and retry.': 'محاولات تسجيل الدخول كثيرة. انتظر قليلًا وحاول مجددًا.',
   'Choose a new, stronger password between 12 and 128 characters.': 'اختر كلمة مرور جديدة وأقوى يتراوح طولها بين 12 و128 حرفًا.',

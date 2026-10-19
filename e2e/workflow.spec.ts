@@ -34,11 +34,76 @@ test('approval cannot revive after edits; scheduled edits clear status and sched
   await schedule.click()
   await expect(page.getByRole('button', { name: 'Unschedule' })).toBeVisible()
   await page.getByRole('button', { name: 'View', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeDisabled()
+  const beforeEdit = await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))
+  expect(beforeEdit[0].status).toBe('scheduled')
+  await page.getByRole('checkbox', { name: 'I approve converting this post to a draft' }).check()
   await page.getByRole('button', { name: 'Edit', exact: true }).click()
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))
   expect(saved[0].status).toBe('draft')
   expect(saved[0].scheduledFor).toBeUndefined()
   await expect(page.getByRole('checkbox', { name: /I reviewed and approve/ })).not.toBeChecked()
+})
+
+test('saving a reviewed draft consumes consent and never approves, schedules or publishes it', async ({ page }) => {
+  await page.getByRole('button', { name: 'Create with AI' }).click()
+  await page.getByLabel('Content idea', { exact: true }).fill('Simple content ideas for a small UAE business')
+  await page.getByRole('button', { name: 'Generate draft' }).click()
+  const review = page.getByRole('checkbox', { name: /I reviewed and approve/ })
+  const save = page.getByRole('button', { name: 'Save draft', exact: true })
+  await expect(save).toBeDisabled()
+  await review.check()
+  await save.click()
+  const update = page.getByRole('button', { name: 'Update draft', exact: true })
+  await expect(review).not.toBeChecked()
+  await expect(update).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Approve & save' })).toBeDisabled()
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))
+  expect(stored).toHaveLength(1)
+  expect(stored[0].status).toBe('draft')
+  expect(stored[0].scheduledFor).toBeUndefined()
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Continue draft' })).toBeVisible()
+  await page.getByRole('button', { name: 'Continue draft' }).click()
+  await expect(review).not.toBeChecked()
+  await expect(update).toBeDisabled()
+})
+
+test('view and cancelled edit leave approved content unchanged; confirmation is not reused', async ({ page }) => {
+  const post = {
+    id: 'fixture-approved', idea: 'An approved UAE business idea', platform: 'Instagram', tone: 'Friendly',
+    caption: 'Reviewed caption', hashtags: ['UAE'], status: 'approved', createdAt: '2026-10-01T10:00:00Z',
+  }
+  await page.evaluate(post => localStorage.setItem('aasiflow-posts', JSON.stringify([post])), post)
+  await page.reload()
+  await page.getByRole('button', { name: 'View', exact: true }).click()
+  const confirmation = page.getByRole('checkbox', { name: 'I approve converting this post to a draft' })
+  await expect(confirmation).not.toBeChecked()
+  await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeDisabled()
+  await confirmation.check()
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))).toEqual([post])
+  await page.getByRole('button', { name: 'View', exact: true }).click()
+  await expect(confirmation).not.toBeChecked()
+  await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeDisabled()
+})
+
+test('reschedule without changing the displayed time keeps the existing schedule', async ({ page }) => {
+  const post = {
+    id: 'fixture-scheduled', idea: 'A scheduled UAE business idea', platform: 'Instagram', tone: 'Friendly',
+    caption: 'Reviewed caption', hashtags: ['UAE'], status: 'scheduled', createdAt: '2026-10-01T10:00:00Z',
+    scheduledFor: '2099-05-20T16:45:00.000Z',
+  }
+  await page.evaluate(post => localStorage.setItem('aasiflow-posts', JSON.stringify([post])), post)
+  await page.reload()
+  await navigate(page, 'Content calendar')
+  await page.getByRole('button', { name: 'Reschedule', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Reschedule', exact: true })).toBeEnabled()
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))
+  expect(stored[0].scheduledFor).toBe(post.scheduledFor)
+  await page.reload()
+  await navigate(page, 'Content calendar')
+  await expect(page.getByRole('button', { name: 'Unschedule', exact: true })).toBeVisible()
 })
 test('Arabic language preference survives reload and Arabic captions use RTL', async ({ page }, testInfo) => {
   if (testInfo.project.name === 'mobile') {

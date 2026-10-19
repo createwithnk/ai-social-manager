@@ -1,5 +1,5 @@
 import { MediaInput, MediaPreview } from './components/MediaInput'
-import { validatePost } from './lib/workflow'
+import { futureScheduleISO, validatePost } from './lib/workflow'
 import { useLocale } from './lib/locale'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -224,6 +224,7 @@ function Workspace({ auth }: { auth: AuthState }) {
   }
 
   async function editApprovedOrScheduledPost(post: Post) {
+    if (post.status === 'draft') { editDraft(post); return }
     const draftPost: Post = { ...post, status: 'draft', scheduledFor: undefined }
     const saved = await persistPost(draftPost)
     setViewingPost(null)
@@ -265,7 +266,7 @@ function Workspace({ auth }: { auth: AuthState }) {
       {view === 'admin' && <AdminDashboard />}
       {view === 'media' && <MediaLibrary userId={userId} />}
       {view === 'calendar' && <Calendar posts={posts} onUpdate={persistPost} onView={(post) => viewPost(post, 'calendar')} disabled={postsLoading} />}
-      {view === 'detail' && viewingPost && <PostDetail post={viewingPost} onBack={() => { setViewingPost(null); setView(detailBackView) }} onEdit={editApprovedOrScheduledPost} disabled={postsLoading} />}
+      {view === 'detail' && viewingPost && <PostDetail key={viewingPost.id} post={viewingPost} onBack={() => { setViewingPost(null); setView(detailBackView) }} onEdit={editApprovedOrScheduledPost} disabled={postsLoading} />}
     </main>
     {mobile && <div className="backdrop" onClick={() => setMobile(false)} />}
   </div>
@@ -288,8 +289,11 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | n
 function PostDetail({ post, onBack, onEdit, disabled }: { post: Post; onBack: () => void; onEdit: (post: Post) => Promise<void>; disabled: boolean }) {
   const { t } = useLocale()
   const [editing, setEditing] = useState(false)
+  const [editConfirmed, setEditConfirmed] = useState(false)
+  const requiresConfirmation = post.status !== 'draft'
 
   async function edit() {
+    if (disabled || editing || (requiresConfirmation && !editConfirmed)) return
     setEditing(true)
     try {
       await onEdit(post)
@@ -300,7 +304,19 @@ function PostDetail({ post, onBack, onEdit, disabled }: { post: Post; onBack: ()
     }
   }
 
-  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">{t("READ-ONLY CONTENT")}</span><h2>{post.idea}</h2></div><button className="ghost" onClick={onBack} disabled={editing}>{t("Back")}</button></div><p><span className={`status ${post.status}`}>{t(post.status)}</span></p><dl><dt>{t("Platform")}</dt><dd>{post.platform}</dd><dt>{t("Tone")}</dt><dd>{post.tone}</dd><dt>{t("Created")}</dt><dd>{new Date(post.createdAt).toLocaleString()}</dd>{post.scheduledFor && <><dt>{t("Scheduled for")}</dt><dd>{new Date(post.scheduledFor).toLocaleString()}</dd></>}</dl>{post.media && <MediaPreview media={post.media} />}<h3>{t("Caption")}</h3><p dir={post.language === 'ar' || post.language === 'ur' ? 'rtl' : 'ltr'} lang={post.language ?? 'en'} style={{ whiteSpace: 'pre-wrap' }}>{post.caption}</p><h3>{t("Hashtags")}</h3><p>{post.hashtags.map((tag) => `#${tag}`).join(' ')}</p><button className="primary" onClick={() => { void edit() }} disabled={disabled || editing}>{editing ? t("Preparing draft…") : post.status === 'draft' ? t("Edit draft") : t("Edit")}</button></div></section>
+  return <section className="content"><div className="panel">
+    <div className="panel-head"><div><span className="eyebrow">{t("READ-ONLY CONTENT")}</span><h2>{post.idea}</h2></div><button className="ghost" onClick={onBack} disabled={editing}>{t("Back")}</button></div>
+    <p><span className={`status ${post.status}`}>{t(post.status)}</span></p>
+    <dl><dt>{t("Platform")}</dt><dd>{post.platform}</dd><dt>{t("Tone")}</dt><dd>{post.tone}</dd><dt>{t("Created")}</dt><dd>{new Date(post.createdAt).toLocaleString()}</dd>{post.scheduledFor && <><dt>{t("Scheduled for")}</dt><dd>{new Date(post.scheduledFor).toLocaleString()}</dd></>}</dl>
+    {post.media && <MediaPreview media={post.media} />}
+    <h3>{t("Caption")}</h3><p dir={post.language === 'ar' || post.language === 'ur' ? 'rtl' : 'ltr'} lang={post.language ?? 'en'} style={{ whiteSpace: 'pre-wrap' }}>{post.caption}</p>
+    <h3>{t("Hashtags")}</h3><p>{post.hashtags.map((tag) => `#${tag}`).join(' ')}</p>
+    {requiresConfirmation && <div className="approval">
+      <input id="confirm-edit" type="checkbox" checked={editConfirmed} onChange={event => setEditConfirmed(event.target.checked)} disabled={disabled || editing} />
+      <label htmlFor="confirm-edit"><strong>{t("I approve converting this post to a draft")}</strong><span>{t("This removes its approval and schedule. Changed content must be reviewed and approved again before saving.")}</span></label>
+    </div>}
+    <button className="primary" onClick={() => { void edit() }} disabled={disabled || editing || (requiresConfirmation && !editConfirmed)}>{editing ? t("Preparing draft…") : post.status === 'draft' ? t("Edit draft") : t("Edit")}</button>
+  </div></section>
 }
 
 function Generator({ initialPost, onSave, disabled, userId }: { userId?: string; initialPost: Post | null; onSave: (post: Post) => Promise<Post | void>; disabled: boolean }) {
@@ -352,7 +368,7 @@ function Generator({ initialPost, onSave, disabled, userId }: { userId?: string;
   }
 
   async function save(status: 'draft' | 'approved') {
-    if (saving || generating || uploading || disabled || !draft || !draft.caption.trim() || !draftMatchesBrief || !idea.trim() || idea.trim().length > 500 || (status === 'approved' && !isApproved)) return
+    if (saving || generating || uploading || disabled || !draft || !draft.caption.trim() || !draftMatchesBrief || !idea.trim() || idea.trim().length > 500 || !isApproved) return
     const id = postId ?? crypto.randomUUID()
     const timestamp = createdAt ?? new Date().toISOString()
     setSaving(true)
@@ -362,6 +378,8 @@ function Generator({ initialPost, onSave, disabled, userId }: { userId?: string;
       if (saved) setRevision(saved.revision)
       setPostId(id)
       setCreatedAt(saved?.createdAt ?? timestamp)
+      setApproved(false)
+      setReviewedFingerprint(null)
     } catch (error) {
       void reportRuntimeError('save_failed')
       setSaveError(errorMessage(error))
@@ -371,7 +389,9 @@ function Generator({ initialPost, onSave, disabled, userId }: { userId?: string;
   }
 
   const busy = saving || generating || uploading || disabled
-  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>{t("1")}<b>{t("Brief")}</b></span><i /><span className={draft ? 'current' : ''}>{t("2")}<b>{t("Review")}</b></span><i /><span>{t("3")}<b>{t("Approve")}</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">{t("STEP 1 — YOUR IDEA")}</span><h2>{t("What do you want to share?")}</h2><label>{t("Content idea")}<textarea aria-label={t('Content idea')} aria-describedby="idea-help" value={idea} onChange={(event) => { setIdea(event.target.value); setApproved(false); setReviewedFingerprint(null) }} placeholder={t("Example: Five simple ways small businesses can create better Instagram posts...")} maxLength={500} disabled={busy} /><small id="idea-help">{idea.length}{t("/500 · Minimum 10 characters")}</small></label><div className="field-row"><label>{t("Platform")}<select aria-label={t('Platform')} value={platform} onChange={(event) => { setPlatform(event.target.value as Platform); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option} value={option}>{t(option)}</option>)}</select></label><label>{t("Tone")}<select aria-label={t('Tone')} value={tone} onChange={(event) => { setTone(event.target.value); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option} value={option}>{t(option)}</option>)}</select></label></div><div className="field-row"><label>{t("Content language")}<select aria-label={t("Content language")} value={language} onChange={(event) => { setLanguage(event.target.value as ContentLanguage); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}><option value="en">{t("English")}</option><option value="ar">{t("العربية")}</option><option value="hi">{t("Hindi")}</option><option value="ur">{t("Urdu")}</option></select></label><label>{t("Target market")}<select aria-label={t("Target market")} value={market} onChange={(event) => { setMarket(event.target.value as Market); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['General', 'UAE', 'Saudi Arabia', 'Kuwait', 'Gulf'].map((option) => <option key={option} value={option}>{t(option)}</option>)}</select></label></div><MediaInput userId={userId} media={media} onBusy={setUploading} disabled={busy || !userId} onChange={(value) => { setMedia(value); setApproved(false); setReviewedFingerprint(null) }} /><button className="primary wide" disabled={!canGenerate || busy} onClick={() => { void generate() }}><WandSparkles /> {generating ? t("Generating…") : t("Generate draft")}</button><p className="fineprint">{t("AI drafts use a secure server-side provider when signed in. Local preview mode uses templates. Every post still requires your approval.")}</p>{saveError && !draft && <p className="form-error" role="alert">{t(saveError)}</p>}</div><div className="panel preview-panel"><span className="eyebrow">{t("STEP 2 — REVIEW & EDIT")}</span><h2>{t("Your draft")}</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>{t("Your generated draft will appear here.")}</p></div> : <><label>{t("Caption")}<textarea aria-label={t('Caption')} className="caption" dir={language === 'ar' || language === 'ur' ? 'rtl' : 'ltr'} lang={language} value={draft.caption} onChange={(event) => { setDraft({ ...draft, caption: event.target.value }); setApproved(false); setReviewedFingerprint(null) }} disabled={busy} /></label><label>{t("Hashtags")}<input aria-label={t('Hashtags')} dir={language === 'ar' || language === 'ur' ? 'rtl' : 'ltr'} value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => { setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) }); setApproved(false); setReviewedFingerprint(null) }} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{t(saveError)}</p>}<button className="ghost draft-save" disabled={busy || !draftMatchesBrief} onClick={() => { void save('draft') }}><FileText /> {saving ? t("Saving…") : postId ? t("Update draft") : t("Save draft")}</button><div className="approval"><input id="approve" type="checkbox" checked={isApproved && draftMatchesBrief} onChange={(event) => { setApproved(event.target.checked); setReviewedFingerprint(event.target.checked ? fingerprint : null) }} disabled={busy || !draftMatchesBrief} /><label htmlFor="approve"><strong>{t("I reviewed and approve this content")}</strong><span>{t("Required before saving as approved or scheduling.")}</span></label></div><button className="primary wide" disabled={!isApproved || !draftMatchesBrief || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? t("Saving…") : t("Approve & save")}</button></>}</div></div></section>
+  return <section className="content generator"><div className="steps"><span className={draft ? 'done' : 'current'}>{t("1")}<b>{t("Brief")}</b></span><i /><span className={draft ? 'current' : ''}>{t("2")}<b>{t("Review")}</b></span><i /><span>{t("3")}<b>{t("Approve")}</b></span></div><div className="generator-grid"><div className="panel form-panel"><span className="eyebrow">{t("STEP 1 — YOUR IDEA")}</span><h2>{t("What do you want to share?")}</h2><label>{t("Content idea")}<textarea aria-label={t('Content idea')} aria-describedby="idea-help" value={idea} onChange={(event) => { setIdea(event.target.value); setApproved(false); setReviewedFingerprint(null) }} placeholder={t("Example: Five simple ways small businesses can create better Instagram posts...")} maxLength={500} disabled={busy} /><small id="idea-help">{idea.length}{t("/500 · Minimum 10 characters")}</small></label><div className="field-row"><label>{t("Platform")}<select aria-label={t('Platform')} value={platform} onChange={(event) => { setPlatform(event.target.value as Platform); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['Instagram', 'LinkedIn', 'Facebook', 'X'].map((option) => <option key={option} value={option}>{t(option)}</option>)}</select></label><label>{t("Tone")}<select aria-label={t('Tone')} value={tone} onChange={(event) => { setTone(event.target.value); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['Friendly', 'Professional', 'Bold', 'Educational'].map((option) => <option key={option} value={option}>{t(option)}</option>)}</select></label></div><div className="field-row"><label>{t("Content language")}<select aria-label={t("Content language")} value={language} onChange={(event) => { setLanguage(event.target.value as ContentLanguage); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}><option value="en">{t("English")}</option><option value="ar">{t("العربية")}</option><option value="hi">{t("Hindi")}</option><option value="ur">{t("Urdu")}</option></select></label><label>{t("Target market")}<select aria-label={t("Target market")} value={market} onChange={(event) => { setMarket(event.target.value as Market); setApproved(false); setReviewedFingerprint(null) }} disabled={busy}>{['General', 'UAE', 'Saudi Arabia', 'Kuwait', 'Gulf'].map((option) => <option key={option} value={option}>{t(option)}</option>)}</select></label></div><MediaInput userId={userId} media={media} onBusy={setUploading} disabled={busy || !userId} onChange={(value) => { setMedia(value); setApproved(false); setReviewedFingerprint(null) }} /><button className="primary wide" disabled={!canGenerate || busy} onClick={() => { void generate() }}><WandSparkles /> {generating ? t("Generating…") : t("Generate draft")}</button><p className="fineprint">{t("AI drafts use a secure server-side provider when signed in. Local preview mode uses templates. Every post still requires your approval.")}</p>{saveError && !draft && <p className="form-error" role="alert">{t(saveError)}</p>}</div><div className="panel preview-panel"><span className="eyebrow">{t("STEP 2 — REVIEW & EDIT")}</span><h2>{t("Your draft")}</h2>{!draft ? <div className="preview-empty"><Sparkles /><p>{t("Your generated draft will appear here.")}</p></div> : <><label>{t("Caption")}<textarea aria-label={t('Caption')} className="caption" dir={language === 'ar' || language === 'ur' ? 'rtl' : 'ltr'} lang={language} value={draft.caption} onChange={(event) => { setDraft({ ...draft, caption: event.target.value }); setApproved(false); setReviewedFingerprint(null) }} disabled={busy} /></label><label>{t("Hashtags")}<input aria-label={t('Hashtags')} dir={language === 'ar' || language === 'ur' ? 'rtl' : 'ltr'} value={draft.hashtags.map((tag) => `#${tag}`).join(' ')} onChange={(event) => { setDraft({ ...draft, hashtags: event.target.value.split(/\s+/).map((tag) => tag.replace('#', '')).filter(Boolean) }); setApproved(false); setReviewedFingerprint(null) }} disabled={busy} /></label>{saveError && <p className="form-error" role="alert">{t(saveError)}</p>}<div className="approval"><input id="approve" type="checkbox" checked={isApproved && draftMatchesBrief} onChange={(event) => { setApproved(event.target.checked); setReviewedFingerprint(event.target.checked ? fingerprint : null) }} disabled={busy || !draftMatchesBrief} /><label htmlFor="approve"><strong>{t("I reviewed and approve this content")}</strong><span>{t("Required before every save. Saving a draft does not schedule or publish it.")}</span></label></div>
+      <button className="ghost draft-save" disabled={busy || !draftMatchesBrief || !isApproved} onClick={() => { void save('draft') }}><FileText /> {saving ? t("Saving…") : postId ? t("Update draft") : t("Save draft")}</button>
+      <button className="primary wide" disabled={!isApproved || !draftMatchesBrief || busy} onClick={() => { void save('approved') }}><CheckCircle2 /> {saving ? t("Saving…") : t("Approve & save")}</button></>}</div></div></section>
 }
 
 function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpdate: (post: Post) => Promise<Post | void>; onView: (post: Post) => void; disabled: boolean }) {
@@ -399,14 +419,19 @@ function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpda
     }
   }
 
-  function schedule(post: Post) {
+  function schedule(post: Post, selectedTime: string) {
+    if (disabled || savingId !== null) return
     if (post.status !== 'approved' && post.status !== 'scheduled') { setError('Approve the content before scheduling.'); return }
-    const scheduledAt = new Date(scheduleTimes[post.id] ?? defaultScheduleTime)
-    if (Number.isNaN(scheduledAt.getTime()) || scheduledAt.getTime() <= Date.now()) { setError('Choose a future scheduling time.'); return }
-    void update({ ...post, status: 'scheduled', scheduledFor: scheduledAt.toISOString() })
+    try {
+      const scheduledFor = futureScheduleISO(selectedTime)
+      void update({ ...post, status: 'scheduled', scheduledFor })
+    } catch {
+      setError('Choose a future scheduling time.')
+    }
   }
 
   function unschedule(post: Post) {
+    if (disabled || savingId !== null) return
     void update({ ...post, status: 'approved', scheduledFor: undefined })
   }
 
@@ -414,7 +439,7 @@ function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpda
     return scheduleTimes[post.id] ?? (post.scheduledFor ? toDateTimeInput(new Date(post.scheduledFor)) : defaultScheduleTime)
   }
 
-  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">{t("APPROVED CONTENT ONLY")}</span><h3>{t("Ready to schedule")}</h3></div></div>{error && <p className="form-error" role="alert">{t(error)}</p>}{approved.length === 0 ? <div className="empty"><CalendarDays /><h3>{t("No approved content yet")}</h3><p>{t("Review and approve a draft before it can appear here.")}</p></div> : <div className="post-list">{approved.map((post) => { const busy = disabled || savingId === post.id; return <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.scheduledFor ? `Scheduled for ${new Date(post.scheduledFor).toLocaleString()}` : t("Approved and ready")}</p></div><div className="schedule-controls"><button className="ghost" disabled={busy} onClick={() => onView(post)}>{t("View")}</button><input aria-label={`Schedule ${post.idea}`} type="datetime-local" value={scheduleTimeFor(post)} onChange={(event) => setScheduleTimes((times) => ({ ...times, [post.id]: event.target.value }))} disabled={busy} /><div><button className="ghost" disabled={busy} onClick={() => schedule(post)}><CalendarDays /> {busy ? t("Saving…") : post.status === 'approved' ? t("Schedule") : t("Reschedule")}</button>{post.status === 'scheduled' && <button className="ghost unschedule" disabled={busy} onClick={() => unschedule(post)}>{t("Unschedule")}</button>}</div></div></article> })}</div>}</div></section>
+  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">{t("APPROVED CONTENT ONLY")}</span><h3>{t("Ready to schedule")}</h3></div></div>{error && <p className="form-error" role="alert">{t(error)}</p>}{approved.length === 0 ? <div className="empty"><CalendarDays /><h3>{t("No approved content yet")}</h3><p>{t("Review and approve a draft before it can appear here.")}</p></div> : <div className="post-list">{approved.map((post) => { const busy = disabled || savingId !== null; return <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.scheduledFor ? `Scheduled for ${new Date(post.scheduledFor).toLocaleString()}` : t("Approved and ready")}</p></div><div className="schedule-controls"><button className="ghost" disabled={busy} onClick={() => onView(post)}>{t("View")}</button><input aria-label={`Schedule ${post.idea}`} type="datetime-local" value={scheduleTimeFor(post)} onChange={(event) => setScheduleTimes((times) => ({ ...times, [post.id]: event.target.value }))} disabled={busy} /><div><button className="ghost" disabled={busy} onClick={() => schedule(post, scheduleTimeFor(post))}><CalendarDays /> {busy ? t("Saving…") : post.status === 'approved' ? t("Schedule") : t("Reschedule")}</button>{post.status === 'scheduled' && <button className="ghost unschedule" disabled={busy} onClick={() => unschedule(post)}>{t("Unschedule")}</button>}</div></div></article> })}</div>}</div></section>
 }
 
 function toDateTimeInput(date: Date) {

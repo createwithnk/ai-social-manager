@@ -1,5 +1,11 @@
 import type { Post } from '../types'
 export const captionLimits = { Instagram: 2200, LinkedIn: 3000, Facebook: 63206, X: 280 }
+// Called from user actions, never from render. Keep the clock injectable for tests.
+export function futureScheduleISO(value: string, now = Date.now()) {
+  const timestamp = Date.parse(value)
+  if (!Number.isFinite(timestamp) || timestamp <= now) throw new Error('Choose a future scheduling time.')
+  return new Date(timestamp).toISOString()
+}
 export function validatePost(post: Post, now = Date.now()) {
   if (!post || typeof post !== 'object' || typeof post.idea !== 'string' || typeof post.caption !== 'string' || !Object.hasOwn(captionLimits,post.platform) || !['draft','approved','scheduled'].includes(post.status) || !['Friendly','Professional','Bold','Educational'].includes(post.tone) || !['en','ar','hi','ur','English','Hindi','Urdu','Arabic'].includes(post.language ?? 'English')) throw new Error('Check the post platform, tone, language and status.')
   if (!Array.isArray(post.hashtags) || post.hashtags.length > 8 || !post.hashtags.every(tag => typeof tag === 'string' && /^[\p{L}\p{M}\p{N}_]{1,80}$/u.test(tag))) throw new Error('Use up to 8 hashtags with letters, numbers or underscores.')

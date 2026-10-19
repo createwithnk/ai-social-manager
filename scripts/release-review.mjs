@@ -17,6 +17,7 @@ const paths = [
   'src/App.tsx', 'src/BetaGate.tsx', 'src/AdminDashboard.tsx', 'src/RuntimeBoundary.tsx',
   'src/lib/auth.ts', 'src/lib/ai.ts', 'src/lib/beta-policy.ts', 'src/lib/monitoring.ts',
   'src/lib/media.ts', 'src/lib/supabase.ts', 'src/lib/translations.ts', 'src/styles.css',
+  'src/lib/posts.ts', 'src/lib/workflow.ts', 'src/types.ts', 'package.json', 'package-lock.json',
   'src/main.tsx', 'src/components/MediaInput.tsx', 'src/MediaLibrary.tsx',
   'scripts/release-review.mjs', 'deployment/target.json', 'public/_headers', 'deployment/security-headers.json',
 ]
