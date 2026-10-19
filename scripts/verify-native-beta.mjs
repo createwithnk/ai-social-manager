@@ -9,6 +9,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { setTimeout as delay } from 'node:timers/promises'
 import pg from 'pg'
+import { isolatedPgEnvironment } from './native-pg-environment.mjs'
 
 const bin = process.env.AASIFLOW_TEST_PG_BIN
 if (!bin || !path.isAbsolute(bin)) throw new Error('Set AASIFLOW_TEST_PG_BIN to an absolute PostgreSQL 17 bin directory. No download or hosted fallback is performed.')
@@ -27,7 +28,7 @@ function run(name, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(path.join(bin, name), args, {
       ...identity, cwd: directory, stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, PGHOST: directory, PGPORT: '5432', PGDATABASE: 'postgres', PGUSER: 'postgres', PGPASSWORD: '', PGSERVICE: '', PGSERVICEFILE: path.join(directory, 'no-service'), PGPASSFILE: path.join(directory, 'no-password'), PGSSLMODE: 'disable', PGOPTIONS: '' },
+      env: isolatedPgEnvironment(process.env, directory),
     })
     let output = ''
     const timer = setTimeout(() => child.kill('SIGTERM'), 30000)
@@ -85,7 +86,7 @@ try {
   assert.match(report.version, /PostgreSQL\) 17\./)
   for (const tool of ['pg_dump', 'pg_dumpall', 'pg_restore']) assert.match(await run(tool, ['--version']), /PostgreSQL\) 17\./)
   await run('initdb', ['-D', data, '-U', 'postgres', '-A', 'trust', '--no-locale', '--encoding=UTF8', '--no-sync'])
-  server = spawn(path.join(bin, 'postgres'), ['-D', data, '-k', directory, '-c', 'listen_addresses=', '-c', 'unix_socket_permissions=0700', '-c', 'max_connections=32', '-c', 'log_min_messages=error'], { ...identity, cwd: directory, stdio: ['ignore', 'pipe', 'pipe'] })
+  server = spawn(path.join(bin, 'postgres'), ['-D', data, '-k', directory, '-c', 'listen_addresses=', '-c', 'unix_socket_permissions=0700', '-c', 'max_connections=32', '-c', 'log_min_messages=error'], { ...identity, cwd: directory, env: isolatedPgEnvironment(process.env, directory), stdio: ['ignore', 'pipe', 'pipe'] })
   server.stdout.on('data', bytes => { serverLog = (serverLog + bytes).slice(-3000) })
   server.stderr.on('data', bytes => { serverLog = (serverLog + bytes).slice(-3000) })
   let startupError

@@ -1,6 +1,24 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
+import path from 'node:path'
+import { isolatedPgEnvironment } from '../scripts/native-pg-environment.mjs'
+
+test('native process environment cannot inherit production connections, services, credentials or preload hooks', () => {
+  const directory = path.resolve('test-socket')
+  const env = isolatedPgEnvironment({ PATH: '/bin', LANG: 'C', PGHOST: 'production.example', PGSERVICE: 'production', PGSERVICEFILE: '/private/service', PGPASSFILE: '/private/password', PGPASSWORD: 'private-password', DATABASE_URL: 'postgres://production.example/postgres', SUPABASE_SERVICE_ROLE_KEY: 'private-key', GEMINI_API_KEY: 'private-key', GITHUB_TOKEN: 'private-token', NODE_OPTIONS: '--require /unexpected' }, directory)
+  assert.equal(env.PGHOST, directory)
+  assert.equal(env.PGPORT, '5432')
+  assert.equal(env.PGDATABASE, 'postgres')
+  assert.equal(env.PGPASSWORD, '')
+  assert.equal(env.PGPASSFILE, '/dev/null')
+  assert.equal(env.PATH, '/bin')
+  for (const key of ['PGSERVICE', 'PGSERVICEFILE', 'DATABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'GEMINI_API_KEY', 'GITHUB_TOKEN', 'NODE_OPTIONS']) assert.equal(Object.hasOwn(env, key), false, key)
+})
+
+test('native tools reject a remote URL in place of their local socket directory', () => {
+  assert.throws(() => isolatedPgEnvironment({}, 'postgres://production.example/postgres'), /absolute local socket/)
+})
 
 test('native acceptance refuses absent or relative tools without a hosted fallback', () => {
   for (const bin of ['', './postgres']) {

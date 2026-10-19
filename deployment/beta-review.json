@@ -133,7 +133,7 @@
     },
     {
       "path": "scripts/release-review.mjs",
-      "sha256": "8e1dcf69b33ed30a8aac465dba17d751bc9d33092e9f371840cf69048487ac81"
+      "sha256": "ce06b313ac58ef73826b40f47b98e9c7339d9cec13e1588d58d858d180044f1a"
     },
     {
       "path": ".github/workflows/ci.yml",
@@ -141,7 +141,11 @@
     },
     {
       "path": "scripts/verify-native-beta.mjs",
-      "sha256": "acd91b5bbeed8413e53fe072fcc3e955280145f69d058410cd7242c6abee9f86"
+      "sha256": "6883ca0fb7d2fb05c442c0b8a11a08886b15fbd6edb133fba281e633f7a21a4c"
+    },
+    {
+      "path": "scripts/native-pg-environment.mjs",
+      "sha256": "0d2fd5296d55ce5c3dad22f10ab2bdee137f15e3ed6d4ff2f2a56e8ac6acff7f"
     },
     {
       "path": "deployment/target.json",
