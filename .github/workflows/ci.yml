@@ -2,7 +2,7 @@ name: Validate development
 on:
   pull_request:
   push:
-    branches: [chore/security-and-approval-hardening]
+    branches: [chore/security-and-approval-hardening, fix/beta-readiness-20261019]
 permissions:
   contents: read
 concurrency:
@@ -32,3 +32,26 @@ jobs:
       - run: npx --no-install playwright install --with-deps chromium
       - run: npm run test:e2e
       # No deployment, publishing, credentials, or billing steps.
+  native-beta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Official PostgreSQL 17.6 Bookworm image, pinned to the verified manifest digest.
+    # No database service, network port, production connection or repository secret.
+    container:
+      image: postgres:17.6-bookworm@sha256:f3bd19c606e442c3d7bdfa8002e03fe260a1023351e0ea4598032022b68dd6e3
+    env:
+      AASIFLOW_TEST_PG_BIN: /usr/lib/postgresql/17/bin
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run review:beta
+      - run: npm run test:native-beta
+      - name: Show synthetic native acceptance result
+        if: always()
+        run: node -e 'const fs=require("node:fs"); const p="test-results/native-beta.json"; if(fs.existsSync(p)) process.stdout.write(fs.readFileSync(p,"utf8"));'

@@ -1,6 +1,6 @@
 {
   "projectRef": "nkfecpdegcmsapvbviky",
-  "branch": "chore/security-and-approval-hardening",
+  "branch": "fix/beta-readiness-20261019",
   "approved": false,
   "defaults": {
     "aiEnabled": false,
@@ -133,7 +133,15 @@
     },
     {
       "path": "scripts/release-review.mjs",
-      "sha256": "b4ae6a8174439bc8d90f8c3c13709153b13f2cdb93df2d2e356abea97510576c"
+      "sha256": "8e1dcf69b33ed30a8aac465dba17d751bc9d33092e9f371840cf69048487ac81"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "3bb82e6c3aa0c7b0708e2ab44f25d47590f3cb72b5595d8a36eb2c9d7a568c23"
+    },
+    {
+      "path": "scripts/verify-native-beta.mjs",
+      "sha256": "acd91b5bbeed8413e53fe072fcc3e955280145f69d058410cd7242c6abee9f86"
     },
     {
       "path": "deployment/target.json",

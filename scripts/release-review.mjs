@@ -19,11 +19,11 @@ const paths = [
   'src/lib/media.ts', 'src/lib/supabase.ts', 'src/lib/translations.ts', 'src/styles.css',
   'src/lib/posts.ts', 'src/lib/workflow.ts', 'src/types.ts', 'package.json', 'package-lock.json',
   'src/main.tsx', 'src/components/MediaInput.tsx', 'src/MediaLibrary.tsx',
-  'scripts/release-review.mjs', 'deployment/target.json', 'public/_headers', 'deployment/security-headers.json',
+  'scripts/release-review.mjs', '.github/workflows/ci.yml', 'scripts/verify-native-beta.mjs', 'deployment/target.json', 'public/_headers', 'deployment/security-headers.json',
 ]
 const files=[]
 for(const path of paths) files.push({path,sha256:createHash('sha256').update((await readFile(path,'utf8')).replace(/\r\n/g,'\n')).digest('hex')})
-const manifest=JSON.stringify({projectRef:target.projectRef,branch:'chore/security-and-approval-hardening',approved:false,
+const manifest=JSON.stringify({projectRef:target.projectRef,branch:'fix/beta-readiness-20261019',approved:false,
   defaults:{aiEnabled:false,uploadsEnabled:false,dailyCallLimit:0,dailyBudgetUsd:0},
   firstApproval:'Review isolated staging/backup evidence before authorizing these exact SQL payloads. No blanket database push.',
   separateApprovals:['Hosted Auth settings','Owner UUID privileges','Test UUID membership','Frontend and generator release','Provider usage with verified no-charge configuration','Real user invitations'],

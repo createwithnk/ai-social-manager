@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { chown, mkdtemp, readFile, writeFile } from 'node:fs/promises'
+import { chown, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -18,14 +18,17 @@ const directory = await mkdtemp(path.join(os.tmpdir(), 'aasiflow-beta-native-'))
 const data = path.join(directory, 'data')
 const identity = process.getuid?.() === 0 ? { uid: 65534, gid: 65534 } : {}
 const clients = new Set()
-const report = { checkedAt: new Date().toISOString(), status: 'blocked', scope: 'Disposable socket-only native PostgreSQL with synthetic Auth/Storage', checks: [], sourceHashes: [], stopped: false, hostedBackupVerified: false, liveChanges: false, providerCalls: false }
+const report = { checkedAt: new Date().toISOString(), status: 'blocked', scope: 'Disposable socket-only native PostgreSQL with synthetic Auth/Storage', checks: [], sourceHashes: [], stopped: false, syntheticLogicalRestoreVerified: false, hostedBackupVerified: false, liveChanges: false, providerCalls: false }
 const A = 'a1111111-1111-4111-8111-111111111111', B = 'b2222222-2222-4222-8222-222222222222'
 const SA = 'a3333333-3333-4333-8333-333333333333', SB = 'b4444444-4444-4444-8444-444444444444'
 let server, serverLog = '', admin
 
 function run(name, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(path.join(bin, name), args, { ...identity, cwd: directory, stdio: ['ignore', 'pipe', 'pipe'] })
+    const child = spawn(path.join(bin, name), args, {
+      ...identity, cwd: directory, stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, PGHOST: directory, PGPORT: '5432', PGDATABASE: 'postgres', PGUSER: 'postgres', PGPASSWORD: '', PGSERVICE: '', PGSERVICEFILE: path.join(directory, 'no-service'), PGPASSFILE: path.join(directory, 'no-password'), PGSSLMODE: 'disable', PGOPTIONS: '' },
+    })
     let output = ''
     const timer = setTimeout(() => child.kill('SIGTERM'), 30000)
     child.stdout.on('data', bytes => { output += bytes })
@@ -35,10 +38,11 @@ function run(name, args) {
   })
 }
 
-async function connect(role = 'postgres', uid, session) {
+async function connect(role = 'postgres', uid, session, database = 'postgres') {
   assert.ok(['postgres', 'authenticated', 'service_role', 'anon'].includes(role))
+  assert.ok(['postgres', 'aasiflow_beta_restore'].includes(database))
   // Explicit socket/user/database. PGHOST, DATABASE_URL and saved Supabase settings are ignored.
-  const client = new pg.Client({ host: directory, port: 5432, database: 'postgres', user: 'postgres', password: '', ssl: false, connectionTimeoutMillis: 2000, query_timeout: 10000, options: '-c statement_timeout=8000 -c lock_timeout=5000' })
+  const client = new pg.Client({ host: directory, port: 5432, database, user: 'postgres', password: '', ssl: false, connectionTimeoutMillis: 2000, query_timeout: 10000, options: '-c statement_timeout=8000 -c lock_timeout=5000' })
   client.on('error', () => {})
   try { await client.connect() } catch (error) { await client.end().catch(() => {}); throw error }
   clients.add(client)
@@ -60,6 +64,17 @@ async function check(name, fn) {
   process.stdout.write(`PASS: ${name}\n`)
 }
 
+async function restoreSnapshot(client) {
+  const rows = {}
+  for (const table of ['auth.users', 'auth.sessions', 'public.posts', 'public.ai_usage', 'storage.objects', 'private.beta_members', 'private.beta_controls', 'private.ai_requests', 'private.client_error_counts', 'private.launch_controls']) {
+    rows[table] = await scalar(client, `select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text),'[]'::jsonb) from ${table} t`)
+  }
+  const policies = (await client.query("select schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check from pg_policies where schemaname in ('public','private','storage','auth') order by schemaname,tablename,policyname")).rows
+  const rls = (await client.query("select n.nspname,c.relname,c.relrowsecurity,c.relforcerowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind='r' and n.nspname in ('public','private','storage','auth') order by n.nspname,c.relname")).rows
+  const functions = (await client.query("select n.nspname,p.proname,pg_get_function_identity_arguments(p.oid) as args,md5(pg_get_functiondef(p.oid)) as body_hash from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.prokind='f' and n.nspname in ('public','private','storage','auth') order by n.nspname,p.proname,args")).rows
+  return { rows, policies, rls, functions }
+}
+
 try {
   if (identity.uid !== undefined) {
     try { await chown(directory, identity.uid, identity.gid) } catch {
@@ -68,6 +83,7 @@ try {
   }
   report.version = (await run('postgres', ['--version'])).trim()
   assert.match(report.version, /PostgreSQL\) 17\./)
+  for (const tool of ['pg_dump', 'pg_dumpall', 'pg_restore']) assert.match(await run(tool, ['--version']), /PostgreSQL\) 17\./)
   await run('initdb', ['-D', data, '-U', 'postgres', '-A', 'trust', '--no-locale', '--encoding=UTF8', '--no-sync'])
   server = spawn(path.join(bin, 'postgres'), ['-D', data, '-k', directory, '-c', 'listen_addresses=', '-c', 'unix_socket_permissions=0700', '-c', 'max_connections=32', '-c', 'log_min_messages=error'], { ...identity, cwd: directory, stdio: ['ignore', 'pipe', 'pipe'] })
   server.stdout.on('data', bytes => { serverLog = (serverLog + bytes).slice(-3000) })
@@ -178,6 +194,35 @@ try {
     assert.equal(await scalar(b, 'select public.beta_access()'), false)
     assert.equal(await scalar(admin, 'select publishing_enabled or billing_enabled from private.launch_controls'), false)
   })
+  await check('native logical backup restores synthetic rows, RLS, policies and functions into a fresh database', async () => {
+    const before = await restoreSnapshot(admin)
+    const archive = path.join(directory, 'synthetic-beta.dump')
+    const roles = path.join(directory, 'synthetic-roles.sql')
+    await run('pg_dump', ['--host', directory, '--port', '5432', '--username', 'postgres', '--no-password', '--format=custom', '--file', archive, 'postgres'])
+    await run('pg_dumpall', ['--host', directory, '--port', '5432', '--username', 'postgres', '--no-password', '--roles-only', '--no-role-passwords', '--file', roles])
+    const archiveBytes = await readFile(archive)
+    assert.equal(archiveBytes.subarray(0, 5).toString(), 'PGDMP')
+    const rolesSQL = await readFile(roles, 'utf8')
+    assert.match(rolesSQL, /CREATE ROLE authenticated;/)
+    assert.doesNotMatch(rolesSQL, /PASSWORD\s+'/i)
+    await admin.query('create database aasiflow_beta_restore with template template0')
+    await run('pg_restore', ['--host', directory, '--port', '5432', '--username', 'postgres', '--no-password', '--exit-on-error', '--dbname', 'aasiflow_beta_restore', archive])
+    const restored = await connect('postgres', undefined, undefined, 'aasiflow_beta_restore')
+    assert.deepEqual(await restoreSnapshot(restored), before)
+    const restoredA = await connect('authenticated', A, SA, 'aasiflow_beta_restore')
+    const restoredB = await connect('authenticated', B, SB, 'aasiflow_beta_restore')
+    assert.equal(await scalar(restoredA, 'select count(*)::int from public.posts'), retained.length)
+    assert.equal(await scalar(restoredB, 'select public.beta_access()'), false)
+    assert.equal(await scalar(restoredB, 'select count(*)::int from public.posts'), 0)
+    await assert.rejects(restoredA.query("select public.reserve_ai_request('gemini-2.5-flash')"), error => error.code === '42501')
+    assert.equal(await scalar(restored, 'select publishing_enabled or billing_enabled from private.launch_controls'), false)
+    report.syntheticLogicalRestoreVerified = true
+    report.archiveSha256 = createHash('sha256').update(archiveBytes).digest('hex')
+    report.rolesSha256 = createHash('sha256').update(rolesSQL).digest('hex')
+    report.snapshotSha256 = createHash('sha256').update(JSON.stringify(before)).digest('hex')
+    // Roles are recorded password-free; the restore reuses the isolated cluster's roles.
+    // Actual hosted Auth/Storage, stored-object bytes and separate-cluster role restoration remain unverified.
+  })
   report.status = 'passed'
 } catch (error) {
   report.status = server ? 'failed' : 'blocked'
@@ -189,5 +234,7 @@ try {
   report.stopped = !server || server.exitCode !== null || server.signalCode !== null
   // Keep synthetic data/evidence for inspection; never delete customer backups.
   await writeFile(path.join(directory, 'verification.json'), JSON.stringify(report, null, 2) + '\n')
+  await mkdir(path.join(root, 'test-results'), { recursive: true })
+  await writeFile(path.join(root, 'test-results/native-beta.json'), JSON.stringify(report, null, 2) + '\n')
   process.stdout.write(`Synthetic native evidence: ${path.join(directory, 'verification.json')}\n`)
 }
