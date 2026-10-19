@@ -95,9 +95,12 @@ async function restoreSnapshot(client) {
   const functions = (await client.query("select n.nspname,p.proname,pg_get_function_identity_arguments(p.oid) as args,md5(pg_get_functiondef(p.oid)) as body_hash from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.prokind='f' and n.nspname in ('public','private','storage','auth') order by n.nspname,p.proname,args")).rows
   const roles = (await client.query("select rolname,rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication,rolbypassrls,rolconnlimit,rolvaliduntil from pg_roles where rolname !~ '^pg_' order by rolname")).rows
   const memberships = (await client.query("select parent.rolname as parent,member.rolname as member,grantor.rolname as grantor,m.admin_option,m.inherit_option,m.set_option from pg_auth_members m join pg_roles parent on parent.oid=m.roleid join pg_roles member on member.oid=m.member join pg_roles grantor on grantor.oid=m.grantor order by parent.rolname,member.rolname,grantor.rolname")).rows
-  const schemas = (await client.query("select n.nspname,pg_get_userbyid(n.nspowner) as owner,array(select a::text from unnest(n.nspacl) a order by a::text) as grants from pg_namespace n where n.nspname in ('public','private','storage','auth') order by n.nspname")).rows
-  const relations = (await client.query("select n.nspname,c.relname,c.relkind,pg_get_userbyid(c.relowner) as owner,array(select a::text from unnest(c.relacl) a order by a::text) as grants from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind in ('r','v','m','S','f') and n.nspname in ('public','private','storage','auth') order by n.nspname,c.relname")).rows
-  const functionGrants = (await client.query("select n.nspname,p.proname,pg_get_function_identity_arguments(p.oid) as args,pg_get_userbyid(p.proowner) as owner,p.prosecdef,array(select a::text from unnest(p.proacl) a order by a::text) as grants from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.prokind='f' and n.nspname in ('public','private','storage','auth') order by n.nspname,p.proname,args")).rows
+  // pg_dump can restore explicit owner-only ACLs as NULL (the same built-in
+  // defaults). Compare effective defaults, not raw catalog representation.
+  // PUBLIC grants, grant options, grantors and owners remain part of comparison.
+  const schemas = (await client.query("select n.nspname,pg_get_userbyid(n.nspowner) as owner,array(select a::text from unnest(coalesce(n.nspacl,acldefault('n',n.nspowner))) a order by a::text) as grants from pg_namespace n where n.nspname in ('public','private','storage','auth') order by n.nspname")).rows
+  const relations = (await client.query("select n.nspname,c.relname,c.relkind,pg_get_userbyid(c.relowner) as owner,array(select a::text from unnest(coalesce(c.relacl,case when c.relkind='S' then acldefault('s',c.relowner) else acldefault('r',c.relowner) end)) a order by a::text) as grants from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind in ('r','v','m','S','f') and n.nspname in ('public','private','storage','auth') order by n.nspname,c.relname")).rows
+  const functionGrants = (await client.query("select n.nspname,p.proname,pg_get_function_identity_arguments(p.oid) as args,pg_get_userbyid(p.proowner) as owner,p.prosecdef,array(select a::text from unnest(coalesce(p.proacl,acldefault('f',p.proowner))) a order by a::text) as grants from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.prokind='f' and n.nspname in ('public','private','storage','auth') order by n.nspname,p.proname,args")).rows
   const defaults = (await client.query("select pg_get_userbyid(d.defaclrole) as owner,n.nspname,d.defaclobjtype,array(select a::text from unnest(d.defaclacl) a order by a::text) as grants from pg_default_acl d left join pg_namespace n on n.oid=d.defaclnamespace order by owner,n.nspname,d.defaclobjtype")).rows
   return { rows, policies, rls, functions, roles, memberships, schemas, relations, functionGrants, defaults }
 }
@@ -240,6 +243,13 @@ try {
     await bootstrap.query('create database aasiflow_beta_restore with owner postgres template template0')
     await run('pg_restore', ['--host', restoreDirectory, '--port', '5432', '--username', 'postgres', '--no-password', '--exit-on-error', '--dbname', 'aasiflow_beta_restore', archive], restoreDirectory)
     const restored = await connect('postgres', undefined, undefined, 'aasiflow_beta_restore', restoreDirectory)
+    assert.deepEqual(await restoreSnapshot(restored), before)
+    // Negative control: an accidental PUBLIC grant must not normalize away.
+    await restored.query('begin')
+    try {
+      await restored.query('grant execute on function public.reserve_ai_request(text) to public')
+      assert.notDeepEqual(await restoreSnapshot(restored), before)
+    } finally { await restored.query('rollback') }
     assert.deepEqual(await restoreSnapshot(restored), before)
     const restoredA = await connect('authenticated', A, SA, 'aasiflow_beta_restore', restoreDirectory)
     const restoredB = await connect('authenticated', B, SB, 'aasiflow_beta_restore', restoreDirectory)
