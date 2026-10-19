@@ -16,19 +16,19 @@ if (!bin || !path.isAbsolute(bin)) throw new Error('Set AASIFLOW_TEST_PG_BIN to 
 if (process.platform === 'win32') throw new Error('This socket-only native check requires Linux/macOS/WSL. It does not connect to a Windows or hosted database.')
 const root = fileURLToPath(new URL('../', import.meta.url))
 const directory = await mkdtemp(path.join(os.tmpdir(), 'aasiflow-beta-native-'))
-const data = path.join(directory, 'data')
 const identity = process.getuid?.() === 0 ? { uid: 65534, gid: 65534 } : {}
 const clients = new Set()
-const report = { checkedAt: new Date().toISOString(), status: 'blocked', scope: 'Disposable socket-only native PostgreSQL with synthetic Auth/Storage', checks: [], sourceHashes: [], stopped: false, syntheticLogicalRestoreVerified: false, hostedBackupVerified: false, liveChanges: false, providerCalls: false }
+const clusters = []
+const report = { checkedAt: new Date().toISOString(), status: 'blocked', scope: 'Two disposable socket-only native PostgreSQL clusters with synthetic Auth/Storage', checks: [], sourceHashes: [], stopped: false, restoreStopped: false, syntheticLogicalRestoreVerified: false, separateClusterRestoreVerified: false, hostedBackupVerified: false, liveChanges: false, providerCalls: false }
 const A = 'a1111111-1111-4111-8111-111111111111', B = 'b2222222-2222-4222-8222-222222222222'
 const SA = 'a3333333-3333-4333-8333-333333333333', SB = 'b4444444-4444-4444-8444-444444444444'
-let server, serverLog = '', admin
+let restoreDirectory, admin
 
-function run(name, args) {
+function run(name, args, socketDirectory = directory) {
   return new Promise((resolve, reject) => {
     const child = spawn(path.join(bin, name), args, {
       ...identity, cwd: directory, stdio: ['ignore', 'pipe', 'pipe'],
-      env: isolatedPgEnvironment(process.env, directory),
+      env: isolatedPgEnvironment(process.env, socketDirectory),
     })
     let output = ''
     const timer = setTimeout(() => child.kill('SIGTERM'), 30000)
@@ -39,17 +39,38 @@ function run(name, args) {
   })
 }
 
-async function connect(role = 'postgres', uid, session, database = 'postgres') {
+async function connect(role = 'postgres', uid, session, database = 'postgres', socketDirectory = directory, loginUser = 'postgres') {
   assert.ok(['postgres', 'authenticated', 'service_role', 'anon'].includes(role))
   assert.ok(['postgres', 'aasiflow_beta_restore'].includes(database))
+  assert.ok(socketDirectory === directory || socketDirectory === restoreDirectory)
+  assert.ok(loginUser === 'postgres' || loginUser === 'aasiflow_restore_bootstrap')
   // Explicit socket/user/database. PGHOST, DATABASE_URL and saved Supabase settings are ignored.
-  const client = new pg.Client({ host: directory, port: 5432, database, user: 'postgres', password: '', ssl: false, connectionTimeoutMillis: 2000, query_timeout: 10000, options: '-c statement_timeout=8000 -c lock_timeout=5000' })
+  const client = new pg.Client({ host: socketDirectory, port: 5432, database, user: loginUser, password: '', ssl: false, connectionTimeoutMillis: 2000, query_timeout: 10000, options: '-c statement_timeout=8000 -c lock_timeout=5000' })
   client.on('error', () => {})
   try { await client.connect() } catch (error) { await client.end().catch(() => {}); throw error }
   clients.add(client)
   await client.query("select set_config('request.jwt.claims',$1,false)", [JSON.stringify({ role, sub: uid, session_id: session, user_metadata: { admin: true, beta: true } })])
   if (role !== 'postgres') await client.query(`set role ${role}`)
   return client
+}
+
+async function startCluster(socketDirectory, loginUser = 'postgres') {
+  const data = path.join(socketDirectory, 'data')
+  await run('initdb', ['-D', data, '-U', loginUser, '-A', 'trust', '--no-locale', '--encoding=UTF8', '--no-sync'], socketDirectory)
+  const server = spawn(path.join(bin, 'postgres'), ['-D', data, '-k', socketDirectory, '-c', 'listen_addresses=', '-c', 'unix_socket_permissions=0700', '-c', 'max_connections=32', '-c', 'log_min_messages=error'], { ...identity, cwd: socketDirectory, env: isolatedPgEnvironment(process.env, socketDirectory), stdio: ['ignore', 'pipe', 'pipe'] })
+  clusters.push({ server, data, socketDirectory })
+  let serverLog = '', startupError
+  server.stdout.on('data', bytes => { serverLog = (serverLog + bytes).slice(-3000) })
+  server.stderr.on('data', bytes => { serverLog = (serverLog + bytes).slice(-3000) })
+  server.on('error', error => { startupError = error })
+  const deadline = Date.now() + 15000
+  while (true) {
+    if (startupError) throw startupError
+    try { return await connect('postgres', undefined, undefined, 'postgres', socketDirectory, loginUser) } catch (error) {
+      if (Date.now() > deadline || server.exitCode !== null) throw new Error(`Isolated database did not start: ${error.message}. ${serverLog}`)
+      await delay(100)
+    }
+  }
 }
 async function scalar(client, sql, args = []) { return Object.values((await client.query(sql, args)).rows[0])[0] }
 async function source(relative, expectedHash) {
@@ -67,13 +88,19 @@ async function check(name, fn) {
 
 async function restoreSnapshot(client) {
   const rows = {}
-  for (const table of ['auth.users', 'auth.sessions', 'public.posts', 'public.ai_usage', 'storage.objects', 'private.beta_members', 'private.beta_controls', 'private.ai_requests', 'private.client_error_counts', 'private.launch_controls']) {
+  for (const table of ['auth.users', 'auth.sessions', 'public.posts', 'public.ai_usage', 'storage.buckets', 'storage.objects', 'private.beta_members', 'private.beta_controls', 'private.ai_requests', 'private.client_error_counts', 'private.launch_controls']) {
     rows[table] = await scalar(client, `select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text),'[]'::jsonb) from ${table} t`)
   }
   const policies = (await client.query("select schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check from pg_policies where schemaname in ('public','private','storage','auth') order by schemaname,tablename,policyname")).rows
   const rls = (await client.query("select n.nspname,c.relname,c.relrowsecurity,c.relforcerowsecurity from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind='r' and n.nspname in ('public','private','storage','auth') order by n.nspname,c.relname")).rows
   const functions = (await client.query("select n.nspname,p.proname,pg_get_function_identity_arguments(p.oid) as args,md5(pg_get_functiondef(p.oid)) as body_hash from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.prokind='f' and n.nspname in ('public','private','storage','auth') order by n.nspname,p.proname,args")).rows
-  return { rows, policies, rls, functions }
+  const roles = (await client.query("select rolname,rolsuper,rolinherit,rolcreaterole,rolcreatedb,rolcanlogin,rolreplication,rolbypassrls,rolconnlimit,rolvaliduntil from pg_roles where rolname !~ '^pg_' and rolname<>'aasiflow_restore_bootstrap' order by rolname")).rows
+  const memberships = (await client.query("select parent.rolname as parent,member.rolname as member,grantor.rolname as grantor,m.admin_option,m.inherit_option,m.set_option from pg_auth_members m join pg_roles parent on parent.oid=m.roleid join pg_roles member on member.oid=m.member join pg_roles grantor on grantor.oid=m.grantor order by parent.rolname,member.rolname,grantor.rolname")).rows
+  const schemas = (await client.query("select n.nspname,pg_get_userbyid(n.nspowner) as owner,array(select a::text from unnest(n.nspacl) a order by a::text) as grants from pg_namespace n where n.nspname in ('public','private','storage','auth') order by n.nspname")).rows
+  const relations = (await client.query("select n.nspname,c.relname,c.relkind,pg_get_userbyid(c.relowner) as owner,array(select a::text from unnest(c.relacl) a order by a::text) as grants from pg_class c join pg_namespace n on n.oid=c.relnamespace where c.relkind in ('r','v','m','S','f') and n.nspname in ('public','private','storage','auth') order by n.nspname,c.relname")).rows
+  const functionGrants = (await client.query("select n.nspname,p.proname,pg_get_function_identity_arguments(p.oid) as args,pg_get_userbyid(p.proowner) as owner,p.prosecdef,array(select a::text from unnest(p.proacl) a order by a::text) as grants from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.prokind='f' and n.nspname in ('public','private','storage','auth') order by n.nspname,p.proname,args")).rows
+  const defaults = (await client.query("select pg_get_userbyid(d.defaclrole) as owner,n.nspname,d.defaclobjtype,array(select a::text from unnest(d.defaclacl) a order by a::text) as grants from pg_default_acl d left join pg_namespace n on n.oid=d.defaclnamespace order by owner,n.nspname,d.defaclobjtype")).rows
+  return { rows, policies, rls, functions, roles, memberships, schemas, relations, functionGrants, defaults }
 }
 
 try {
@@ -84,21 +111,8 @@ try {
   }
   report.version = (await run('postgres', ['--version'])).trim()
   assert.match(report.version, /PostgreSQL\) 17\./)
-  for (const tool of ['pg_dump', 'pg_dumpall', 'pg_restore']) assert.match(await run(tool, ['--version']), /PostgreSQL\) 17\./)
-  await run('initdb', ['-D', data, '-U', 'postgres', '-A', 'trust', '--no-locale', '--encoding=UTF8', '--no-sync'])
-  server = spawn(path.join(bin, 'postgres'), ['-D', data, '-k', directory, '-c', 'listen_addresses=', '-c', 'unix_socket_permissions=0700', '-c', 'max_connections=32', '-c', 'log_min_messages=error'], { ...identity, cwd: directory, env: isolatedPgEnvironment(process.env, directory), stdio: ['ignore', 'pipe', 'pipe'] })
-  server.stdout.on('data', bytes => { serverLog = (serverLog + bytes).slice(-3000) })
-  server.stderr.on('data', bytes => { serverLog = (serverLog + bytes).slice(-3000) })
-  let startupError
-  server.on('error', error => { startupError = error })
-  const deadline = Date.now() + 15000
-  while (!admin) {
-    if (startupError) throw startupError
-    try { admin = await connect() } catch (error) {
-      if (Date.now() > deadline || server.exitCode !== null) throw new Error(`Isolated database did not start: ${error.message}. ${serverLog}`)
-      await delay(100)
-    }
-  }
+  for (const tool of ['pg_dump', 'pg_dumpall', 'pg_restore', 'psql']) assert.match(await run(tool, ['--version']), /PostgreSQL\) 17\./)
+  admin = await startCluster(directory)
   await check('native cluster has no TCP listener', async () => assert.equal(await scalar(admin, 'show listen_addresses'), ''))
   await admin.query(await source('tests/local-bootstrap.sql'))
   const history = JSON.parse(await readFile(path.join(root, 'supabase/migration-history.json'), 'utf8'))
@@ -195,7 +209,9 @@ try {
     assert.equal(await scalar(b, 'select public.beta_access()'), false)
     assert.equal(await scalar(admin, 'select publishing_enabled or billing_enabled from private.launch_controls'), false)
   })
-  await check('native logical backup restores synthetic rows, RLS, policies and functions into a fresh database', async () => {
+  await check('native logical backup restores synthetic roles, rows, RLS and privileges into a separate cluster', async () => {
+    // A harmless synthetic membership makes role-graph restoration observable.
+    await admin.query('create role beta_restore_probe nologin; grant beta_restore_probe to authenticated')
     const before = await restoreSnapshot(admin)
     const archive = path.join(directory, 'synthetic-beta.dump')
     const roles = path.join(directory, 'synthetic-roles.sql')
@@ -206,36 +222,60 @@ try {
     const rolesSQL = await readFile(roles, 'utf8')
     assert.match(rolesSQL, /CREATE ROLE authenticated;/)
     assert.doesNotMatch(rolesSQL, /PASSWORD\s+'/i)
-    await admin.query('create database aasiflow_beta_restore with template template0')
-    await run('pg_restore', ['--host', directory, '--port', '5432', '--username', 'postgres', '--no-password', '--exit-on-error', '--dbname', 'aasiflow_beta_restore', archive])
-    const restored = await connect('postgres', undefined, undefined, 'aasiflow_beta_restore')
+    restoreDirectory = await mkdtemp(path.join(directory, 'restore-'))
+    if (identity.uid !== undefined) await chown(restoreDirectory, identity.uid, identity.gid)
+    const bootstrap = await startCluster(restoreDirectory, 'aasiflow_restore_bootstrap')
+    assert.equal(await scalar(bootstrap, 'show listen_addresses'), '')
+    assert.notEqual(await scalar(bootstrap, 'show data_directory'), await scalar(admin, 'show data_directory'))
+    assert.equal(await scalar(bootstrap, "select count(*)::int from pg_roles where rolname in ('postgres','anon','authenticated','service_role','beta_restore_probe')"), 0)
+    // Separate bootstrap avoids silently reusing the original cluster's roles.
+    // -X and the minimal environment exclude personal psql startup/service files.
+    await run('psql', ['--host', restoreDirectory, '--port', '5432', '--username', 'aasiflow_restore_bootstrap', '--no-password', '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--dbname', 'postgres', '--file', roles], restoreDirectory)
+    await bootstrap.query('create database aasiflow_beta_restore with owner postgres template template0')
+    await run('pg_restore', ['--host', restoreDirectory, '--port', '5432', '--username', 'postgres', '--no-password', '--exit-on-error', '--dbname', 'aasiflow_beta_restore', archive], restoreDirectory)
+    const restored = await connect('postgres', undefined, undefined, 'aasiflow_beta_restore', restoreDirectory)
     assert.deepEqual(await restoreSnapshot(restored), before)
-    const restoredA = await connect('authenticated', A, SA, 'aasiflow_beta_restore')
-    const restoredB = await connect('authenticated', B, SB, 'aasiflow_beta_restore')
+    const restoredA = await connect('authenticated', A, SA, 'aasiflow_beta_restore', restoreDirectory)
+    const restoredB = await connect('authenticated', B, SB, 'aasiflow_beta_restore', restoreDirectory)
+    assert.equal(await scalar(restoredA, "select pg_has_role(current_user,'beta_restore_probe','MEMBER')"), true)
     assert.equal(await scalar(restoredA, 'select count(*)::int from public.posts'), retained.length)
     assert.equal(await scalar(restoredB, 'select public.beta_access()'), false)
     assert.equal(await scalar(restoredB, 'select count(*)::int from public.posts'), 0)
     await assert.rejects(restoredA.query("select public.reserve_ai_request('gemini-2.5-flash')"), error => error.code === '42501')
+    await assert.rejects(restoredA.query("insert into public.posts(user_id,idea,platform,tone,caption,status,scheduled_for) values($1,'Restored approval guard','Instagram','Friendly','Synthetic','scheduled',now()+interval '1 day')", [A]), /Approve before scheduling/)
     assert.equal(await scalar(restored, 'select publishing_enabled or billing_enabled from private.launch_controls'), false)
     report.syntheticLogicalRestoreVerified = true
+    report.separateClusterRestoreVerified = true
     report.archiveSha256 = createHash('sha256').update(archiveBytes).digest('hex')
     report.rolesSha256 = createHash('sha256').update(rolesSQL).digest('hex')
     report.snapshotSha256 = createHash('sha256').update(JSON.stringify(before)).digest('hex')
-    // Roles are recorded password-free; the restore reuses the isolated cluster's roles.
-    // Actual hosted Auth/Storage, stored-object bytes and separate-cluster role restoration remain unverified.
+    // Actual hosted backups, Auth/Storage services and stored-object bytes remain unverified.
   })
   report.status = 'passed'
 } catch (error) {
-  report.status = server ? 'failed' : 'blocked'
+  report.status = clusters.length ? 'failed' : 'blocked'
   report.reason = error.message
   throw error
 } finally {
   await Promise.allSettled([...clients].map(client => client.end()))
-  if (server && server.exitCode === null) await run('pg_ctl', ['-D', data, '-m', 'fast', '-w', 'stop'])
-  report.stopped = !server || server.exitCode !== null || server.signalCode !== null
+  let cleanupError
+  for (const cluster of [...clusters].reverse()) {
+    try {
+      if (cluster.server.exitCode === null && cluster.server.signalCode === null) await run('pg_ctl', ['-D', cluster.data, '-m', 'fast', '-w', 'stop'], cluster.socketDirectory)
+    } catch (error) { cleanupError ??= error }
+  }
+  const stopped = cluster => cluster.server.exitCode !== null || cluster.server.signalCode !== null
+  report.stopped = clusters.every(stopped)
+  report.restoreStopped = clusters.some(cluster => cluster.socketDirectory === restoreDirectory && stopped(cluster))
+  if (cleanupError || !report.stopped) {
+    report.status = 'failed'
+    report.reason ??= 'A disposable cluster failed to stop; native acceptance is not complete.'
+  }
   // Keep synthetic data/evidence for inspection; never delete customer backups.
   await writeFile(path.join(directory, 'verification.json'), JSON.stringify(report, null, 2) + '\n')
   await mkdir(path.join(root, 'test-results'), { recursive: true })
   await writeFile(path.join(root, 'test-results/native-beta.json'), JSON.stringify(report, null, 2) + '\n')
   process.stdout.write(`Synthetic native evidence: ${path.join(directory, 'verification.json')}\n`)
+  if (cleanupError) throw cleanupError
+  if (!report.stopped) throw new Error(report.reason)
 }

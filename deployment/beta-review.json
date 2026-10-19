@@ -141,7 +141,7 @@
     },
     {
       "path": "scripts/verify-native-beta.mjs",
-      "sha256": "6883ca0fb7d2fb05c442c0b8a11a08886b15fbd6edb133fba281e633f7a21a4c"
+      "sha256": "e1601b6a7947483578451bcacdae63a54aa21e0b7ca9a7f6e08b88d5e4a107cf"
     },
     {
       "path": "scripts/native-pg-environment.mjs",
