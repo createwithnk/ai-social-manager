@@ -1,5 +1,9 @@
 # AasiFlowAI Beta launch preparation
 
+## Latest hosted review — 22 October 2026
+
+The [fresh read-only receipt](evidence/hosted-readonly-20261022.json) confirms the live scheduling/Beta/owner additions are still absent and publishing/billing remain closed. A safe backup-inventory tool is prepared; actual backup availability and recovery remain unverified because task-scoped read access is unavailable. Follow [CONTINUE_AASIFLOWAI.md](CONTINUE_AASIFLOWAI.md) and [HOSTED_BACKUP_REVIEW.md](HOSTED_BACKUP_REVIEW.md). Do not repeat the completed synthetic native rehearsal or treat a metadata inventory as recovery proof. No hosted mutation, provider call, paid upgrade or deployment occurred.
+
 ## Current development candidate — 19 October 2026
 
 The authorized development branch [fix/beta-readiness-20261019](https://github.com/createwithnk/ai-social-manager/tree/fix/beta-readiness-20261019) is pushed. Source commit `3c617ad` passed [CI 39267865055](https://github.com/createwithnk/ai-social-manager/actions/runs/39267865055): 96 Node tests, 81 PGlite checks, 26 browser cases, 24 Deno tests/15 payment substeps and 11 native PostgreSQL 17.6 checks. Exact evidence is in [evidence/beta-ci-20261019.json](evidence/beta-ci-20261019.json).

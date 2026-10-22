@@ -12,6 +12,7 @@
     "test:native-beta": "node scripts/verify-native-beta.mjs",
     "check:edge": "tsc -p tsconfig.edge.json",
     "review:beta": "node scripts/release-review.mjs --check",
+    "review:backups": "node scripts/backup-inventory.mjs",
     "test:e2e": "playwright test",
     "check:e2e": "tsc -p tsconfig.e2e.json",
     "test:edge": "node scripts/run-deno.mjs test",

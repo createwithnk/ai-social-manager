@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "project": "AasiFlowAI",
+  "repository": "createwithnk/ai-social-manager",
+  "developmentBranch": "fix/beta-readiness-20261019",
+  "supabaseProjectRef": "nkfecpdegcmsapvbviky",
+  "checkpoint": "docs/CONTINUE_AASIFLOWAI.md",
+  "hostedEvidence": "docs/evidence/hosted-readonly-20261022.json",
+  "allowed": [
+    "read_only_AasiFlowAI_metadata",
+    "local_development",
+    "isolated_synthetic_tests",
+    "local_commits",
+    "push_verified_development_branch"
+  ],
+  "held": [
+    "all_other_projects",
+    "main_merge",
+    "live_SQL_writes",
+    "hosted_Auth_or_identity_changes",
+    "hosted_deployment_or_public_launch",
+    "provider_API_requests",
+    "paid_services_or_upgrades",
+    "billing_or_social_publishing",
+    "real_user_invitations",
+    "customer_data_deletion"
+  ],
+  "quotaResetObservable": false,
+  "rules": [
+    "Read the current remote development head before resuming; never force-push.",
+    "Preserve unfinished work and unavailable laptop checkpoint 21e8dce.",
+    "Save completed work, exact verification and blockers before yielding.",
+    "Do not repeat completed work or invent work while a required input is missing.",
+    "Treat API inventory as metadata only; it does not prove hosted recovery.",
+    "Use the scheduler task record as proof of scheduling; this file does not schedule anything."
+  ]
+}

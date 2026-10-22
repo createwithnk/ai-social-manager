@@ -113,7 +113,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "48856f5a9cd978c7fee31504e82406285914044df1f41e5f00d64dab2807c03a"
+      "sha256": "599528b128760e76f65408565de2f8a91f7d59027b3f51c9d49ff4d6d488c839"
     },
     {
       "path": "package-lock.json",
@@ -132,8 +132,16 @@
       "sha256": "9676f3365bd793d21dccc8f7f6de2f975560d10698b4988b41d9df894c93508f"
     },
     {
+      "path": "scripts/backup-inventory.mjs",
+      "sha256": "33d07b31fb1c1d9d20be4cab835bae0befdc7265dedb5b9c2b093c5135500b2e"
+    },
+    {
+      "path": "deployment/continuation.json",
+      "sha256": "92b2799f502deb01e4061cfc954237f338831f792050f847c955c40195ee5197"
+    },
+    {
       "path": "scripts/release-review.mjs",
-      "sha256": "ce06b313ac58ef73826b40f47b98e9c7339d9cec13e1588d58d858d180044f1a"
+      "sha256": "fa57a8ae79d62ad0a0e90c3219656c8135b7d3c841e566181b95ef571895a3b3"
     },
     {
       "path": ".github/workflows/ci.yml",

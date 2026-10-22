@@ -19,6 +19,7 @@ const paths = [
   'src/lib/media.ts', 'src/lib/supabase.ts', 'src/lib/translations.ts', 'src/styles.css',
   'src/lib/posts.ts', 'src/lib/workflow.ts', 'src/types.ts', 'package.json', 'package-lock.json',
   'src/main.tsx', 'src/components/MediaInput.tsx', 'src/MediaLibrary.tsx',
+  'scripts/backup-inventory.mjs', 'deployment/continuation.json',
   'scripts/release-review.mjs', '.github/workflows/ci.yml', 'scripts/verify-native-beta.mjs', 'scripts/native-pg-environment.mjs', 'deployment/target.json', 'public/_headers', 'deployment/security-headers.json',
 ]
 const files=[]

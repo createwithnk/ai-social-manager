@@ -1,5 +1,13 @@
 # AasiFlowAI project status
 
+## Read-only hosted continuation — 22 October 2026
+
+Only AasiFlowAI was accessed. Fresh project/catalog/advisor reads confirm healthy PostgreSQL 17.6, four unchanged historical migrations, protected-table RLS and closed publishing/billing controls. The six private no-policy INFO findings retain no anon/authenticated table DML privileges. Leaked-password protection remains a hosted warning; no paid upgrade or Auth change was made. All three proposed Beta updates remain unapplied and newer runtime release remains held. See [sanitized hosted evidence](evidence/hosted-readonly-20261022.json).
+
+Added a fixed-project, GET-only backup-inventory command with deadlines, streamed-size limits, redirect rejection, sanitized output and no fallback to unrelated credentials. Ten new mocked checks pass; the full local suite passes 106 Node tests and 81 SQL checks, plus lint/manifest/whitespace checks. This does not certify a hosted backup: the connected MCP has no backup-list action and the task-specific read token is absent.
+
+The durable [continuation checkpoint](CONTINUE_AASIFLOWAI.md) and [scope policy](../deployment/continuation.json) preserve finished work, held actions, the exact next blocker and resumption instructions. Account quota-reset events are not exposed; any scheduled continuation is an attempt subject to actual usage/access limits, not a quota bypass. Preserve DarulIlm isolation and the unavailable laptop checkpoint. Current-commit CI must still be read from GitHub rather than inferred from older results.
+
 ## Development checkpoint — 19 October 2026
 
 The authorized development work is pushed to [fix/beta-readiness-20261019](https://github.com/createwithnk/ai-social-manager/tree/fix/beta-readiness-20261019). Code commit `3c617adfb2eeb008b90a363a447797bbc236a240` passed [GitHub CI 39267865055](https://github.com/createwithnk/ai-social-manager/actions/runs/39267865055), including both validation and native PostgreSQL jobs. PR #2 remains draft on its previous branch; main was not merged and nothing was deployed.
