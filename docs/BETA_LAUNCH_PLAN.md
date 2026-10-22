@@ -1,5 +1,11 @@
 # AasiFlowAI Beta launch preparation
 
+## Automated acceptance verified — 23 October 2026
+
+The previously pending source `3c8d39666f9437bcac61ce9b0477e2aba8245dc9` passed both jobs in [CI 39815151280](https://github.com/createwithnk/ai-social-manager/actions/runs/39815151280): 106 Node tests, 81 isolated SQL checks, 24 Deno tests/15 payment steps, all 30 desktop/mobile browser cases and 11 synthetic native PostgreSQL checks. Both new keyboard/Arabic-calendar scenarios passed on both viewports. The [CI receipt](evidence/beta-ci-20261023.json) records the exact tested tree and verification limits. No unchanged suites were rerun to record it.
+
+The next prerequisite remains actual hosted backup inventory/recovery: the task-scoped read token is absent and connected tools expose no backup-list action. Do not infer backup availability or certify real Auth/Storage/Gemini behavior from the synthetic CI. The five release groups below remain open; no hosted mutation or launch was performed.
+
 ## Targeted UI acceptance — 22 October 2026
 
 Workspace navigation now moves keyboard focus to the new screen's heading and marks the current navigation item. Arabic Calendar labels, read-only tone and date displays follow the chosen interface language without changing stored scheduling times. Two desktop/mobile browser scenarios cover these previously missing cases; require their current-head CI result before accepting the candidate. Native Arabic/screen-reader sign-off is still pending.

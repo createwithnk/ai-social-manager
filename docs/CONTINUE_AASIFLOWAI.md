@@ -1,6 +1,6 @@
 # Continue AasiFlowAI
 
-Updated: 22 October 2026. Read this file before resuming work.
+Updated: 23 October 2026. Read this file before resuming work.
 
 ## Scope
 
@@ -8,7 +8,15 @@ Only `createwithnk/ai-social-manager`, development branch `fix/beta-readiness-20
 
 The user authorized routine development, isolated testing, checkpoints and pushing reviewed development work. Public launch, hosted deployment, live SQL/Auth/identity changes, paid/provider calls, billing, posting and real invitations remain held. Continue safe work without repeatedly requesting routine permission.
 
-## Verified starting point
+## Current verified CI checkpoint — 23 October 2026
+
+Source commit `3c8d39666f9437bcac61ce9b0477e2aba8245dc9`, tree `1b04a09306512332bde32e850e1d7e8537e09618`, is confirmed on the development branch. The previously queued [CI 39815151280](https://github.com/createwithnk/ai-social-manager/actions/runs/39815151280) completed successfully. Both job logs verify 106 Node tests, 81 isolated SQL checks, 24 Deno tests/15 payment steps, 30 desktop/mobile browser cases and 11 synthetic native PostgreSQL checks, plus lint, TypeScript, build and manifest verification. See the [dated CI receipt](evidence/beta-ci-20261023.json).
+
+The new keyboard and Arabic-calendar scenarios passed on both desktop and mobile. This closes the pending automated browser verification; native Arabic wording and actual screen-reader acceptance are still required. Existing passing suites were read from CI rather than rerun. Any later code change needs its own verification; documentation-only receipt commits do not replace the tested source SHA above.
+
+The next prerequisite is unchanged: `AASIFLOW_SUPABASE_READ_TOKEN` is absent and no connected backup-list action is available. Backup inventory, hosted recovery and actual Storage object bytes remain unverified; backup availability is unknown. No held action was performed. Preserve the existing source checkpoints and wait for newly available scoped access/artifacts or a new actionable failure; do not invent features or repeatedly audit unchanged state.
+
+## Earlier verified starting point
 
 Remote starting checkpoint: `4f339abed0634281123771fc51cfaec5e83c4dc6`. Its CI passed 96 Node tests, 81 SQL checks, 24 Deno tests/15 payment steps, 26 browser cases and 11 native PostgreSQL checks. Native restore used synthetic catalogs and two disposable clusters, not an actual hosted backup. Preserve unavailable laptop checkpoint `21e8dce`; do not claim it synchronized.
 
@@ -30,7 +38,7 @@ The advisor's six private-table no-policy INFO findings reflect closed tables wi
 
 The final UI review found two remaining automated-accessibility/localization gaps: changing workspace screens left keyboard focus on a removed or old control, and Arabic Calendar scheduling labels still used English/browser-default dates. Screen changes now focus the heading, the current navigation item is announced, and Calendar/details use the selected interface locale. Ordinary editor updates, language changes and the existing mobile-menu Escape behavior must retain their own focus. No post lifecycle, approval, schedule timestamp, SQL or server configuration changed.
 
-Two new browser scenarios run in both desktop and mobile projects (30 total browser cases). They cover View/Back/Edit/new-composer/navigation focus, no focus theft while typing/changing language, translated scheduling labels/details and an unchanged stored timestamp. Local lint, app build, browser TypeScript, 106 Node tests and 81 SQL checks pass. Browser execution is verified by the current commit's GitHub CI, not inferred from the earlier run above. Native Arabic wording/screen-reader acceptance still requires a human review.
+Two new browser scenarios passed in both desktop and mobile projects (30 total browser cases). They cover View/Back/Edit/new-composer/navigation focus, no focus theft while typing/changing language, translated scheduling labels/details and an unchanged stored timestamp. Source `3c8d396` has passed full CI as recorded above; no result is inferred from the earlier backup/checkpoint run. Native Arabic wording/screen-reader acceptance still requires a human review.
 
 Launch preparation still has five groups of outstanding evidence/actions: actual hosted recovery; exact hosted SQL and invite/owner/Auth setup; an approved private runtime destination/release; authorized real login/RLS/provider acceptance with no-charge boundaries; and human Arabic/accessibility plus cohort/support/privacy/retention acceptance. None is marked complete by these local UI fixes. Runtime deployment and public launch remain held; do not interpret the user's request to finish preparation as permission to launch.
 
