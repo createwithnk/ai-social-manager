@@ -1,5 +1,9 @@
 # AasiFlowAI project status
 
+## Targeted UI acceptance continuation — 22 October 2026
+
+The prior backup/checkpoint commit `8683cff` passed [CI 39810575643](https://github.com/createwithnk/ai-social-manager/actions/runs/39810575643). A subsequent UI review fixes keyboard focus on screen changes, announces the active navigation item and completes selected-locale Calendar/details labels. Two new browser scenarios run on desktop and mobile; use current-head CI for their result. Local lint, app build, browser TypeScript, 106 Node tests and 81 SQL checks pass. Hosted recovery/setup/release/provider acceptance and human/cohort decisions remain outstanding; see [current checkpoint](CONTINUE_AASIFLOWAI.md). No launch, hosted configuration or other project was changed.
+
 ## Read-only hosted continuation — 22 October 2026
 
 Only AasiFlowAI was accessed. Fresh project/catalog/advisor reads confirm healthy PostgreSQL 17.6, four unchanged historical migrations, protected-table RLS and closed publishing/billing controls. The six private no-policy INFO findings retain no anon/authenticated table DML privileges. Leaked-password protection remains a hosted warning; no paid upgrade or Auth change was made. All three proposed Beta updates remain unapplied and newer runtime release remains held. See [sanitized hosted evidence](evidence/hosted-readonly-20261022.json).

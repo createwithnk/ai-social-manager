@@ -1,5 +1,11 @@
 # AasiFlowAI Beta launch preparation
 
+## Targeted UI acceptance — 22 October 2026
+
+Workspace navigation now moves keyboard focus to the new screen's heading and marks the current navigation item. Arabic Calendar labels, read-only tone and date displays follow the chosen interface language without changing stored scheduling times. Two desktop/mobile browser scenarios cover these previously missing cases; require their current-head CI result before accepting the candidate. Native Arabic/screen-reader sign-off is still pending.
+
+There are five remaining release groups: hosted backup/recovery; reviewed hosted database/Auth/identity setup; a selected and separately approved private runtime release; real integration/provider no-charge acceptance; and human Arabic/accessibility/cohort/support/privacy acceptance. Existing code, isolated tests and the inventory helper do not close those hosted or human gates. Continue safe preparation; deployment and launch remain held.
+
 ## Latest hosted review — 22 October 2026
 
 The [fresh read-only receipt](evidence/hosted-readonly-20261022.json) confirms the live scheduling/Beta/owner additions are still absent and publishing/billing remain closed. A safe backup-inventory tool is prepared; actual backup availability and recovery remain unverified because task-scoped read access is unavailable. Follow [CONTINUE_AASIFLOWAI.md](CONTINUE_AASIFLOWAI.md) and [HOSTED_BACKUP_REVIEW.md](HOSTED_BACKUP_REVIEW.md). Do not repeat the completed synthetic native rehearsal or treat a metadata inventory as recovery proof. No hosted mutation, provider call, paid upgrade or deployment occurred.

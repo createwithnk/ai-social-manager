@@ -133,6 +133,9 @@ function Workspace({ auth }: { auth: AuthState }) {
   const [compactNavigation, setCompactNavigation] = useState(() => window.matchMedia('(max-width: 900px)').matches)
   const menuButton = useRef<HTMLButtonElement>(null)
   const navigation = useRef<HTMLElement>(null)
+  const viewHeading = useRef<HTMLHeadingElement>(null)
+  const screenKey = `${view}:${view === 'create' ? editingPost?.id ?? composerKey : view === 'detail' ? viewingPost?.id ?? '' : ''}`
+  const previousScreen = useRef(screenKey)
   useEffect(() => {
     const query = window.matchMedia('(max-width: 900px)')
     const change = () => { setCompactNavigation(query.matches); if (!query.matches) setMobile(false) }
@@ -155,6 +158,11 @@ function Workspace({ auth }: { auth: AuthState }) {
     document.addEventListener('keydown', keydown)
     return () => { document.removeEventListener('keydown', keydown); returnFocusTo?.focus() }
   }, [mobile, compactNavigation])
+  useEffect(() => {
+    if (previousScreen.current === screenKey) return
+    previousScreen.current = screenKey
+    viewHeading.current?.focus()
+  }, [screenKey])
   const [postsLoading, setPostsLoading] = useState(isSupabaseConfigured)
   const [postsError, setPostsError] = useState<string | null>(null)
   const userId = auth.user?.id
@@ -259,7 +267,7 @@ function Workspace({ auth }: { auth: AuthState }) {
       <div className="guardrail"><CheckCircle2 /><div><strong>{t("Approval protected")}</strong><span>{t("Nothing is published without your approval.")}</span></div></div>
     </aside>
     <main>
-      <header><LanguageSwitcher /><button ref={menuButton} aria-controls="workspace-navigation" aria-expanded={mobile} className="menu" onClick={() => setMobile(true)} aria-label={t("Open navigation")}><Menu /></button><div><small>{t("AI SOCIAL MEDIA WORKSPACE")}</small><h1>{view === 'dashboard' ? t("Your content workspace") : view === 'create' ? t("Create new content") : view === 'detail' ? t("Content details") : view === 'admin' ? t("Owner monitoring") : view === 'media' ? t("Media library") : t("Content calendar")}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut />{t("Log out")}</button></div>}<button className="primary compact" onClick={createPost}><Plus />{t("New post")}</button></header>
+      <header><LanguageSwitcher /><button ref={menuButton} aria-controls="workspace-navigation" aria-expanded={mobile} className="menu" onClick={() => setMobile(true)} aria-label={t("Open navigation")}><Menu /></button><div><small>{t("AI SOCIAL MEDIA WORKSPACE")}</small><h1 ref={viewHeading} tabIndex={-1}>{view === 'dashboard' ? t("Your content workspace") : view === 'create' ? t("Create new content") : view === 'detail' ? t("Content details") : view === 'admin' ? t("Owner monitoring") : view === 'media' ? t("Media library") : t("Content calendar")}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut />{t("Log out")}</button></div>}<button className="primary compact" onClick={createPost}><Plus />{t("New post")}</button></header>
       {(postsError ?? auth.error) && <p className="workspace-error" role="alert">{t(postsError ?? auth.error ?? '')}</p>}
       {view === 'dashboard' && <Dashboard posts={posts} drafts={posts.filter((post) => post.status === 'draft').length} approved={posts.filter((post) => post.status === 'approved').length} scheduled={posts.filter((post) => post.status === 'scheduled').length} onCreate={createPost} onEdit={editDraft} onView={(post) => viewPost(post, 'dashboard')} loading={postsLoading} />}
       {view === 'create' && <Generator key={editingPost?.id ?? `new-${composerKey}`} initialPost={editingPost} userId={userId} onSave={savePost} disabled={postsLoading} />}
@@ -274,7 +282,7 @@ function Workspace({ auth }: { auth: AuthState }) {
 
 function Nav({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
 
-  return <button className={active ? 'nav active' : 'nav'} onClick={onClick}>{icon}<span>{label}</span></button>
+  return <button className={active ? 'nav active' : 'nav'} aria-current={active ? 'page' : undefined} onClick={onClick}>{icon}<span>{label}</span></button>
 }
 
 function Dashboard({ posts, drafts, approved, scheduled, onCreate, onEdit, onView, loading }: { posts: Post[]; drafts: number; approved: number; scheduled: number; onCreate: () => void; onEdit: (post: Post) => void; onView: (post: Post) => void; loading: boolean }) {
@@ -287,7 +295,7 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | n
 }
 
 function PostDetail({ post, onBack, onEdit, disabled }: { post: Post; onBack: () => void; onEdit: (post: Post) => Promise<void>; disabled: boolean }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [editing, setEditing] = useState(false)
   const [editConfirmed, setEditConfirmed] = useState(false)
   const requiresConfirmation = post.status !== 'draft'
@@ -307,7 +315,7 @@ function PostDetail({ post, onBack, onEdit, disabled }: { post: Post; onBack: ()
   return <section className="content"><div className="panel">
     <div className="panel-head"><div><span className="eyebrow">{t("READ-ONLY CONTENT")}</span><h2>{post.idea}</h2></div><button className="ghost" onClick={onBack} disabled={editing}>{t("Back")}</button></div>
     <p><span className={`status ${post.status}`}>{t(post.status)}</span></p>
-    <dl><dt>{t("Platform")}</dt><dd>{post.platform}</dd><dt>{t("Tone")}</dt><dd>{post.tone}</dd><dt>{t("Created")}</dt><dd>{new Date(post.createdAt).toLocaleString()}</dd>{post.scheduledFor && <><dt>{t("Scheduled for")}</dt><dd>{new Date(post.scheduledFor).toLocaleString()}</dd></>}</dl>
+    <dl><dt>{t("Platform")}</dt><dd>{t(post.platform)}</dd><dt>{t("Tone")}</dt><dd>{t(post.tone)}</dd><dt>{t("Created")}</dt><dd>{new Date(post.createdAt).toLocaleString(locale === 'ar' ? 'ar-AE' : 'en-GB')}</dd>{post.scheduledFor && <><dt>{t("Scheduled for")}</dt><dd>{new Date(post.scheduledFor).toLocaleString(locale === 'ar' ? 'ar-AE' : 'en-GB')}</dd></>}</dl>
     {post.media && <MediaPreview media={post.media} />}
     <h3>{t("Caption")}</h3><p dir={post.language === 'ar' || post.language === 'ur' ? 'rtl' : 'ltr'} lang={post.language ?? 'en'} style={{ whiteSpace: 'pre-wrap' }}>{post.caption}</p>
     <h3>{t("Hashtags")}</h3><p>{post.hashtags.map((tag) => `#${tag}`).join(' ')}</p>
@@ -395,7 +403,7 @@ function Generator({ initialPost, onSave, disabled, userId }: { userId?: string;
 }
 
 function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpdate: (post: Post) => Promise<Post | void>; onView: (post: Post) => void; disabled: boolean }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const approved = useMemo(() => posts.filter((post) => post.status === 'approved' || post.status === 'scheduled'), [posts])
   const [scheduleTimes, setScheduleTimes] = useState<Record<string, string>>({})
   const [savingId, setSavingId] = useState<string | null>(null)
@@ -439,7 +447,7 @@ function Calendar({ posts, onUpdate, onView, disabled }: { posts: Post[]; onUpda
     return scheduleTimes[post.id] ?? (post.scheduledFor ? toDateTimeInput(new Date(post.scheduledFor)) : defaultScheduleTime)
   }
 
-  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">{t("APPROVED CONTENT ONLY")}</span><h3>{t("Ready to schedule")}</h3></div></div>{error && <p className="form-error" role="alert">{t(error)}</p>}{approved.length === 0 ? <div className="empty"><CalendarDays /><h3>{t("No approved content yet")}</h3><p>{t("Review and approve a draft before it can appear here.")}</p></div> : <div className="post-list">{approved.map((post) => { const busy = disabled || savingId !== null; return <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.scheduledFor ? `Scheduled for ${new Date(post.scheduledFor).toLocaleString()}` : t("Approved and ready")}</p></div><div className="schedule-controls"><button className="ghost" disabled={busy} onClick={() => onView(post)}>{t("View")}</button><input aria-label={`Schedule ${post.idea}`} type="datetime-local" value={scheduleTimeFor(post)} onChange={(event) => setScheduleTimes((times) => ({ ...times, [post.id]: event.target.value }))} disabled={busy} /><div><button className="ghost" disabled={busy} onClick={() => schedule(post, scheduleTimeFor(post))}><CalendarDays /> {busy ? t("Saving…") : post.status === 'approved' ? t("Schedule") : t("Reschedule")}</button>{post.status === 'scheduled' && <button className="ghost unschedule" disabled={busy} onClick={() => unschedule(post)}>{t("Unschedule")}</button>}</div></div></article> })}</div>}</div></section>
+  return <section className="content"><div className="panel"><div className="panel-head"><div><span className="eyebrow">{t("APPROVED CONTENT ONLY")}</span><h3>{t("Ready to schedule")}</h3></div></div>{error && <p className="form-error" role="alert">{t(error)}</p>}{approved.length === 0 ? <div className="empty"><CalendarDays /><h3>{t("No approved content yet")}</h3><p>{t("Review and approve a draft before it can appear here.")}</p></div> : <div className="post-list">{approved.map((post) => { const busy = disabled || savingId !== null; return <article className="post" key={post.id}><div className="platform">{post.platform[0]}</div><div><strong>{post.idea}</strong><p>{post.scheduledFor ? `${t("Scheduled for")} ${new Date(post.scheduledFor).toLocaleString(locale === 'ar' ? 'ar-AE' : 'en-GB')}` : t("Approved and ready")}</p></div><div className="schedule-controls"><button className="ghost" disabled={busy} onClick={() => onView(post)}>{t("View")}</button><input aria-label={`${t("Schedule")} ${post.idea}`} type="datetime-local" value={scheduleTimeFor(post)} onChange={(event) => setScheduleTimes((times) => ({ ...times, [post.id]: event.target.value }))} disabled={busy} /><div><button className="ghost" disabled={busy} onClick={() => schedule(post, scheduleTimeFor(post))}><CalendarDays /> {busy ? t("Saving…") : post.status === 'approved' ? t("Schedule") : t("Reschedule")}</button>{post.status === 'scheduled' && <button className="ghost unschedule" disabled={busy} onClick={() => unschedule(post)}>{t("Unschedule")}</button>}</div></div></article> })}</div>}</div></section>
 }
 
 function toDateTimeInput(date: Date) {

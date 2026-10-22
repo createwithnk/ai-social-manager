@@ -18,12 +18,21 @@ The advisor's six private-table no-policy INFO findings reflect closed tables wi
 
 ## This continuation
 
+- The backup/checkpoint commit `8683cffaacb4de662921d598d7b8d2e2bad15d16` is confirmed pushed; [CI 39810575643](https://github.com/createwithnk/ai-social-manager/actions/runs/39810575643) passed both jobs. Do not repeat that delivery work.
 - Prepared the fixed-project, GET-only `npm run review:backups` command and 10 passing focused tests. The complete local suite now passes 106 Node tests plus 81 SQL checks; lint and manifest/whitespace checks pass.
 - Response size, elapsed time, redirects, errors and output fields are bounded; secrets and signed URLs are omitted.
 - Other project IDs fail before any request; unrelated Supabase environment keys are not reused.
 - Actual inventory remains blocked because `AASIFLOW_SUPABASE_READ_TOKEN` is absent and the connected MCP has no backup-list action.
 - `inventoryVerified` is separate from `hostedBackupVerified`; listing a completed backup never certifies recovery.
 - Require the current remote head's full CI to pass before treating any new commit as tested. The live-receipt JSON and prior CI evidence are different scopes.
+
+## Targeted UI acceptance continuation
+
+The final UI review found two remaining automated-accessibility/localization gaps: changing workspace screens left keyboard focus on a removed or old control, and Arabic Calendar scheduling labels still used English/browser-default dates. Screen changes now focus the heading, the current navigation item is announced, and Calendar/details use the selected interface locale. Ordinary editor updates, language changes and the existing mobile-menu Escape behavior must retain their own focus. No post lifecycle, approval, schedule timestamp, SQL or server configuration changed.
+
+Two new browser scenarios run in both desktop and mobile projects (30 total browser cases). They cover View/Back/Edit/new-composer/navigation focus, no focus theft while typing/changing language, translated scheduling labels/details and an unchanged stored timestamp. Local lint, app build, browser TypeScript, 106 Node tests and 81 SQL checks pass. Browser execution is verified by the current commit's GitHub CI, not inferred from the earlier run above. Native Arabic wording/screen-reader acceptance still requires a human review.
+
+Launch preparation still has five groups of outstanding evidence/actions: actual hosted recovery; exact hosted SQL and invite/owner/Auth setup; an approved private runtime destination/release; authorized real login/RLS/provider acceptance with no-charge boundaries; and human Arabic/accessibility plus cohort/support/privacy/retention acceptance. None is marked complete by these local UI fixes. Runtime deployment and public launch remain held; do not interpret the user's request to finish preparation as permission to launch.
 
 ## Next authorized work, in order
 
