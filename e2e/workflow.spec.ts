@@ -17,7 +17,7 @@ test('keyboard navigation announces the new screen without stealing focus during
   }
   await page.evaluate(post => localStorage.setItem('aasiflow-posts', JSON.stringify([post])), post)
   await page.reload()
-  await expect(page.getByRole('button', { name: 'Dashboard', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('button', { name: 'Dashboard', exact: true, includeHidden: true })).toHaveAttribute('aria-current', 'page')
   await page.getByRole('button', { name: 'View', exact: true }).focus()
   await page.keyboard.press('Enter')
   await expect(page.getByRole('heading', { name: 'Content details', exact: true })).toBeFocused()
@@ -38,8 +38,8 @@ test('keyboard navigation announces the new screen without stealing focus during
   await expect(idea).toHaveValue('')
   await navigate(page, 'Content calendar')
   await expect(page.getByRole('heading', { name: 'Content calendar', exact: true })).toBeFocused()
-  await expect(page.getByRole('button', { name: 'Content calendar', exact: true })).toHaveAttribute('aria-current', 'page')
-  await expect(page.getByRole('button', { name: 'Dashboard', exact: true })).not.toHaveAttribute('aria-current')
+  await expect(page.getByRole('button', { name: 'Content calendar', exact: true, includeHidden: true })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('button', { name: 'Dashboard', exact: true, includeHidden: true })).not.toHaveAttribute('aria-current')
 })
 
 test('Arabic calendar and read-only details use the selected locale without changing the schedule', async ({ page }) => {
