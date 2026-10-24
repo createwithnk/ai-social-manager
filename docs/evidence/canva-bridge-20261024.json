@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-24",
+  "timezone": "Asia/Kolkata",
+  "repository": "createwithnk/ai-social-manager",
+  "branch": "fix/beta-readiness-20261019",
+  "supabaseProjectRef": "nkfecpdegcmsapvbviky",
+  "sourceParent": "2a4f956d850f0634af328211bb61d1b05a83368d",
+  "scope": "New modular source files and isolated synthetic tests only; not mounted, enabled, connected, deployed or hosted-accepted.",
+  "completed": [
+    "Optional English/Arabic Canva design and Brand Template reference interface",
+    "Separate owner/browser scheduled-post mappings with full-post fingerprints and revision checks",
+    "Bounded fixed-GET server catalog using unchanged existing runtime and encrypted grants",
+    "Complete module, opt-in host, setup and limitations guide"
+  ],
+  "checks": {
+    "nodeTopLevelPassed": 163,
+    "newNodeTopLevelCases": 15,
+    "serverCasesWithinOneNodeCase": 7,
+    "isolatedSqlPassed": 81,
+    "newBrowserCasesPassed": 14,
+    "browserProjects": [
+      "desktop",
+      "mobile"
+    ],
+    "storageRecoveryRecheck": "2 passed after test-only factory cleanup",
+    "arabicVisualCheck": "2 passed; mobile screenshot reviewed",
+    "lint": "passed",
+    "appEdgeBrowserTypescript": "passed",
+    "build": "passed; unchanged production JS/CSS outputs",
+    "newDenoEntrypointCheck": "passed with cached Deno 2.9.6",
+    "releaseManifest": "verified unchanged",
+    "currentCandidateCI": "read actual remote head CI after push"
+  },
+  "runtimes": {
+    "node": "24.22.1",
+    "deno": "2.9.6",
+    "localBrowser": "Separate Chromium 138.0.7204.0; no repository dependency change"
+  },
+  "boundaries": {
+    "existingTrackedFileChanges": 0,
+    "authOrSchemaChanges": false,
+    "otherProjectsAccessed": false,
+    "heldActionsPerformed": false,
+    "providerAccountRequests": false,
+    "hostedChanges": false,
+    "productionMounted": false,
+    "externalBrowserRequests": "aborted",
+    "defaultUIEnabled": false,
+    "defaultServerEnabled": false
+  },
+  "limits": [
+    "All local mappings are separate browser records; no cross-device backend sync",
+    "Existing OAuth retains design:meta:read only; Brand Template scope/refresh rollout remains separately held",
+    "No complete Pro stock marketplace, embedded editor, Autofill/export or file-byte import",
+    "No post/media/approval/schedule/queue write or publishing",
+    "Canva changed-source metadata check is not an immutable media export or renewed approval",
+    "Web Storage optimistic conflict checks are not a cross-tab transaction",
+    "Actual hosted backup inventory/recovery and held Beta release/provider/human acceptance remain unverified"
+  ],
+  "sourceFiles": [
+    {
+      "path": "e2e/canva-bridge.spec.ts",
+      "sha256": "152fce018ab08360e06a35d0df8a3c0d03c50547e8f8f8f638e3a2bd07510177"
+    },
+    {
+      "path": "e2e/fixtures/canva-bridge-harness.tsx",
+      "sha256": "cde4391c35ebbb20230854dbb07cd4279456ed1b726a6afd7508ecabeb112a43"
+    },
+    {
+      "path": "src/features/canva-bridge/CanvaCreativeBridge.tsx",
+      "sha256": "4a25f885395f3920060d000f113aa8910638289c0c30a9bd5f99825d1a2eb12e"
+    },
+    {
+      "path": "src/features/canva-bridge/README.md",
+      "sha256": "2fd0c97f55ce7563f7e93980f891aa753dd65b8916ef4c5e4ef6fd32f0d1f856"
+    },
+    {
+      "path": "src/features/canva-bridge/canva-bridge.css",
+      "sha256": "9ed18e8f329dd5db13f44a07c14bb33830ca70a4df5df8765e0c2cf095a09423"
+    },
+    {
+      "path": "src/features/canva-bridge/catalog.ts",
+      "sha256": "e1a495612c0a7b2bb944e6a678a543238e7826d989c11672b612bcc1ce2d48dc"
+    },
+    {
+      "path": "src/features/canva-bridge/labels.ts",
+      "sha256": "2dcd1d830737a4e068419f201479d70f6522b5e663e97bb74f9e512333db4c66"
+    },
+    {
+      "path": "src/features/canva-bridge/mappings.ts",
+      "sha256": "1f5951cd53ab6748a1d2020c15f97d46182399444730886270da7a8c9880c0ee"
+    },
+    {
+      "path": "src/features/canva-bridge/types.ts",
+      "sha256": "4250784bf991c2211986e31b6cb285fd113c85febd2e4f75b6abeff9d6842c8e"
+    },
+    {
+      "path": "src/features/canva-bridge/velo-catalog.ts",
+      "sha256": "b37e7599726bae60f816e0786464a11aa640528dd6de7c18968d2d825d2ee2a6"
+    },
+    {
+      "path": "supabase/functions/_shared/canva-catalog/contracts.ts",
+      "sha256": "cfabea3a73c307ebe6af3380b9e60e4603f0c7196a461267703fc5abaf9a2a7a"
+    },
+    {
+      "path": "supabase/functions/_shared/canva-catalog/service.ts",
+      "sha256": "65785c59f966598d51efabad2684bcb7ecbaed0588515bfd82b0a8642e5f5043"
+    },
+    {
+      "path": "supabase/functions/_shared/canva-catalog/transport.ts",
+      "sha256": "db47b4eca55bd986eafcc15cfc95b078ec4c1dbb54ee92707c8014a37464f346"
+    },
+    {
+      "path": "supabase/functions/velo-canva-catalog/deno.json",
+      "sha256": "520e5505e7507830005acf1f37c112f33882f69f5c9b16bb3ce7587f3fd1eeeb"
+    },
+    {
+      "path": "supabase/functions/velo-canva-catalog/index.ts",
+      "sha256": "7e48f5a7f7db9842c4491bbd99f10b0c1546d049f3dd068972062fba3bc82b55"
+    },
+    {
+      "path": "tests/canva-bridge.test.mjs",
+      "sha256": "e2434a1e80856a45efae5b948c1624065a434df61e04ef582104d0e6908d2517"
+    },
+    {
+      "path": "tests/fixtures/canva-catalog-server.ts",
+      "sha256": "4e005a154a199d4c4e0df83d31133a7b36cb4383e232cd4aaf11a600b6d655ad"
+    }
+  ],
+  "nextSafeStep": "Verify exact-parent/tree development push and fresh CI; separately review optional dashboard mount, existing connection/recovery prerequisites and new Brand Template scope handling without activating held actions."
+}

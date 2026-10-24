@@ -1,0 +1,63 @@
+import type { CanvaErrorCode } from '../../../supabase/functions/_shared/canva-catalog/contracts.ts'
+const en = {
+  heading: 'Canva creative bridge', intro: 'Choose a Canva design or Brand Template and link it to a scheduled post.',
+  boundary: 'References only. This panel never edits posts, changes approval or scheduling, exports media or publishes.',
+  paused: 'Optional module is off. No account request or browser record was opened.',
+  local: 'Mappings and saved links stay in this browser for this Velo account. They do not sync to another device.',
+  account: 'Your Canva account', connect: 'Connect Canva', consent: 'Continue to Canva consent',
+  permission: 'Account browsing requires the separate, approved Canva connection setup. A Pro subscription alone does not authorize Velo.',
+  kind: 'Library type', design: 'Designs', template: 'Brand Templates', query: 'Search your library', search: 'Load Canva library', more: 'Next page',
+  empty: 'No account items loaded.', select: 'Select', selected: 'Selected creative', open: 'Open in Canva',
+  saveLink: 'Save a Canva link', title: 'Creative name', url: 'Canva design or Brand Template URL', add: 'Save link',
+  saved: 'Saved links', noSaved: 'No saved links yet.', linkOnly: 'Link only — account access is unverified.', verified: 'Selected from the connected account; permission is checked again when mapping.',
+  post: 'Scheduled post', choose: 'Choose a scheduled post', map: 'Map selected creative', replace: 'Replace this post’s mapping',
+  replaced: 'A mapping already exists. Replacing it changes only this browser record.', mapped: 'Mapping saved in this browser. The post and publishing queue were not changed.',
+  mappings: 'Post mappings', noMappings: 'No mappings yet.', remove: 'Remove mapping', reload: 'Reload browser records', cancel: 'Stop request',
+  removed: 'Mapping removed. The post and Canva source were not changed.', savedNotice: 'Link saved in this browser.',
+  current: 'Matches the current scheduled post', changed: 'Post changed — review and map again', missing: 'Post is no longer in this workspace', checking: 'Checking mapping…',
+  linkedAt: 'Linked', scheduledAt: 'Scheduled', busy: 'Working…', noPosts: 'No scheduled posts are available.',
+  pinNote: 'A saved mapping is a creative reference, not publish-ready media or renewed approval. Later Canva changes are not synced automatically.',
+}
+const ar: typeof en = {
+  heading: 'جسر تصاميم Canva', intro: 'اختر تصميماً أو قالب علامة تجارية من Canva واربطه بمنشور مجدول.',
+  boundary: 'روابط مرجعية فقط. لا تعدّل هذه اللوحة المنشورات أو الموافقات أو المواعيد، ولا تصدّر الوسائط أو تنشرها.',
+  paused: 'الوحدة الاختيارية معطّلة. لم يُفتح أي طلب للحساب أو سجل في المتصفح.',
+  local: 'تُحفظ الروابط في هذا المتصفح لحساب Velo الحالي فقط، ولا تتزامن مع جهاز آخر.',
+  account: 'حسابك في Canva', connect: 'ربط Canva', consent: 'المتابعة إلى موافقة Canva',
+  permission: 'يتطلب تصفح الحساب إعداد اتصال Canva المعتمد بشكل منفصل. اشتراك Pro وحده لا يمنح Velo الإذن.',
+  kind: 'نوع المكتبة', design: 'التصاميم', template: 'قوالب العلامة التجارية', query: 'البحث في مكتبتك', search: 'تحميل مكتبة Canva', more: 'الصفحة التالية',
+  empty: 'لم تُحمّل عناصر من الحساب.', select: 'اختيار', selected: 'التصميم المختار', open: 'فتح في Canva',
+  saveLink: 'حفظ رابط Canva', title: 'اسم التصميم', url: 'رابط تصميم Canva أو قالب العلامة التجارية', add: 'حفظ الرابط',
+  saved: 'الروابط المحفوظة', noSaved: 'لا توجد روابط محفوظة بعد.', linkOnly: 'رابط فقط — لم يُتحقق من صلاحية الوصول إلى الحساب.', verified: 'اختير من الحساب المتصل؛ تُفحص الصلاحية مجدداً عند الربط.',
+  post: 'المنشور المجدول', choose: 'اختر منشوراً مجدولاً', map: 'ربط التصميم المختار', replace: 'استبدال ربط هذا المنشور',
+  replaced: 'يوجد ربط سابق. الاستبدال يغيّر سجل هذا المتصفح فقط.', mapped: 'حُفظ الربط في هذا المتصفح. لم يتغير المنشور أو قائمة النشر.',
+  mappings: 'روابط المنشورات', noMappings: 'لا توجد روابط بعد.', remove: 'إزالة الربط', reload: 'إعادة تحميل سجلات المتصفح', cancel: 'إيقاف الطلب',
+  removed: 'أُزيل الربط. لم يتغير المنشور أو المصدر في Canva.', savedNotice: 'حُفظ الرابط في هذا المتصفح.',
+  current: 'يطابق المنشور المجدول الحالي', changed: 'تغير المنشور — راجعه واربطه مجدداً', missing: 'لم يعد المنشور في مساحة العمل', checking: 'جارٍ فحص الربط…',
+  linkedAt: 'تاريخ الربط', scheduledAt: 'الموعد', busy: 'جارٍ العمل…', noPosts: 'لا توجد منشورات مجدولة متاحة.',
+  pinNote: 'الربط مرجع للتصميم؛ وليس وسائط جاهزة للنشر أو موافقة جديدة. لا تتزامن تغييرات Canva اللاحقة تلقائياً.',
+}
+const errors: Record<'en'|'ar', Record<CanvaErrorCode,string>> = {
+  en: {
+    setup_pending: 'Canva connection setup is pending. Local links remain available.', sign_in: 'Sign in to the intended Velo account again.',
+    connection_required: 'Connect or reconnect your Canva account through the existing connection setup.',
+    scope_required: 'Brand Template access needs a separate permission review. The existing OAuth permissions were not changed.',
+    invalid: 'Use a valid Canva design or Brand Template reference. The result was not accepted.',
+    unavailable: 'Canva is unavailable. No post was changed. Retry manually.', cancelled: 'Request stopped. No post was changed.',
+    storage: 'Browser records could not be read or saved. Existing data was not intentionally overwritten. Review browser storage.',
+    conflict: 'Browser records changed elsewhere. Reload them before saving.', post_changed: 'The scheduled post changed. Select its latest version and review again.',
+    asset_changed: 'The Canva creative changed after selection. Load and select it again.',
+  },
+  ar: {
+    setup_pending: 'إعداد اتصال Canva قيد الانتظار. لا تزال الروابط المحلية متاحة.', sign_in: 'سجّل الدخول مجدداً إلى حساب Velo المقصود.',
+    connection_required: 'اربط حساب Canva أو أعد ربطه عبر إعداد الاتصال الحالي.',
+    scope_required: 'يتطلب الوصول إلى قوالب العلامة التجارية مراجعة أذونات منفصلة. لم تتغير أذونات OAuth الحالية.',
+    invalid: 'استخدم مرجعاً صالحاً لتصميم Canva أو قالب علامة تجارية. لم تُقبل النتيجة.',
+    unavailable: 'Canva غير متاح. لم يتغير أي منشور. أعد المحاولة يدوياً.', cancelled: 'أُوقف الطلب. لم يتغير أي منشور.',
+    storage: 'تعذرت قراءة سجلات المتصفح أو حفظها. لم تُستبدل البيانات الحالية عمداً. راجع تخزين المتصفح.',
+    conflict: 'تغيرت سجلات المتصفح في مكان آخر. أعد تحميلها قبل الحفظ.', post_changed: 'تغير المنشور المجدول. اختر نسخته الأخيرة وراجعه مجدداً.',
+    asset_changed: 'تغير تصميم Canva بعد اختياره. حمّله واختره مجدداً.',
+  },
+}
+export function canvaLabels(locale: 'en'|'ar') { return locale === 'ar' ? ar : en }
+export function canvaError(locale: 'en'|'ar', code: CanvaErrorCode) { return errors[locale][code] }
