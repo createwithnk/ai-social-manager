@@ -2,6 +2,8 @@
 
 The owner requested the Velo display name and modular asset, publishing and WhatsApp additions. This document describes code scope, not live activation. Existing Auth, post types, approval transitions, database schemas, storage gates and worker contracts remain unchanged. The repository/project identifiers and `aasiflow-*` storage keys stay stable to preserve existing data. The unavailable laptop checkpoint `21e8dce` remains preserved, not claimed synchronized.
 
+Later on 24 October, a separate **default-off** asset OAuth/backend and mobile connection panel was added in development source. Read [VELO_ASSET_CONNECTIONS.md](VELO_ASSET_CONNECTIONS.md) for its exact scope, private SQL proposal, tests and owner prerequisites. It adds metadata connections, not active accounts, file import, Picker or automatic Autofill. The earlier scope below describes the initial module delivery; publishing and WhatsApp remain unchanged.
+
 ## Available in the development source
 
 The single **Velo tools** navigation entry mounts `src/features/velo/ModuleWorkspace.tsx`. All new styles are scoped to `.velo-tools`. English/Arabic labels use a separate dictionary and the existing locale/RTL context. The original Dashboard, Generator, Calendar, Media and owner screens remain in place.

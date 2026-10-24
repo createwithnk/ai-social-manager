@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-24",
+  "timezone": "Asia/Kolkata",
+  "repository": "createwithnk/ai-social-manager",
+  "branch": "fix/beta-readiness-20261019",
+  "supabaseProjectRef": "nkfecpdegcmsapvbviky",
+  "sourceParent": "7e0c8fa75493edd73d4c90556ec21677b740a59c",
+  "scope": "Development source with isolated synthetic tests only; no live asset connection or hosted acceptance.",
+  "completed": [
+    "Separate Canva/Drive OAuth code with PKCE, session-bound one-use state and encrypted grants",
+    "Exclusive refresh/read leases, bounded fixed-endpoint metadata-only transports, no automatic retries",
+    "Default-off service-only private SQL proposal and non-destructive pause proposal, both unapplied",
+    "Gated mobile/Arabic account consent/status/metadata/disconnect panel; old bookmark and CSV tools remain independent",
+    "Mobile owner setup and exact credential/hosted prerequisites documented"
+  ],
+  "checks": {
+    "nodePassed": 133,
+    "assetDatabaseCasesIncludedInNode": 8,
+    "isolatedSqlPassed": 81,
+    "denoPassed": 43,
+    "paymentSubstepsPassed": 15,
+    "newBrowserCasesPassed": 6,
+    "existingBrowserCasesPassed": 40,
+    "totalBrowserCasesPassed": 46,
+    "browserProjects": [
+      "desktop",
+      "mobile"
+    ],
+    "lint": "passed",
+    "appEdgeBrowserTypescript": "passed",
+    "build": "passed",
+    "nativeNewChecks": "pending current-head CI; native PostgreSQL binary unavailable locally",
+    "manifest": "verified after checkpoint regeneration",
+    "whitespace": "passed"
+  },
+  "runtimes": {
+    "node": "24.22.1",
+    "deno": "2.9.6",
+    "localBrowser": "Chromium 138.0.7204.0, separate test runtime; no dependency change"
+  },
+  "testIsolation": {
+    "realProviderRequests": false,
+    "externalBrowserRequests": "aborted",
+    "hostedSqlOrAuthWrites": false,
+    "liveDeployment": false,
+    "realAccountsUsed": false
+  },
+  "configurationPresence": {
+    "AASIFLOW_SUPABASE_READ_TOKEN": false,
+    "AASIFLOW_ASSET_CONNECTIONS_ENABLED": false,
+    "AASIFLOW_ASSET_APP_URL": false,
+    "AASIFLOW_ASSET_TOKEN_KEY": false,
+    "AASIFLOW_CANVA_CLIENT_ID": false,
+    "AASIFLOW_CANVA_CLIENT_SECRET": false,
+    "AASIFLOW_DRIVE_CLIENT_ID": false,
+    "AASIFLOW_DRIVE_CLIENT_SECRET": false
+  },
+  "limits": [
+    "Google Picker selection, file-byte import/sync, approval-bound media revision and automatic Canva Autofill/export are not implemented.",
+    "Drive metadata works only for files already authorized to this app; a pasted viewer link or 2 TB plan is not permission.",
+    "No real Canva/Google account consent or provider acceptance was attempted.",
+    "UI/server/database switches are off by default; private SQL and runtime release remain held.",
+    "Disconnect clears local Velo credentials; remote provider consent is managed separately.",
+    "Hosted backup availability/recovery/object bytes remain unknown/unverified.",
+    "Additional publishing descriptors and WhatsApp lead filtering remain preview/synthetic, not live integrations.",
+    "Candidate GitHub CI and native acceptance must be checked separately for the actual pushed head."
+  ],
+  "preservedContracts": {
+    "checkedAgainst": "7e0c8fa75493edd73d4c90556ec21677b740a59c",
+    "unchangedFiles": [
+      "index.html",
+      "package-lock.json",
+      "package.json",
+      "src/AdminDashboard.tsx",
+      "src/App.tsx",
+      "src/BetaGate.tsx",
+      "src/features/leads/LeadSandbox.tsx",
+      "src/features/leads/filter.ts",
+      "src/features/publishing/PublisherPreview.tsx",
+      "src/features/publishing/connectors.ts",
+      "src/features/velo/ModuleWorkspace.tsx",
+      "src/features/velo/modules.css",
+      "src/lib/auth.ts",
+      "src/lib/media.ts",
+      "src/lib/posts.ts",
+      "src/lib/supabase.ts",
+      "src/lib/workflow.ts",
+      "src/styles.css",
+      "src/types.ts",
+      "supabase/INTERNATIONAL_PAYMENTS.md",
+      "supabase/PAYMENT_SETUP.md",
+      "supabase/functions/_shared/config.ts",
+      "supabase/functions/_shared/media-signature.ts",
+      "supabase/functions/_shared/media-validation.ts",
+      "supabase/functions/_shared/payments.ts",
+      "supabase/functions/_shared/providers.ts",
+      "supabase/functions/_shared/publishing.ts",
+      "supabase/functions/_shared/runtime.ts",
+      "supabase/functions/_shared/security.ts",
+      "supabase/functions/generate-content/gemini.ts",
+      "supabase/functions/generate-content/handler.ts",
+      "supabase/functions/generate-content/index.ts",
+      "supabase/functions/generate-content/monitoring.ts",
+      "supabase/functions/payment-checkout/deno.json",
+      "supabase/functions/payment-checkout/index.ts",
+      "supabase/functions/payment-webhook/deno.json",
+      "supabase/functions/payment-webhook/index.ts",
+      "supabase/functions/publish-worker/index.ts",
+      "supabase/functions/social-account/deno.json",
+      "supabase/functions/social-account/index.ts",
+      "supabase/functions/social-callback/deno.json",
+      "supabase/functions/social-callback/index.ts",
+      "supabase/migration-history.json",
+      "supabase/migrations/20260901000000_create_posts.sql",
+      "supabase/migrations/20261003000000_content_system.sql",
+      "supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql",
+      "supabase/migrations/20261008073141_index_payment_events_order.sql",
+      "supabase/migrations/20261008170431_publication_claim_lock_order.sql",
+      "supabase/migrations/20261013000000_require_prior_approval.sql",
+      "supabase/migrations/20261014000000_owner_monitoring.sql",
+      "supabase/proposals/20261015000000_private_beta_safety.rollback.sql",
+      "supabase/proposals/20261015000000_private_beta_safety.sql"
+    ]
+  },
+  "sourceFiles": [
+    {
+      "path": "e2e/velo-asset-connections.spec.ts",
+      "sha256": "8995f7dcce0c34451ad76a1a0650794573b7a7c932fb532962e47b05669d6a64"
+    },
+    {
+      "path": "scripts/release-review.mjs",
+      "sha256": "8f489a13d870dd5d491d9c9c3f85a51cfeff86e4fee6d265d622c29bde1d4b43"
+    },
+    {
+      "path": "scripts/run-deno.mjs",
+      "sha256": "4cf44dba9d57eaf75be90e8f0be95c9fdd363a79559aa38ed82f2de0467c4ebf"
+    },
+    {
+      "path": "scripts/verify-native-beta.mjs",
+      "sha256": "6729c7b880303e36e52923ab879d33905f84c4f20a2e0fb2d9b720df98ee034a"
+    },
+    {
+      "path": "src/features/assets/AssetBridge.tsx",
+      "sha256": "37aeb129f7346cda36b125fe21a2e7f5a01b028a87e7120f0e746c0a1b8b7154"
+    },
+    {
+      "path": "src/features/assets/AssetConnections.tsx",
+      "sha256": "138ab2f5e45e88f818d6a45c0f508c04cfd62bf0872fb05d791a65ac1db4517e"
+    },
+    {
+      "path": "src/features/assets/connection-client.ts",
+      "sha256": "5fad1fa191460a797748a22bfb802cc02f20a1f50d80ded0c037830069809a3e"
+    },
+    {
+      "path": "src/features/assets/connections.ts",
+      "sha256": "77e9f6ba63b4ffd6e7b5a0f4e0d90d9997df89c2cab067898c74dcab9d5d10a3"
+    },
+    {
+      "path": "src/features/velo/locale.ts",
+      "sha256": "91012be39245c056477ff754b4e5a4df9b03afe926788dac588a16d67753e040"
+    },
+    {
+      "path": "supabase/functions/_shared/asset-bridge/protocol.ts",
+      "sha256": "ed4c1d6d20c90f06d1bb4997829f9b87f5a9b9bb422e89c38996830d86a3501b"
+    },
+    {
+      "path": "supabase/functions/_shared/asset-bridge/runtime.ts",
+      "sha256": "ceca88a516bbfe15222350107ac8b4d9719a84afca1d8794231de27ac60552dc"
+    },
+    {
+      "path": "supabase/functions/_shared/asset-bridge/service.ts",
+      "sha256": "7ada2e6414ca42d7cd7d667767672a9c82373a57001177d2ab92deabef3cc326"
+    },
+    {
+      "path": "supabase/functions/velo-asset-account/deno.json",
+      "sha256": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb"
+    },
+    {
+      "path": "supabase/functions/velo-asset-account/index.ts",
+      "sha256": "6bef1ed1c142d3a6c9d95e193001be519df76aac1e00e3684aa2927d6d8b2d67"
+    },
+    {
+      "path": "supabase/functions/velo-asset-callback/deno.json",
+      "sha256": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb"
+    },
+    {
+      "path": "supabase/functions/velo-asset-callback/index.ts",
+      "sha256": "e5e964968398c4f60506ae060b9312a1cbd4df085d03f70281ed92379e1fd0a4"
+    },
+    {
+      "path": "supabase/proposals/velo_asset_connections.pause.sql",
+      "sha256": "65dbfffbad22364349a8c5715c50763505062c9bcaf0fc6819add62d7ea46244"
+    },
+    {
+      "path": "supabase/proposals/velo_asset_connections.sql",
+      "sha256": "616eefdd9e8948b39f5c3ede23ce02a2095f625c0731d18f0b5f046ed0fe8612"
+    },
+    {
+      "path": "tests/velo-asset-client.test.mjs",
+      "sha256": "981e1f33c2661e206344938cd4e92ffd4e6a7f839b1ef4ba357dca4d25a43d8a"
+    },
+    {
+      "path": "tests/velo-assets-database.test.mjs",
+      "sha256": "eb44393bba290ca591e9fec72840901e8cd4e9f464c42326173ed6be7b1f6978"
+    },
+    {
+      "path": "tests/velo-assets.test.ts",
+      "sha256": "decc14eb1c19bbc39d60e66d42b5f064453df5e9c7b840f3bbaff5ce625e4515"
+    },
+    {
+      "path": "tests/velo-localization.test.mjs",
+      "sha256": "0ab4d3196a40463c9e4e3c4d8c207864f296f7ef480d72c794c8ce12043f9973"
+    }
+  ],
+  "heldActionsPerformed": false,
+  "otherProjectsAccessed": false,
+  "nextSafeStep": "Verify exact-parent development push and fresh CI. Continue modular work without enabling held hosted/provider actions; real connection requires scoped OAuth app/configuration, hosted recovery evidence and owner consent."
+}

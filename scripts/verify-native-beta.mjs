@@ -87,7 +87,7 @@ async function check(name, fn) {
 
 async function restoreSnapshot(client) {
   const rows = {}
-  for (const table of ['auth.users', 'auth.sessions', 'public.posts', 'public.ai_usage', 'storage.buckets', 'storage.objects', 'private.beta_members', 'private.beta_controls', 'private.ai_requests', 'private.client_error_counts', 'private.launch_controls']) {
+  for (const table of ['auth.users', 'auth.sessions', 'public.posts', 'public.ai_usage', 'storage.buckets', 'storage.objects', 'private.beta_members', 'private.beta_controls', 'private.ai_requests', 'private.client_error_counts', 'private.launch_controls', 'private.velo_asset_controls', 'private.velo_asset_connections', 'private.velo_asset_states', 'private.velo_asset_daily']) {
     rows[table] = await scalar(client, `select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text),'[]'::jsonb) from ${table} t`)
   }
   const policies = (await client.query("select schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check from pg_policies where schemaname in ('public','private','storage','auth') order by schemaname,tablename,policyname")).rows
@@ -211,6 +211,46 @@ try {
     assert.equal(await scalar(b, 'select public.beta_access()'), false)
     assert.equal(await scalar(admin, 'select publishing_enabled or billing_enabled from private.launch_controls'), false)
   })
+  // New asset proposal is applied ONLY to this disposable synthetic cluster.
+  const assetPath = 'supabase/proposals/velo_asset_connections.sql'
+  const assetHash = manifest.files.find(item => item.path === assetPath)?.sha256
+  assert.ok(assetHash, 'Missing reviewed asset proposal hash')
+  await admin.query(await source(assetPath, assetHash))
+  const assetCall = (client, op, payload = {}) => scalar(client, 'select public.velo_asset_command($1,$2,$3,$4::jsonb)', [op, A, SA, JSON.stringify(payload)])
+  const stateHash = 'a'.repeat(64)
+  await check('native asset RPC starts closed and direct private credentials remain denied', async () => {
+    assert.equal(await assetCall(service, 'begin', { provider: 'canva', stateHash, encryptedVerifier: 'v1.' + 'x'.repeat(80) }), null)
+    await assert.rejects(assetCall(a, 'list'), error => error.code === '42501')
+    await assert.rejects(service.query('select * from private.velo_asset_connections'), error => error.code === '42501')
+  })
+  await admin.query('update private.velo_asset_controls set enabled=true')
+  const flow = await assetCall(service, 'begin', { provider: 'canva', stateHash, encryptedVerifier: 'v1.' + 'x'.repeat(80) })
+  assert.ok(flow?.id)
+  assert.ok(await assetCall(service, 'take', { stateHash }))
+  const grant = { ...flow, provider: 'canva', encryptedGrant: 'v1.' + 'y'.repeat(100), accountId: 'account_fixture', accountName: 'Synthetic account', expiresAt: Date.now() + 3600000 }
+  assert.equal(await assetCall(service, 'save', grant), true)
+  await check('four independent overlapping asset readers obtain only one refresh lease', async () => {
+    const readers = await Promise.all(Array.from({ length: 4 }, () => connect('service_role')))
+    const readerPids = await Promise.all(readers.map(client => scalar(client, 'select pg_backend_pid()')))
+    await admin.query('begin')
+    await admin.query("select pg_advisory_xact_lock(hashtextextended('velo-assets:'||$1::text,0))", [A])
+    const pending = readers.map(client => assetCall(client, 'claim', { provider: 'canva' }))
+    let claims
+    try {
+      const deadline = Date.now() + 4000
+      while (true) {
+        await admin.query('select pg_stat_clear_snapshot()')
+        if (await scalar(admin, "select count(*)::int from pg_stat_activity where pid=any($1::int[]) and wait_event_type='Lock'", [readerPids]) === readers.length) break
+        if (Date.now() > deadline) throw new Error('Independent asset readers did not wait on the owner lock')
+        await delay(25)
+      }
+      await admin.query('commit'); claims = (await Promise.all(pending)).filter(Boolean)
+    } catch (error) { await admin.query('rollback'); await Promise.allSettled(pending); throw error }
+    assert.equal(claims.length, 1)
+    assert.equal(await assetCall(service, 'finish', { ...grant, lease: claims[0].lease }), true)
+    assert.equal(await scalar(admin, 'select read_calls from private.velo_asset_daily where user_id=$1', [A]), 1)
+  })
+  await admin.query('update private.velo_asset_controls set enabled=false')
   await check('native logical backup restores synthetic roles, rows, RLS and privileges into a separate cluster', async () => {
     // A harmless synthetic membership makes role-graph restoration observable.
     await admin.query('create role beta_restore_probe nologin; grant beta_restore_probe to authenticated')

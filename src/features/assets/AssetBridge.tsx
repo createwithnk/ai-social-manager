@@ -3,6 +3,8 @@ import type { Post } from '../../types'
 import { useVeloLocale } from '../velo/locale'
 import { AssetLinkError, addAssetLink, createAssetLink, readAssetLinks, removeAssetLink, type AssetLink } from './links'
 import { canvaBulkCsv } from './bulk-csv'
+import AssetConnections from './AssetConnections'
+import { assetConnectionsEnabled } from './connection-client'
 
 export default function AssetBridge({ ownerId, posts }: { ownerId: string; posts: readonly Post[] }) {
   const { t } = useVeloLocale()
@@ -40,6 +42,7 @@ export default function AssetBridge({ ownerId, posts }: { ownerId: string; posts
     finally { if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl!), 1000) }
   }
   return <div className="velo-stack">
+    {assetConnectionsEnabled && <AssetConnections />}
     <div className="panel">
       <h2>{t('Canva and Google Drive links')}</h2>
       <p>{t('Bookmarks are saved only in this browser for this account. They do not sync between devices.')}</p>
@@ -58,7 +61,7 @@ export default function AssetBridge({ ownerId, posts }: { ownerId: string; posts
         <button type="button" className="ghost" onClick={() => remove(asset.id)} aria-label={`${t('Remove bookmark')}: ${asset.title}`}>{t('Remove bookmark')}</button>
       </li>)}</ul>
       {!items.length && <p>{t('No saved links yet.')}</p>}
-      <p className="velo-note">{t('Automatic account connection and file import are not active.')}</p>
+      {!assetConnectionsEnabled && <p className="velo-note">{t('Automatic account connection and file import are not active.')}</p>}
     </div>
     <div className="panel"><h2>{t('Canva Bulk Create CSV')}</h2><p>{t('Export up to 100 saved drafts as a CSV, then upload it in Canva Bulk Create and map the columns to your template.')}</p><button type="button" className="ghost" onClick={downloadCsv}>{t('Download template CSV')}</button></div>
   </div>

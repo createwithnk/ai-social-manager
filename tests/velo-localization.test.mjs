@@ -10,7 +10,7 @@ import { loadModule } from './helpers.mjs'
 test('new module labels, provider prerequisites, stages and sample replies have Arabic translations', () => {
   const { veloArabic } = loadModule('../src/features/velo/locale.ts', { '../../lib/locale': { useLocale: () => ({ locale: 'en', t: text => text }) } })
   let checked = 0
-  for (const file of ['../src/features/velo/ModuleWorkspace.tsx', '../src/features/assets/AssetBridge.tsx', '../src/features/publishing/PublisherPreview.tsx', '../src/features/leads/LeadSandbox.tsx']) {
+  for (const file of ['../src/features/velo/ModuleWorkspace.tsx', '../src/features/assets/AssetBridge.tsx', '../src/features/assets/AssetConnections.tsx', '../src/features/publishing/PublisherPreview.tsx', '../src/features/leads/LeadSandbox.tsx']) {
     const source = ts.createSourceFile(file, fs.readFileSync(new URL(file, import.meta.url), 'utf8'), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
     function visit(node) {
       if (ts.isCallExpression(node) && node.expression.getText(source) === 't' && ts.isStringLiteral(node.arguments[0])) {
