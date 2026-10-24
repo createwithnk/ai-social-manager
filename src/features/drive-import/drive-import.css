@@ -1,0 +1,7 @@
+.velo-drive-import{padding:22px;border:1px solid #d8e2dd;border-radius:16px;background:#fff;color:#16372e;max-width:850px;box-sizing:border-box;line-height:1.65}
+.velo-drive-import *{box-sizing:border-box}.velo-drive-import h2{font-size:1.5rem;margin:0 0 12px}.velo-drive-import p{margin:10px 0;overflow-wrap:anywhere}
+.velo-drive-import .drive-actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.velo-drive-import button{min-height:44px;min-width:44px;border:1px solid #b9d0c2;border-radius:8px;padding:10px 14px;background:#edf6f0;color:#173b2b;cursor:pointer;font:inherit}
+.velo-drive-import button:disabled{cursor:default;opacity:.55}.velo-drive-import button:focus-visible{outline:3px solid #276dba;outline-offset:3px}
+.velo-drive-import ul{list-style:none;padding:0;margin:0;display:grid;gap:10px}.velo-drive-import li{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px;border:1px solid #dbe4df;border-radius:8px;overflow-wrap:anywhere;min-width:0}
+.velo-drive-import li strong{flex:1 1 180px;min-width:0}.velo-drive-import li small{flex-basis:100%}.velo-drive-import .drive-error{color:#942b26}.velo-drive-import .drive-note{font-size:.9rem;color:#52695e}.velo-drive-import .drive-notice{padding:12px;background:#fff6dc;border-radius:8px}
+@media(max-width:560px){.velo-drive-import{padding:16px;width:100%}.velo-drive-import .drive-actions>button{flex:1 1 100%;width:100%}}
