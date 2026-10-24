@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-24",
+  "timezone": "Asia/Kolkata",
+  "scope": "Local synthetic verification of Velo modular preparation, not hosted acceptance, API activation or launch approval.",
+  "repository": "createwithnk/ai-social-manager",
+  "branch": "fix/beta-readiness-20261019",
+  "supabaseProjectRef": "nkfecpdegcmsapvbviky",
+  "sourceParent": "112ae5c3afd28bd3a664c7bb154d1755c4e4ed06",
+  "completed": [
+    "Velo public display name with existing identifiers preserved",
+    "Account-scoped browser bookmarks for Canva/Drive and bounded Canva CSV export",
+    "Five publishing preflight descriptors with no transport or queue writes",
+    "Sample FAQ/lead filter with per-conversation opt-out, human takeover and consent checks",
+    "Unmounted raw-body HMAC and business/phone guards"
+  ],
+  "checks": {
+    "nodePassed": 120,
+    "isolatedSqlPassed": 81,
+    "denoPassed": 26,
+    "paymentSubstepsPassed": 15,
+    "newBrowserCasesPassed": 10,
+    "existingBrowserCasesPassed": 30,
+    "totalBrowserCasesPassed": 40,
+    "browserProjects": [
+      "desktop",
+      "mobile"
+    ],
+    "lint": "passed",
+    "appEdgeBrowserTypescript": "passed",
+    "build": "passed",
+    "manifest": "verified after checkpoint regeneration",
+    "whitespace": "passed"
+  },
+  "browserRuntime": {
+    "version": "Chromium 138.0.7204.0",
+    "package": "@sparticuz/chromium@138.0.2",
+    "scope": "Separate local test runtime only; no project dependency added. All browser requests outside localhost were aborted."
+  },
+  "denoRuntime": "2.9.6",
+  "limits": [
+    "Bookmark metadata is local to this browser/account; no cross-device or backend synchronization.",
+    "Asset file import, Google Picker and Canva OAuth/Autofill are not connected.",
+    "All additional publisher plans are preview-only, never queued or published.",
+    "WhatsApp uses made-up sample enquiries and sample FAQ facts; no LLM, live inbox or outbound messages.",
+    "Webhook helper is not a deployed endpoint or durable replay/consent store.",
+    "Hosted backup availability, actual recovery and stored-object bytes remain unknown/unverified.",
+    "Existing hosted evidence is dated 22 October; no fresh hosted metadata or customer records were read in this phase.",
+    "Current remote candidate CI must be inspected separately; this is a local verification receipt."
+  ],
+  "preservedContracts": {
+    "checkedAgainst": "112ae5c3afd28bd3a664c7bb154d1755c4e4ed06",
+    "unchangedFiles": [
+      "package-lock.json",
+      "package.json",
+      "src/AdminDashboard.tsx",
+      "src/BetaGate.tsx",
+      "src/lib/auth.ts",
+      "src/lib/media.ts",
+      "src/lib/posts.ts",
+      "src/lib/supabase.ts",
+      "src/lib/workflow.ts",
+      "src/styles.css",
+      "src/types.ts",
+      "supabase/INTERNATIONAL_PAYMENTS.md",
+      "supabase/PAYMENT_SETUP.md",
+      "supabase/functions/_shared/config.ts",
+      "supabase/functions/_shared/media-signature.ts",
+      "supabase/functions/_shared/media-validation.ts",
+      "supabase/functions/_shared/payments.ts",
+      "supabase/functions/_shared/providers.ts",
+      "supabase/functions/_shared/publishing.ts",
+      "supabase/functions/_shared/runtime.ts",
+      "supabase/functions/_shared/security.ts",
+      "supabase/functions/generate-content/gemini.ts",
+      "supabase/functions/generate-content/handler.ts",
+      "supabase/functions/generate-content/index.ts",
+      "supabase/functions/generate-content/monitoring.ts",
+      "supabase/functions/payment-checkout/deno.json",
+      "supabase/functions/payment-checkout/index.ts",
+      "supabase/functions/payment-webhook/deno.json",
+      "supabase/functions/payment-webhook/index.ts",
+      "supabase/functions/publish-worker/index.ts",
+      "supabase/functions/social-account/deno.json",
+      "supabase/functions/social-account/index.ts",
+      "supabase/functions/social-callback/deno.json",
+      "supabase/functions/social-callback/index.ts",
+      "supabase/migration-history.json",
+      "supabase/migrations/20260901000000_create_posts.sql",
+      "supabase/migrations/20261003000000_content_system.sql",
+      "supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql",
+      "supabase/migrations/20261008073141_index_payment_events_order.sql",
+      "supabase/migrations/20261008170431_publication_claim_lock_order.sql",
+      "supabase/migrations/20261013000000_require_prior_approval.sql",
+      "supabase/migrations/20261014000000_owner_monitoring.sql",
+      "supabase/proposals/20261015000000_private_beta_safety.rollback.sql",
+      "supabase/proposals/20261015000000_private_beta_safety.sql"
+    ]
+  },
+  "sourceFiles": [
+    {
+      "path": "e2e/velo-modules.spec.ts",
+      "sha256": "0b6f8deaf97273b4b02cd3493fabf19dd71966992640ee7c7c2ae039721d3e40"
+    },
+    {
+      "path": "index.html",
+      "sha256": "560b80c58c21d6358ff547813c16b3e297e4b2c0bfdf4c4884a16056684c65a0"
+    },
+    {
+      "path": "scripts/release-review.mjs",
+      "sha256": "4db0bd55da76754bded00bd5fdf0dc1b795a3d7544b7d7ab9affb91ab9e6b771"
+    },
+    {
+      "path": "scripts/run-deno.mjs",
+      "sha256": "fbcfd304fe279b548fa51ca975d4527a1993d3317e048fd63ab8e5d1404653a3"
+    },
+    {
+      "path": "src/App.tsx",
+      "sha256": "c846d7b1c0335d82c94efbb34b3f05e6feb4d8714489d4e72619dff3fdba1ca7"
+    },
+    {
+      "path": "src/features/assets/AssetBridge.tsx",
+      "sha256": "4864b4a512c4a0ad3f030e6120ffc2dbf397153dae3112d23462e9b0d6d9d4b0"
+    },
+    {
+      "path": "src/features/assets/bulk-csv.ts",
+      "sha256": "4baa72d1dead4cb67d8b343a545aca7db979a2254d18ab6def5b9a236c3547b2"
+    },
+    {
+      "path": "src/features/assets/links.ts",
+      "sha256": "1cf7594f4a6880e96912a0b75cf409747e27172387437ba65ae15ed447df39c3"
+    },
+    {
+      "path": "src/features/leads/LeadSandbox.tsx",
+      "sha256": "8372019236ba1844670e26a000eb358bc7b792f0a1ccf94577f5e70f1617999d"
+    },
+    {
+      "path": "src/features/leads/filter.ts",
+      "sha256": "f784c88547915954c2818bc70152fec0088e0f2b54fdc250d621fa776cbbe6c2"
+    },
+    {
+      "path": "src/features/publishing/PublisherPreview.tsx",
+      "sha256": "2d5d7b20b12f8df89fa9d532c1d645b27b37327845f463c1c781f3528f8ac2f2"
+    },
+    {
+      "path": "src/features/publishing/connectors.ts",
+      "sha256": "83e841040dcf6f9974d2ecf1d2c40c4c81ec56d9d10ba06571c631f429454ff5"
+    },
+    {
+      "path": "src/features/velo/ModuleWorkspace.tsx",
+      "sha256": "0630596e365bddb23acbed6ee2d6ed7fe642c0a65448f1ee134e5e000da61ba5"
+    },
+    {
+      "path": "src/features/velo/locale.ts",
+      "sha256": "6f603282a74b21edecc3c7f962cc38ed60e9ccd1d3fa31d1959a466c419c20c2"
+    },
+    {
+      "path": "src/features/velo/modules.css",
+      "sha256": "bc157b9ae3940b550ff55cf781dca967e2716b1c3e0c5002cfa72ce97303342d"
+    },
+    {
+      "path": "src/lib/translations.ts",
+      "sha256": "d7abd1f93bdf8790e0f0a18119f5204f90c43962c7d4fe0ca160b7c6c60a4b24"
+    },
+    {
+      "path": "supabase/functions/_shared/velo-whatsapp.ts",
+      "sha256": "7f1813af595585eccebcbc8703b28c998c27fdea2d4175b86d02a1b0b6af198e"
+    },
+    {
+      "path": "tests/frontend.test.mjs",
+      "sha256": "f46d96d8d590445a08f8b344244a391766f9f4da41ce6b77f93d439321307bcf"
+    },
+    {
+      "path": "tests/velo-localization.test.mjs",
+      "sha256": "e069ac74e170304dc76c04e85cca0abf09d20729d07c6700794af9ac06c2c51f"
+    },
+    {
+      "path": "tests/velo-modules.test.mjs",
+      "sha256": "3c6b818594e21eae7a599aeb13df58320c22835329a1b93359f245967439f442"
+    },
+    {
+      "path": "tests/velo-webhook.test.ts",
+      "sha256": "b3ffeccffdfcb3d36919b9fcb4527de1a591eac9eaa5d0d35d128fd7f7469d4a"
+    }
+  ],
+  "heldActionsPerformed": false,
+  "otherProjectsAccessed": false,
+  "nextSafeStep": "Verify the development push/CI, then wait for scoped hosted backup evidence and the separately authorized account/configuration/provider prerequisites documented in VELO_MODULES.md."
+}

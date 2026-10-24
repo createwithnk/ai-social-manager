@@ -5,8 +5,8 @@ import { isAbsolute } from 'node:path'
 const binary = process.env.AASIFLOW_TEST_DENO_BIN
 if (!binary && !process.env.npm_execpath) throw new Error('Run this check through an npm script.')
 const targets = process.argv[2] === 'check'
-  ? ['check', ...['generate-content', 'social-account', 'social-callback', 'publish-worker', 'payment-checkout', 'payment-webhook'].map(name => `supabase/functions/${name}/index.ts`)]
-  : ['test', '--allow-env', 'tests/security.test.ts', 'tests/payment-endpoints.test.ts']
+  ? ['check', ...['generate-content', 'social-account', 'social-callback', 'publish-worker', 'payment-checkout', 'payment-webhook'].map(name => `supabase/functions/${name}/index.ts`), 'supabase/functions/_shared/velo-whatsapp.ts']
+  : ['test', '--allow-env', 'tests/security.test.ts', 'tests/payment-endpoints.test.ts', 'tests/velo-webhook.test.ts']
 if (binary) {
   if (!isAbsolute(binary)) throw new Error('The local Deno test binary must be an absolute path.')
   const version = spawnSync(binary, ['--version'], { encoding: 'utf8', timeout: 10000 })

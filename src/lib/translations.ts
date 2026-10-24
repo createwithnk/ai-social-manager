@@ -1,5 +1,6 @@
 export type Locale = 'en' | 'ar'
 export const arabic: Record<string, string> = {
+  Velo: 'Velo', 'Loading Velo': 'جارٍ تحميل Velo', 'Velo tools': 'أدوات Velo',
   'Required before every save. Saving a draft does not schedule or publish it.': 'الموافقة مطلوبة قبل كل عملية حفظ. حفظ المسودة لا يؤدي إلى جدولتها أو نشرها.',
   'I approve converting this post to a draft': 'أوافق على تحويل هذا المنشور إلى مسودة',
   'This removes its approval and schedule. Changed content must be reviewed and approved again before saving.': 'سيؤدي ذلك إلى إلغاء الموافقة والجدولة. يجب مراجعة المحتوى المعدّل والموافقة عليه مجددًا قبل الحفظ.',

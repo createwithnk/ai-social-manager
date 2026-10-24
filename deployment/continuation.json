@@ -1,11 +1,14 @@
 {
   "schemaVersion": 1,
   "project": "AasiFlowAI",
+  "displayName": "Velo",
   "repository": "createwithnk/ai-social-manager",
   "developmentBranch": "fix/beta-readiness-20261019",
   "supabaseProjectRef": "nkfecpdegcmsapvbviky",
   "checkpoint": "docs/CONTINUE_AASIFLOWAI.md",
   "hostedEvidence": "docs/evidence/hosted-readonly-20261022.json",
+  "moduleCheckpoint": "docs/VELO_MODULES.md",
+  "moduleEvidence": "docs/evidence/velo-modules-20261024.json",
   "allowed": [
     "read_only_AasiFlowAI_metadata",
     "local_development",

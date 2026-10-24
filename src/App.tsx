@@ -13,9 +13,10 @@ import MediaLibrary from './MediaLibrary'
 import AdminDashboard from './AdminDashboard'
 import BetaGate from './BetaGate'
 import { reportRuntimeError } from './lib/monitoring'
+import ModuleWorkspace from './features/velo/ModuleWorkspace'
 import type { ContentLanguage, Market, Platform, Post } from './types'
 
-type View = 'dashboard' | 'create' | 'calendar' | 'detail' | 'media' | 'admin'
+type View = 'dashboard' | 'create' | 'calendar' | 'detail' | 'media' | 'admin' | 'tools'
 
 function loadLocalPosts(): Post[] {
   try {
@@ -51,7 +52,7 @@ function App() {
 
 function AuthLoading() {
   const { t } = useLocale()
-  return <main className="auth-shell"><section className="auth-card"><LoaderCircle className="spinner" /><h1>{t("Loading AasiFlowAI")}</h1><p>{t("Checking your session securely.")}</p></section></main>
+  return <main className="auth-shell"><section className="auth-card"><LoaderCircle className="spinner" /><h1>{t("Loading Velo")}</h1><p>{t("Checking your session securely.")}</p></section></main>
 }
 
 function AuthBootstrapError({ auth }: { auth: AuthState }) {
@@ -255,24 +256,26 @@ function Workspace({ auth }: { auth: AuthState }) {
 
   return <div className="app-shell">
     <aside id="workspace-navigation" ref={navigation} aria-hidden={compactNavigation && !mobile} inert={compactNavigation && !mobile} className={mobile ? 'sidebar open' : 'sidebar'}>
-      <div className="brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>{t("AasiFlowAI")}</strong><small>{t("Content workspace")}</small></div></div>
+      <div className="brand"><div className="brand-mark"><WandSparkles size={20} /></div><div><strong>{t("Velo")}</strong><small>{t("Content workspace")}</small></div></div>
       <button className="close" onClick={() => setMobile(false)} aria-label={t("Close navigation")}><X /></button>
       <nav>
         <Nav active={view === 'dashboard'} icon={<LayoutDashboard />} label={t("Dashboard")} onClick={() => { setView('dashboard'); setMobile(false) }} />
         <Nav active={view === 'create'} icon={<Sparkles />} label={t("Create content")} onClick={() => { createPost(); setMobile(false) }} />
         <Nav active={view === 'calendar'} icon={<CalendarDays />} label={t("Content calendar")} onClick={() => { setView('calendar'); setMobile(false) }} />
         {auth.user && <Nav active={view === 'admin'} icon={<BarChart3 />} label={t("Owner monitoring")} onClick={() => { setView('admin'); setMobile(false) }} />}
+        <Nav active={view === 'tools'} icon={<WandSparkles />} label={t("Velo tools")} onClick={() => { setView('tools'); setMobile(false) }} />
         <Nav active={view === 'media'} icon={<FileText />} label={t("Media library")} onClick={() => { setView('media'); setMobile(false) }} />
       </nav>
       <div className="guardrail"><CheckCircle2 /><div><strong>{t("Approval protected")}</strong><span>{t("Nothing is published without your approval.")}</span></div></div>
     </aside>
     <main>
-      <header><LanguageSwitcher /><button ref={menuButton} aria-controls="workspace-navigation" aria-expanded={mobile} className="menu" onClick={() => setMobile(true)} aria-label={t("Open navigation")}><Menu /></button><div><small>{t("AI SOCIAL MEDIA WORKSPACE")}</small><h1 ref={viewHeading} tabIndex={-1}>{view === 'dashboard' ? t("Your content workspace") : view === 'create' ? t("Create new content") : view === 'detail' ? t("Content details") : view === 'admin' ? t("Owner monitoring") : view === 'media' ? t("Media library") : t("Content calendar")}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut />{t("Log out")}</button></div>}<button className="primary compact" onClick={createPost}><Plus />{t("New post")}</button></header>
+      <header><LanguageSwitcher /><button ref={menuButton} aria-controls="workspace-navigation" aria-expanded={mobile} className="menu" onClick={() => setMobile(true)} aria-label={t("Open navigation")}><Menu /></button><div><small>{t("AI SOCIAL MEDIA WORKSPACE")}</small><h1 ref={viewHeading} tabIndex={-1}>{view === 'dashboard' ? t("Your content workspace") : view === 'create' ? t("Create new content") : view === 'detail' ? t("Content details") : view === 'admin' ? t("Owner monitoring") : view === 'tools' ? t("Velo tools") : view === 'media' ? t("Media library") : t("Content calendar")}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut />{t("Log out")}</button></div>}<button className="primary compact" onClick={createPost}><Plus />{t("New post")}</button></header>
       {(postsError ?? auth.error) && <p className="workspace-error" role="alert">{t(postsError ?? auth.error ?? '')}</p>}
       {view === 'dashboard' && <Dashboard posts={posts} drafts={posts.filter((post) => post.status === 'draft').length} approved={posts.filter((post) => post.status === 'approved').length} scheduled={posts.filter((post) => post.status === 'scheduled').length} onCreate={createPost} onEdit={editDraft} onView={(post) => viewPost(post, 'dashboard')} loading={postsLoading} />}
       {view === 'create' && <Generator key={editingPost?.id ?? `new-${composerKey}`} initialPost={editingPost} userId={userId} onSave={savePost} disabled={postsLoading} />}
       {view === 'admin' && <AdminDashboard />}
       {view === 'media' && <MediaLibrary userId={userId} />}
+      {view === 'tools' && <ModuleWorkspace key={userId ?? 'local-preview'} ownerId={userId ?? 'local-preview'} posts={posts} />}
       {view === 'calendar' && <Calendar posts={posts} onUpdate={persistPost} onView={(post) => viewPost(post, 'calendar')} disabled={postsLoading} />}
       {view === 'detail' && viewingPost && <PostDetail key={viewingPost.id} post={viewingPost} onBack={() => { setViewingPost(null); setView(detailBackView) }} onEdit={editApprovedOrScheduledPost} disabled={postsLoading} />}
     </main>

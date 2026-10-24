@@ -1,6 +1,6 @@
 # Continue AasiFlowAI
 
-Updated: 23 October 2026. Read this file before resuming work.
+Updated: 24 October 2026. Read this file before resuming work.
 
 ## Scope
 
@@ -8,13 +8,23 @@ Only `createwithnk/ai-social-manager`, development branch `fix/beta-readiness-20
 
 The user authorized routine development, isolated testing, checkpoints and pushing reviewed development work. Public launch, hosted deployment, live SQL/Auth/identity changes, paid/provider calls, billing, posting and real invitations remain held. Continue safe work without repeatedly requesting routine permission.
 
-## Current verified CI checkpoint — 23 October 2026
+## Velo modular development checkpoint — 24 October 2026
+
+The owner explicitly requested the Velo display name and three modular additions after the earlier planning-only step. The development source now mounts a separate **Velo tools** screen: account-scoped local Canva/Drive bookmarks and Canva Bulk Create CSV export; five **preview-only** publisher descriptors/preflight plans; and a rules-based WhatsApp sample-enquiry sandbox. An unmounted server helper verifies raw-body signatures and business/phone identity. These are not live OAuth connections, automatic publishing or a production WhatsApp agent. See [module scope and live prerequisites](VELO_MODULES.md) and the [local verification receipt](evidence/velo-modules-20261024.json).
+
+Local verification passed 120 Node tests, 81 isolated SQL checks, 26 Deno tests/15 payment steps, 10 new module browser cases and the existing 30 browser cases (40 total across desktop/mobile), lint, app/Edge/browser TypeScript, build and release-manifest verification. Browser verification used a separate Chromium 138.0.7204.0 test binary; repository dependencies were not changed. Initial local browser installation/launch and accessible-label failures were corrected; only completed passing runs are counted. Read the actual current remote head's CI before treating the delivered candidate as CI-verified; the 23 October CI receipt below describes the earlier source.
+
+The existing Auth, posts/media persistence, lifecycle/approval logic, post types, original stylesheet, SQL and existing Edge handlers remain unchanged. Only the small branding/navigation/mount addition touches `App.tsx`; new module styles are scoped separately. Repository/project identity and old storage keys remain stable. No other project was inspected or changed.
+
+The safe preparation requested in this phase is implemented. Live asset OAuth/import, additional platform/schema/worker integration, durable WhatsApp webhook/lead state, actual account consent and provider acceptance are still pending. Automatic connections/messages/posts remain inactive. Do not invent more features or interpret this checkpoint as approval for the held actions.
+
+## Earlier verified CI checkpoint — 23 October 2026
 
 Source commit `3c8d39666f9437bcac61ce9b0477e2aba8245dc9`, tree `1b04a09306512332bde32e850e1d7e8537e09618`, is confirmed on the development branch. The previously queued [CI 39815151280](https://github.com/createwithnk/ai-social-manager/actions/runs/39815151280) completed successfully. Both job logs verify 106 Node tests, 81 isolated SQL checks, 24 Deno tests/15 payment steps, 30 desktop/mobile browser cases and 11 synthetic native PostgreSQL checks, plus lint, TypeScript, build and manifest verification. See the [dated CI receipt](evidence/beta-ci-20261023.json).
 
 The new keyboard and Arabic-calendar scenarios passed on both desktop and mobile. This closes the pending automated browser verification; native Arabic wording and actual screen-reader acceptance are still required. Existing passing suites were read from CI rather than rerun. Any later code change needs its own verification; documentation-only receipt commits do not replace the tested source SHA above.
 
-The next prerequisite is unchanged: `AASIFLOW_SUPABASE_READ_TOKEN` is absent and no connected backup-list action is available. Backup inventory, hosted recovery and actual Storage object bytes remain unverified; backup availability is unknown. No held action was performed. Preserve the existing source checkpoints and wait for newly available scoped access/artifacts or a new actionable failure; do not invent features or repeatedly audit unchanged state.
+The hosted prerequisite is unchanged: `AASIFLOW_SUPABASE_READ_TOKEN` is absent and no connected backup-list action is available. Backup inventory, hosted recovery and actual Storage object bytes remain unverified; backup availability is unknown. No held action was performed. Preserve the existing source checkpoints and wait for newly available scoped access/artifacts or a new actionable failure; do not invent features or repeatedly audit unchanged state.
 
 ## Earlier verified starting point
 

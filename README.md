@@ -1,4 +1,6 @@
-# AasiFlowAI
+# Velo (formerly AasiFlowAI)
+
+The display name is now Velo. Repository identity, Supabase target and existing storage/session keys are preserved. New [asset, publisher and lead modules](docs/VELO_MODULES.md) are isolated preparation tools; OAuth connections, automatic publishing and live WhatsApp messaging are not activated.
 
 Human-in-the-loop social media content workspace. Turn an idea into a platform-specific draft, edit it, explicitly approve it, and place it on a content calendar.
 

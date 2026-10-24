@@ -1,0 +1,18 @@
+.velo-tools .velo-tabs{display:flex;gap:10px;flex-wrap:wrap;margin-block:18px}
+.velo-tools .velo-stack{display:grid;gap:16px;min-width:0}
+.velo-tools label,.velo-tools input,.velo-tools select,.velo-tools textarea{min-width:0;max-width:100%}
+.velo-tools .velo-stack>.primary,.velo-tools .velo-stack>.ghost{justify-self:start}
+.velo-tools .velo-stack p{line-height:1.65;margin-block:4px;overflow-wrap:anywhere}
+.velo-tools .velo-stack h2{margin-block:0 8px;font-size:24px}
+.velo-tools .velo-assets{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.velo-tools .velo-assets li{display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-block-start:1px solid var(--line);padding-block:14px}
+.velo-tools .velo-assets li>div{flex:1 1 160px;min-width:0;overflow-wrap:anywhere}
+.velo-tools .velo-assets strong,.velo-tools .velo-assets small{display:block}
+.velo-tools .velo-assets small,.velo-tools .velo-note{color:var(--muted);font-size:13px}
+.velo-tools a.ghost{text-decoration:none;min-height:44px}
+.velo-tools .velo-link{color:var(--green);overflow-wrap:anywhere}
+.velo-tools .velo-check{display:flex;gap:12px;align-items:center;line-height:1.5}
+.velo-tools .velo-check input{width:20px;flex:none;margin:0;accent-color:var(--green)}
+.velo-tools li{line-height:1.7}
+.velo-tools .velo-result{padding:18px;border:1px solid var(--line);border-radius:12px;background:#f1f7f3}
+@media(max-width:560px){.velo-tools .velo-tabs>button{flex:1 1 140px}.velo-tools .panel{padding:18px}.velo-tools .velo-stack>.primary{width:100%}}

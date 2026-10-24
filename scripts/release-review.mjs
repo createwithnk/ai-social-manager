@@ -19,6 +19,13 @@ const paths = [
   'src/lib/media.ts', 'src/lib/supabase.ts', 'src/lib/translations.ts', 'src/styles.css',
   'src/lib/posts.ts', 'src/lib/workflow.ts', 'src/types.ts', 'package.json', 'package-lock.json',
   'src/main.tsx', 'src/components/MediaInput.tsx', 'src/MediaLibrary.tsx',
+  'index.html',
+  'src/features/velo/ModuleWorkspace.tsx', 'src/features/velo/locale.ts', 'src/features/velo/modules.css',
+  'src/features/assets/AssetBridge.tsx', 'src/features/assets/links.ts', 'src/features/assets/bulk-csv.ts',
+  'src/features/publishing/PublisherPreview.tsx', 'src/features/publishing/connectors.ts',
+  'src/features/leads/LeadSandbox.tsx', 'src/features/leads/filter.ts',
+  'supabase/functions/_shared/velo-whatsapp.ts',
+  'scripts/run-deno.mjs',
   'scripts/backup-inventory.mjs', 'deployment/continuation.json',
   'scripts/release-review.mjs', '.github/workflows/ci.yml', 'scripts/verify-native-beta.mjs', 'scripts/native-pg-environment.mjs', 'deployment/target.json', 'public/_headers', 'deployment/security-headers.json',
 ]

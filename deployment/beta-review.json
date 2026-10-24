@@ -53,7 +53,7 @@
     },
     {
       "path": "src/App.tsx",
-      "sha256": "1071396e4deba9f7ec46919f35561ea6e92efd57325e2ea96e28d4f166335e31"
+      "sha256": "c846d7b1c0335d82c94efbb34b3f05e6feb4d8714489d4e72619dff3fdba1ca7"
     },
     {
       "path": "src/BetaGate.tsx",
@@ -93,7 +93,7 @@
     },
     {
       "path": "src/lib/translations.ts",
-      "sha256": "b47afb671818691504d79ca4fb36f54cd078daf660f733494c42d72ea5b8822b"
+      "sha256": "d7abd1f93bdf8790e0f0a18119f5204f90c43962c7d4fe0ca160b7c6c60a4b24"
     },
     {
       "path": "src/styles.css",
@@ -132,16 +132,68 @@
       "sha256": "9676f3365bd793d21dccc8f7f6de2f975560d10698b4988b41d9df894c93508f"
     },
     {
+      "path": "index.html",
+      "sha256": "560b80c58c21d6358ff547813c16b3e297e4b2c0bfdf4c4884a16056684c65a0"
+    },
+    {
+      "path": "src/features/velo/ModuleWorkspace.tsx",
+      "sha256": "0630596e365bddb23acbed6ee2d6ed7fe642c0a65448f1ee134e5e000da61ba5"
+    },
+    {
+      "path": "src/features/velo/locale.ts",
+      "sha256": "6f603282a74b21edecc3c7f962cc38ed60e9ccd1d3fa31d1959a466c419c20c2"
+    },
+    {
+      "path": "src/features/velo/modules.css",
+      "sha256": "bc157b9ae3940b550ff55cf781dca967e2716b1c3e0c5002cfa72ce97303342d"
+    },
+    {
+      "path": "src/features/assets/AssetBridge.tsx",
+      "sha256": "4864b4a512c4a0ad3f030e6120ffc2dbf397153dae3112d23462e9b0d6d9d4b0"
+    },
+    {
+      "path": "src/features/assets/links.ts",
+      "sha256": "1cf7594f4a6880e96912a0b75cf409747e27172387437ba65ae15ed447df39c3"
+    },
+    {
+      "path": "src/features/assets/bulk-csv.ts",
+      "sha256": "4baa72d1dead4cb67d8b343a545aca7db979a2254d18ab6def5b9a236c3547b2"
+    },
+    {
+      "path": "src/features/publishing/PublisherPreview.tsx",
+      "sha256": "2d5d7b20b12f8df89fa9d532c1d645b27b37327845f463c1c781f3528f8ac2f2"
+    },
+    {
+      "path": "src/features/publishing/connectors.ts",
+      "sha256": "83e841040dcf6f9974d2ecf1d2c40c4c81ec56d9d10ba06571c631f429454ff5"
+    },
+    {
+      "path": "src/features/leads/LeadSandbox.tsx",
+      "sha256": "8372019236ba1844670e26a000eb358bc7b792f0a1ccf94577f5e70f1617999d"
+    },
+    {
+      "path": "src/features/leads/filter.ts",
+      "sha256": "f784c88547915954c2818bc70152fec0088e0f2b54fdc250d621fa776cbbe6c2"
+    },
+    {
+      "path": "supabase/functions/_shared/velo-whatsapp.ts",
+      "sha256": "7f1813af595585eccebcbc8703b28c998c27fdea2d4175b86d02a1b0b6af198e"
+    },
+    {
+      "path": "scripts/run-deno.mjs",
+      "sha256": "fbcfd304fe279b548fa51ca975d4527a1993d3317e048fd63ab8e5d1404653a3"
+    },
+    {
       "path": "scripts/backup-inventory.mjs",
       "sha256": "33d07b31fb1c1d9d20be4cab835bae0befdc7265dedb5b9c2b093c5135500b2e"
     },
     {
       "path": "deployment/continuation.json",
-      "sha256": "92b2799f502deb01e4061cfc954237f338831f792050f847c955c40195ee5197"
+      "sha256": "51ff410d0fc41114140f01555571e8fb67f54b6fb01f6942a0bd7f2c76108080"
     },
     {
       "path": "scripts/release-review.mjs",
-      "sha256": "fa57a8ae79d62ad0a0e90c3219656c8135b7d3c841e566181b95ef571895a3b3"
+      "sha256": "4db0bd55da76754bded00bd5fdf0dc1b795a3d7544b7d7ab9affb91ab9e6b771"
     },
     {
       "path": ".github/workflows/ci.yml",
