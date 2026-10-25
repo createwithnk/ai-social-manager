@@ -245,7 +245,7 @@
     },
     {
       "path": ".github/workflows/ci.yml",
-      "sha256": "3bb82e6c3aa0c7b0708e2ab44f25d47590f3cb72b5595d8a36eb2c9d7a568c23"
+      "sha256": "8868b9ac22a99465adf61ddd7e2f422562f34fdef7fae01521c0815d3c4b6d5e"
     },
     {
       "path": "scripts/verify-native-beta.mjs",
