@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { connectionLabel, platformLabel, queueLabel, socialLabels } from './labels.ts'
 import { canCancelStatus, validateSnapshot } from './service.ts'
 import type { SocialLocale, SocialPlatform, SocialPublishingApi, SocialPublishingSnapshot } from './types.ts'
@@ -13,13 +13,13 @@ export default function SocialPublishingDashboard({ enabled = false, locale = 'e
   const [loading, setLoading] = useState(false), [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState(''), [notice, setNotice] = useState('')
   const refreshError = t.refreshError
-  const refresh = useCallback(async () => {
+  async function refresh() {
     if (!enabled || !api) return
     setLoading(true); setError('')
     try { setSnapshot(validateSnapshot(await api.load())) }
     catch { setError(refreshError) }
     finally { setLoading(false) }
-  }, [enabled, api, refreshError])
+  }
   useEffect(() => {
     if (!enabled || !api) return
     let active = true
