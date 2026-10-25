@@ -124,7 +124,7 @@ function AuthScreen({ auth }: { auth: AuthState }) {
   </section></main>
 }
 function Workspace({ auth }: { auth: AuthState }) {
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
   const [view, setView] = useState<View>('dashboard')
   const [posts, setPosts] = useState<Post[]>(() => isSupabaseConfigured ? [] : loadLocalPosts())
   const [editingPost, setEditingPost] = useState<Post | null>(null)
