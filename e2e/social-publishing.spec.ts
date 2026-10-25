@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }) => {
 test('shows five provider statuses and only permits safe queue cancellation', async ({ page }) => {
   await page.goto('/social-publishing-fixture')
   await expect(page.getByRole('heading', { name: 'Platform connections' })).toBeVisible()
-  const connections = page.getByRole('region', { name: 'Platform connections' }).or(page.locator('section').filter({ has: page.getByRole('heading', { name: 'Platform connections' }) }).first())
+  const connections = page.locator('.vsp-section').filter({ has: page.getByRole('heading', { name: 'Platform connections', exact: true }) })
   for (const name of ['Instagram Business','TikTok','YouTube Shorts','Snapchat','Google Business Profile']) await expect(connections.getByRole('heading', { name, exact: true })).toBeVisible()
   await expect(page.getByText('Connected', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Cancel scheduled post' })).toHaveCount(2)
