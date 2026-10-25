@@ -1,0 +1,105 @@
+# Payment setup and test-mode handoff
+
+Status: 9 October 2026. The owner selected personal/freelancer; see `INTERNATIONAL_PAYMENTS.md` for the UAE/Arabic launch limitation and provider handoff. The owner explicitly approved the complete database scope and continued free development/testing. The combined update and missing payment-event FK index were applied; live baseline and payment/session rollback suites passed. Checkout and webhook functions version 2 are deployed and readback verified. Both launch gates remain false. No merchant credential, checkout transaction, charge, refund, payment document use or website/social publication was performed.
+
+## Reviewed database update
+
+The concrete update is
+`migrations/20261007071717_secure_connections_and_publish_queue.sql`, reviewed
+and saved in GitHub with SHA-256
+`4cd66f287b558404ddd999bb6db80b58b21f685e864a78bea75a340606e8557d`.
+
+The applied database update covers:
+
+- Session checks on post/media/usage access; storage/draft quotas and post revisions.
+- Private encrypted social credentials, single-use OAuth state, account metadata,
+  publication snapshots/leases and metrics tables.
+- Payment orders, verified event/refund accounting and the credit ledger.
+
+Both payment and publication controls default to **false**. The migration adds
+no merchant keys, charge, public hosting, social post, worker schedule or Storage
+DELETE grant. It changes access policies and write triggers. Role-based live rollback checks and actual HTTP login/global-signout checks passed. The native concurrency regression now passes all 17 checks after the queue lock-order fix; hosted worker/provider testing remains pending.
+Reconcile the existing migration history before a CLI push; do not rerun the
+old schema files. Recorded versions and repository paths are in `migration-history.json`.
+
+## Merchant account
+
+The owner selected personal/freelancer. Merchant jurisdiction and account eligibility are not yet verified, and Razorpay/PayPal account access has not been inspected. Review `INTERNATIONAL_PAYMENTS.md` before choosing an international route. For the existing INR Razorpay test flow, the account step is to sign in or sign up at
+[Razorpay Dashboard](https://dashboard.razorpay.com/), complete the provider's
+verification flow personally, and select **Test Mode**.
+
+Razorpay documents that Test Mode becomes available after signup and uses
+simulated transactions. Its API-key guide permits generating test keys without
+adding a website. Live account activation and website verification are later
+provider requirements; website publishing remains subject to owner permission.
+
+Use **Account & Settings → Website and app settings → API Keys** in Test Mode.
+Do not regenerate an existing key until checking whether another integration
+uses it. The secret is shown only when generated; transfer it through the
+approved server secret-management flow, never through chat, GitHub, browser
+frontend variables or screenshots. Login passwords and OTPs belong in the
+provider's sign-in flow.
+
+## Server configuration after approval
+
+Use an isolated test database/environment for provider Test Mode. Razorpay
+separates its test and live records; this application's credit ledger must also
+be kept separate. Test credits must never buy production AI calls or persist
+into a live customer balance.
+
+The empty configuration reference is `server-env.example`. Setup requires:
+
+| Setting | Purpose |
+| --- | --- |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | Test-mode provider API access |
+| `RAZORPAY_ACCOUNT_ID` | Exact expected `account_id` from the verified merchant event |
+| `RAZORPAY_WEBHOOK_SECRET` | Independent random HMAC secret |
+| `APP_URL` | Fixed HTTPS application root used for the return URL |
+| `ALLOWED_ORIGINS` | Exact approved application origins |
+| `BILLING_PLANS_JSON` | Owner-selected integer paise prices and AI-attempt credits |
+
+No production prices have been chosen. Amounts in tests are synthetic fixtures.
+The current implementation supports one-off INR credit purchases. Currency,
+international-payment eligibility, product terms and refund policy need owner
+and provider review before an international launch.
+
+The database update is approved/applied and SQL rollback checks passed.
+`payment-checkout` version 2 is deployed with gateway JWT verification enabled.
+`payment-webhook` version 2 has gateway JWT verification disabled because its
+handler verifies the raw-body provider HMAC. Actual HTTP checks confirmed
+closed billing blocks plans, checkout and webhook processing. Missing/invalid
+`APP_URL` returns a setup-pending error before an order or provider request.
+Keep both billing controls off until the isolated provider test environment
+is ready. Keep publication off.
+
+For the current project the eventual webhook URL is:
+
+`https://nkfecpdegcmsapvbviky.supabase.co/functions/v1/payment-webhook`
+
+This endpoint is deployed but rejects events while billing is disabled. Do not
+register an active production webhook or enable collection yet.
+The required events are `payment_link.paid` and `refund.processed`. Set the
+same secret on the provider and server and configure an owner-approved alert
+address. A browser return URL does not grant credits.
+
+## Provider tests still required
+
+Check successful/failed/cancelled checkout, captured amount/currency/merchant,
+duplicate events, partial/full refunds, event ordering, network timeouts and
+manual reconciliation. Confirm exactly one credit grant and each refund
+reversal in the isolated database, then confirm no real funds or production
+credits were touched. Only after this evidence is reviewed should the owner
+approve live keys and collection. Never retry an uncertain checkout blindly.
+
+Local handler tests intercept every Auth, database and provider request.
+All 15 payment-handler steps passed, including configuration failure before a
+provider call. Local and live PostgreSQL rollback suites verify duplicate
+accounting and credit balances. The 12 deployed service safety checks exercise
+closed gates, missing configuration and revoked sessions. These do not establish
+a live provider integration or validate a configured live webhook signature.
+
+References: [Test and Live Modes](https://razorpay.com/docs/payments/dashboard/test-live-modes),
+[API Keys](https://razorpay.com/docs/payments/dashboard/account-settings/api-keys/),
+[Webhook Setup](https://razorpay.com/docs/payments/dashboard/account-settings/webhooks),
+[Webhook Validation](https://razorpay.com/docs/webhooks/validate-test/),
+[Supabase server secrets](https://supabase.com/docs/guides/functions/secrets).

@@ -1,0 +1,24 @@
+.velo-canva-bridge{--vcb-ink:#153d39;--vcb-accent:#06776e;--vcb-line:#d5e4e0;color:var(--vcb-ink);background:#f4f8f6;border:1px solid var(--vcb-line);border-radius:20px;padding:clamp(16px,3vw,30px);font-family:inherit;max-width:1100px;margin-inline:auto;line-height:1.55}
+.velo-canva-bridge *{box-sizing:border-box;min-width:0}
+.velo-canva-bridge h2{font-size:clamp(1.5rem,4vw,2rem);margin:.3rem 0 .6rem;line-height:1.2}
+.velo-canva-bridge h3{font-size:1.08rem;margin:.2rem 0 .8rem}
+.velo-canva-bridge p{margin:.6rem 0 1rem;overflow-wrap:anywhere}
+.velo-canva-bridge .vcb-eyebrow{font-size:.72rem;letter-spacing:.16em;font-weight:750;color:var(--vcb-accent)}
+.velo-canva-bridge .vcb-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-block:18px}
+.velo-canva-bridge .vcb-card{padding:20px;background:#fff;border:1px solid var(--vcb-line);border-radius:14px;margin-block-end:16px}
+.velo-canva-bridge .vcb-boundary{padding:12px 16px;border-inline-start:3px solid var(--vcb-accent);background:#e6f3ed;border-radius:8px;font-size:.92rem}
+.velo-canva-bridge .vcb-note,.velo-canva-bridge small{font-size:.86rem;color:#526b66}
+.velo-canva-bridge label{display:grid;gap:6px;font-size:.9rem;font-weight:650;margin-block:12px}
+.velo-canva-bridge input,.velo-canva-bridge select{width:100%;max-width:100%;font:inherit;border:1px solid #b5cdc5;border-radius:9px;background:white;color:var(--vcb-ink);padding:10px;min-height:44px}
+.velo-canva-bridge button{font:inherit;font-size:.88rem;border:1px solid var(--vcb-accent);border-radius:8px;padding:10px 13px;min-height:44px;background:var(--vcb-accent);color:white;cursor:pointer;overflow-wrap:anywhere}
+.velo-canva-bridge button[aria-pressed=true]{background:#153d39;border-color:#153d39}
+.velo-canva-bridge button:disabled{opacity:.5;cursor:default}
+.velo-canva-bridge :focus-visible{outline:3px solid #9264d2;outline-offset:3px}
+.velo-canva-bridge a{color:#00625c;text-decoration:underline;text-underline-offset:3px;font-size:.88rem;overflow-wrap:anywhere}
+.velo-canva-bridge .vcb-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.velo-canva-bridge .vcb-list{display:grid;gap:12px;list-style:none;padding:0;margin:16px 0;max-height:420px;overflow:auto}
+.velo-canva-bridge .vcb-list li{display:grid;gap:10px;border:1px solid var(--vcb-line);border-radius:10px;padding:13px;overflow-wrap:anywhere}
+.velo-canva-bridge small{display:block;margin-block:4px}
+.velo-canva-bridge .vcb-error{padding:12px;border:1px solid #d9a29b;border-radius:8px;background:#fff0ed;color:#8c2b22}
+.velo-canva-bridge .vcb-notice{padding:12px;border-radius:8px;background:#e1f5e8;color:#14542e}
+@media(max-width:720px){.velo-canva-bridge .vcb-grid{grid-template-columns:1fr}.velo-canva-bridge .vcb-card{padding:14px}.velo-canva-bridge .vcb-actions{align-items:stretch}.velo-canva-bridge .vcb-actions button{flex:1 1 130px}}

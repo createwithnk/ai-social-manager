@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "scope": "AasiFlowAI read-only hosted metadata; not backup or release approval.",
+  "checkedAt": "2026-10-22T15:48:51.859118+00:00",
+  "projectRef": "nkfecpdegcmsapvbviky",
+  "repository": "createwithnk/ai-social-manager",
+  "developmentCheckpoint": "4f339abed0634281123771fc51cfaec5e83c4dc6",
+  "projectStatus": "ACTIVE_HEALTHY",
+  "serverVersion": "17.6",
+  "migrations": [
+    {
+      "version": "20261006090620",
+      "name": "content_system_private_media_and_quota"
+    },
+    {
+      "version": "20261008072754",
+      "name": "secure_connections_and_publish_queue"
+    },
+    {
+      "version": "20261008073442",
+      "name": "index_payment_events_order"
+    },
+    {
+      "version": "20261008170743",
+      "name": "publication_claim_lock_order"
+    }
+  ],
+  "rlsTables": [
+    {
+      "rls": true,
+      "table": "launch_controls",
+      "schema": "private",
+      "force_rls": false
+    },
+    {
+      "rls": true,
+      "table": "ai_usage",
+      "schema": "public",
+      "force_rls": false
+    },
+    {
+      "rls": true,
+      "table": "posts",
+      "schema": "public",
+      "force_rls": false
+    },
+    {
+      "rls": true,
+      "table": "objects",
+      "schema": "storage",
+      "force_rls": false
+    }
+  ],
+  "pendingObjects": {
+    "beta_access": false,
+    "owner_admins": false,
+    "beta_controls": false,
+    "reserve_ai_request": false,
+    "prior_approval_trigger": false
+  },
+  "launchControls": {
+    "publishing_enabled": false,
+    "billing_enabled": false
+  },
+  "privateTableAccess": [
+    {
+      "schema": "private",
+      "table": "action_usage",
+      "rls": true,
+      "policy_count": 0,
+      "anon_any_dml": false,
+      "authenticated_any_dml": false
+    },
+    {
+      "schema": "private",
+      "table": "launch_controls",
+      "rls": true,
+      "policy_count": 0,
+      "anon_any_dml": false,
+      "authenticated_any_dml": false
+    },
+    {
+      "schema": "private",
+      "table": "oauth_states",
+      "rls": true,
+      "policy_count": 0,
+      "anon_any_dml": false,
+      "authenticated_any_dml": false
+    },
+    {
+      "schema": "private",
+      "table": "payment_events",
+      "rls": true,
+      "policy_count": 0,
+      "anon_any_dml": false,
+      "authenticated_any_dml": false
+    },
+    {
+      "schema": "private",
+      "table": "payment_refunds",
+      "rls": true,
+      "policy_count": 0,
+      "anon_any_dml": false,
+      "authenticated_any_dml": false
+    },
+    {
+      "schema": "private",
+      "table": "social_credentials",
+      "rls": true,
+      "policy_count": 0,
+      "anon_any_dml": false,
+      "authenticated_any_dml": false
+    }
+  ],
+  "edgeFunctions": [
+    {
+      "slug": "generate-content",
+      "version": 4,
+      "status": "ACTIVE",
+      "verifyJwt": true
+    },
+    {
+      "slug": "social-account",
+      "version": 2,
+      "status": "ACTIVE",
+      "verifyJwt": true
+    },
+    {
+      "slug": "social-callback",
+      "version": 2,
+      "status": "ACTIVE",
+      "verifyJwt": false
+    },
+    {
+      "slug": "payment-checkout",
+      "version": 2,
+      "status": "ACTIVE",
+      "verifyJwt": true
+    },
+    {
+      "slug": "payment-webhook",
+      "version": 2,
+      "status": "ACTIVE",
+      "verifyJwt": false
+    }
+  ],
+  "extensions": [
+    {
+      "extname": "pgcrypto",
+      "extversion": "1.3"
+    }
+  ],
+  "backup": {
+    "inventoryVerified": false,
+    "hostedBackupVerified": false,
+    "storageObjectsVerified": false,
+    "status": "blocked",
+    "reason": "Connected Supabase tools expose no backup-list action and the task-specific AASIFLOW_SUPABASE_READ_TOKEN is absent. No inventory, dump, restore or stored-object download was performed."
+  },
+  "securityReview": {
+    "privateNoPolicyFindings": 6,
+    "privateClientDmlDenied": true,
+    "leakedPasswordProtection": "disabled_advisor_warning",
+    "leakedPasswordFeatureAvailability": "Pro plan and above according to current official documentation; no upgrade or Auth change performed",
+    "enginePatchReview": "Observed 17.6. Review the vendor's 17.11 rollout/extension compatibility notice before a separately authorized upgrade; patch exposure is not certified by this receipt."
+  },
+  "activity": {
+    "liveSQLWrites": false,
+    "deployments": false,
+    "authChanges": false,
+    "providerCalls": false,
+    "paidChanges": false,
+    "invitations": false,
+    "customerDataReads": false,
+    "otherProjectsAccessed": false
+  },
+  "sources": [
+    "https://supabase.com/docs/reference/api/v1-list-all-backups",
+    "https://supabase.com/docs/guides/platform/backups",
+    "https://supabase.com/docs/guides/auth/password-security",
+    "https://supabase.com/changelog/postgres-15-19-17-11-breaking-changes"
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "scope": "Verified development CI evidence only; not a hosted backup, live acceptance, deployment or launch approval.",
+  "verifiedOn": "2026-10-23",
+  "verifiedTimezone": "Asia/Kolkata",
+  "repository": "https://github.com/createwithnk/ai-social-manager",
+  "branch": "fix/beta-readiness-20261019",
+  "sourceCommit": "3c8d39666f9437bcac61ce9b0477e2aba8245dc9",
+  "sourceTree": "1b04a09306512332bde32e850e1d7e8537e09618",
+  "verificationMethod": "Read the completed workflow and both job logs. No unchanged passing test suites were rerun for this receipt.",
+  "workflow": {
+    "id": 39815151280,
+    "url": "https://github.com/createwithnk/ai-social-manager/actions/runs/39815151280",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 119952319625,
+        "name": "native-beta",
+        "conclusion": "success"
+      },
+      {
+        "id": 119952319993,
+        "name": "validate",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "validation": {
+    "nodeTestsPassed": 106,
+    "pgliteChecksPassed": 81,
+    "browserCasesPassed": 30,
+    "denoTestsPassed": 24,
+    "denoPaymentSubsteps": 15,
+    "lint": "passed",
+    "typescriptAppEdgeAndBrowser": "passed",
+    "build": "passed",
+    "manifest": "passed"
+  },
+  "targetedBrowserCoverage": [
+    {
+      "scenario": "Keyboard View/Back/Edit/new-composer/navigation focus and no focus theft while editing",
+      "projects": [
+        "desktop",
+        "mobile"
+      ],
+      "conclusion": "passed"
+    },
+    {
+      "scenario": "Arabic Calendar/details locale with the stored scheduling timestamp unchanged",
+      "projects": [
+        "desktop",
+        "mobile"
+      ],
+      "conclusion": "passed"
+    }
+  ],
+  "nativeReport": {
+    "checkedAt": "2026-10-22T16:36:08.706Z",
+    "status": "passed",
+    "scope": "Two disposable socket-only native PostgreSQL clusters with synthetic Auth/Storage",
+    "checks": [
+      "native cluster has no TCP listener",
+      "live-database.sql passes on native PostgreSQL",
+      "live-payment-database.sql passes on native PostgreSQL",
+      "three exact reviewed payloads preserve old posts, revisions and media",
+      "all release gates start closed and memberships start empty",
+      "synthetic invite membership preserves two-user isolation and disabled direct uploads",
+      "prior approval is required for direct scheduled inserts",
+      "eight independent overlapping sessions cannot overspend the two-request project budget",
+      "client completion forgery fails and server completion remains idempotent",
+      "operational rollback pauses runtime grants without deleting content or weakening invites",
+      "native logical backup restores synthetic roles, rows, RLS and privileges into a separate cluster"
+    ],
+    "sourceHashes": [
+      {
+        "path": "tests/local-bootstrap.sql",
+        "sha256": "6dbfae5d721ca521b03d9f62b903c1783fc6a4bf9730cab6fa61b2a2190a79e2"
+      },
+      {
+        "path": "supabase/migrations/20260901000000_create_posts.sql",
+        "sha256": "72429e79aa77c7d47df76baf1e82a2e8ea370dcc4dc3dad96f37f0fc9368c5fe"
+      },
+      {
+        "path": "supabase/migrations/20261003000000_content_system.sql",
+        "sha256": "b5d3b87ef0c025e493ae8751ea7165253df5727ad7547ed9dcbf065a15fd2a8b"
+      },
+      {
+        "path": "supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql",
+        "sha256": "4cd66f287b558404ddd999bb6db80b58b21f685e864a78bea75a340606e8557d"
+      },
+      {
+        "path": "supabase/migrations/20261008073141_index_payment_events_order.sql",
+        "sha256": "47e60d804fdb12516fc3b9b3b7487a318de013dc0137a9d02de0b29cd88c1f8c"
+      },
+      {
+        "path": "supabase/migrations/20261008170431_publication_claim_lock_order.sql",
+        "sha256": "7946e8aa74b3b20ed2f570d100ac0272c7dfbdf881a167088cc6b1932d5acc8c"
+      },
+      {
+        "path": "tests/live-database.sql",
+        "sha256": "e6829af36c72f994ce8db6c4f9d1b1adfe80d3d0529ad576b27860a6def000c4"
+      },
+      {
+        "path": "tests/live-payment-database.sql",
+        "sha256": "150794c04c815f6ddcdcbcc5fa658c32634ea18bb439c0f791e513a89326595e"
+      },
+      {
+        "path": "supabase/migrations/20261013000000_require_prior_approval.sql",
+        "sha256": "1f9bc3e229183d5df1f1d7f80d28d688218e4e9c4726d2a920689ce84a38c756"
+      },
+      {
+        "path": "supabase/migrations/20261014000000_owner_monitoring.sql",
+        "sha256": "6c306c0c7b6c93b7a84ae613c019bd93d6bef7865c35b3027b4a9f192131e6ed"
+      },
+      {
+        "path": "supabase/proposals/20261015000000_private_beta_safety.sql",
+        "sha256": "bbc5892b77a6371d2c73d5dbebdd98db24707c61c3aec0259109bb67368f573c"
+      },
+      {
+        "path": "supabase/proposals/20261015000000_private_beta_safety.rollback.sql",
+        "sha256": "35ab8186c4a5a7055428a5ef905320cc5a4615fb4c680b80b8145b98ccbd88a1"
+      }
+    ],
+    "stopped": true,
+    "restoreStopped": true,
+    "syntheticLogicalRestoreVerified": true,
+    "separateClusterRestoreVerified": true,
+    "hostedBackupVerified": false,
+    "liveChanges": false,
+    "providerCalls": false,
+    "version": "postgres (PostgreSQL) 17.6 (Debian 17.6-2.pgdg12+1)",
+    "archiveSha256": "749bad1e56bc3b1f76c269bf502e52ceba8f623d2ae6c7971572314d4f527f88",
+    "rolesSha256": "6777a83f23caec52fc885c918069001ce3e3ea17c73cfdb795de2c9d12c46509",
+    "restoreRolesSha256": "b3571d9c09cbeb310362717ed19fb859c92902571f094b8037f61c9c4814b233",
+    "bootstrapRoleCreateOmitted": true,
+    "snapshotSha256": "54eda8af694bdb048dce009ddbb1410248aab3fcf469038bf995ac8adb6bed3a"
+  },
+  "backupPrerequisite": {
+    "checkedOn": "2026-10-23",
+    "taskScopedReadTokenAvailable": false,
+    "connectedBackupListActionAvailable": false,
+    "inventoryVerified": false,
+    "hostedBackupVerified": false,
+    "storageObjectsVerified": false,
+    "nextSafeStep": "When AasiFlowAI-scoped backup read access or an authorized artifact becomes available, obtain a sanitized inventory receipt and perform the separately scoped isolated recovery review."
+  },
+  "limits": [
+    "The 30 browser cases use local fixtures and block external requests. Real hosted Auth, Storage, email and Gemini behavior remain unverified.",
+    "Native PostgreSQL backup/restore uses synthetic catalogs and identities in disposable clusters; actual hosted recovery and stored-object bytes remain unverified.",
+    "Backup availability is unknown. No unrelated or generic credentials were substituted.",
+    "No runtime code, SQL, Auth/identity configuration, deployed function, hosted fixture, provider request, paid setting, invitation, billing or publishing was changed.",
+    "Other repositories/projects were not accessed. The unavailable laptop checkpoint 21e8dce is not claimed synchronized."
+  ]
+}
+

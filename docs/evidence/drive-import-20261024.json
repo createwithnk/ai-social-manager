@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-24",
+  "timezone": "Asia/Kolkata",
+  "repository": "createwithnk/ai-social-manager",
+  "branch": "fix/beta-readiness-20261019",
+  "sourceParent": "964a2e653b196bc95f823abb5146f6a304d454b7",
+  "scope": "Only new optional module/test/checkpoint files; no existing tracked file changed.",
+  "checks": {
+    "newNodePassed": 15,
+    "totalNodePassed": 148,
+    "isolatedSqlPassed": 81,
+    "newBrowserPassed": 8,
+    "browserProjects": [
+      "desktop",
+      "mobile"
+    ],
+    "lint": "passed",
+    "buildAndAppTypescript": "passed",
+    "browserTypescript": "passed",
+    "existingReleaseManifest": "verified unchanged",
+    "realGoogleOrStorageAcceptance": "not run",
+    "candidateCi": "read actual pushed head separately"
+  },
+  "preserved": {
+    "allExistingTrackedFilesByteIdentical": true,
+    "coreOrAuthEdits": false,
+    "databaseOrRlsChanges": false,
+    "dependenciesChanged": false,
+    "headersChanged": false,
+    "oldCheckpointsChanged": false
+  },
+  "boundaries": {
+    "liveGoogleRequests": false,
+    "liveStorageUploads": false,
+    "hostedSqlOrAuthChanges": false,
+    "deployment": false,
+    "postingOrBilling": false,
+    "otherProjectsAccessed": false,
+    "moduleMounted": false,
+    "uploadsEnabled": false
+  },
+  "limits": [
+    "Existing 10 MiB per file, new 5-file and 25 MiB batch caps.",
+    "Drive selected-file scope has write capability, but this transport performs GET-only requests.",
+    "Source version/size/type/permission checked; SHA-256 verified when supplied, always recorded locally in receipt.",
+    "Header checks do not provide full codec decoding/malware scanning.",
+    "No durable idempotency ledger across reloads; unknown uploads block automatic retry.",
+    "Actual Google vendor dialog and production CSP/COOP/public-key acceptance remain pending."
+  ],
+  "sourceFiles": [
+    {
+      "path": "e2e/drive-import.spec.ts",
+      "sha256": "791731e51cedd8453db324adf00305e7637f40d86122af9639751056454135f3"
+    },
+    {
+      "path": "e2e/fixtures/drive-import-harness.tsx",
+      "sha256": "8c51ca6738b7292116af6cab9d56392b29cd96c44ad8fd7d79cd7e60193d35cf"
+    },
+    {
+      "path": "src/features/drive-import/DriveMediaImporter.tsx",
+      "sha256": "b7b15ef37111cf021433e374cd1f13e5c6e1336da640239f0f9c5fc350819d48"
+    },
+    {
+      "path": "src/features/drive-import/GoogleDriveImport.tsx",
+      "sha256": "34c8335f63547ca79f03932d41cd0293e9cdbf8f2417bb90e8e9fc012155b6a5"
+    },
+    {
+      "path": "src/features/drive-import/README.md",
+      "sha256": "a3a517e802ce1c9d301b1f7f480b72e35d049d8fe9b7f8c1cfa063dbb194bd7a"
+    },
+    {
+      "path": "src/features/drive-import/drive-content.ts",
+      "sha256": "bb0fbd3b22bb2c5d161e2961ddd217c34fd864956845c7fd654bd4c0617a529c"
+    },
+    {
+      "path": "src/features/drive-import/drive-import.css",
+      "sha256": "35e69536dd9829c9ce5e22861a892b08058857d0c15ad946251caca4ea589291"
+    },
+    {
+      "path": "src/features/drive-import/google-picker.ts",
+      "sha256": "bc365a24077635b713fc19cc91fbe4e486420f867b2c5114178f3dea9f191e67"
+    },
+    {
+      "path": "src/features/drive-import/import-batch.ts",
+      "sha256": "c049bb99dbcb24a4817bbf05588dcaf74751ee68bb334068733c09acbdd7c06c"
+    },
+    {
+      "path": "src/features/drive-import/labels.ts",
+      "sha256": "6cd1d971ffa87873b46bd515ca172cd3ca1fa963b945266e62cdd1f713a8ae2e"
+    },
+    {
+      "path": "src/features/drive-import/types.ts",
+      "sha256": "b7e79293664cd1971dddc8e851bbcd0eeff75a9edb3f3f15f97af1d723c9d7c9"
+    },
+    {
+      "path": "src/features/drive-import/velo-target.ts",
+      "sha256": "d104b8c7a790bd4c10caf23727e484478b4785cc212f7f7c91ead441f400b9bf"
+    },
+    {
+      "path": "tests/drive-import.test.mjs",
+      "sha256": "34050162cf9d3c972cb635b920134a6c6c3306e78be27a082bb2508126e25dad"
+    }
+  ],
+  "nextSafeStep": "Verify reviewed development push/current CI. Read the module README and keep existing upload/security locks until separately reviewed configuration and hosted acceptance."
+}

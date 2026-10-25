@@ -1,0 +1,271 @@
+{
+  "projectRef": "nkfecpdegcmsapvbviky",
+  "branch": "fix/beta-readiness-20261019",
+  "approved": false,
+  "defaults": {
+    "aiEnabled": false,
+    "uploadsEnabled": false,
+    "dailyCallLimit": 0,
+    "dailyBudgetUsd": 0
+  },
+  "firstApproval": "Review isolated staging/backup evidence before authorizing these exact SQL payloads. No blanket database push.",
+  "separateApprovals": [
+    "Hosted Auth settings",
+    "Owner UUID privileges",
+    "Test UUID membership",
+    "Frontend and generator release",
+    "Provider usage with verified no-charge configuration",
+    "Real user invitations"
+  ],
+  "normalization": "UTF-8 content with CRLF normalized to LF",
+  "files": [
+    {
+      "path": "supabase/migrations/20261013000000_require_prior_approval.sql",
+      "sha256": "1f9bc3e229183d5df1f1d7f80d28d688218e4e9c4726d2a920689ce84a38c756"
+    },
+    {
+      "path": "supabase/migrations/20261014000000_owner_monitoring.sql",
+      "sha256": "6c306c0c7b6c93b7a84ae613c019bd93d6bef7865c35b3027b4a9f192131e6ed"
+    },
+    {
+      "path": "supabase/proposals/20261015000000_private_beta_safety.sql",
+      "sha256": "bbc5892b77a6371d2c73d5dbebdd98db24707c61c3aec0259109bb67368f573c"
+    },
+    {
+      "path": "supabase/proposals/20261015000000_private_beta_safety.rollback.sql",
+      "sha256": "35ab8186c4a5a7055428a5ef905320cc5a4615fb4c680b80b8145b98ccbd88a1"
+    },
+    {
+      "path": "supabase/functions/generate-content/index.ts",
+      "sha256": "8b33b50e13e6415778a2aacae4247f2c31e890b1294fa18714eef8cc2effa25d"
+    },
+    {
+      "path": "supabase/functions/generate-content/handler.ts",
+      "sha256": "ff02e07897f6ce053c04a5adeb4c133f752cc1ed10c34abbbc1f62274b7e574f"
+    },
+    {
+      "path": "supabase/functions/generate-content/gemini.ts",
+      "sha256": "114a0d1591688a8c5c9219343a1f2fc4a02e8639a848dd6946c614379a893f81"
+    },
+    {
+      "path": "supabase/functions/generate-content/monitoring.ts",
+      "sha256": "8743280c13b91c37cc2891c7aa11c00879ff42fafc225cbde73ea4f921a01dd1"
+    },
+    {
+      "path": "src/App.tsx",
+      "sha256": "a0e33c80457411579cc8b724a2a8f650a14bd1fe8e72b228bd0ef7a24fddf03f"
+    },
+    {
+      "path": "src/BetaGate.tsx",
+      "sha256": "d28d69b6899c11015c68bb2b8233887450778a327229400c154af85eec62b577"
+    },
+    {
+      "path": "src/AdminDashboard.tsx",
+      "sha256": "0623f10c6395de7e9eebdeb733968b79a922cb7286728c38099404d6a9a1143e"
+    },
+    {
+      "path": "src/RuntimeBoundary.tsx",
+      "sha256": "6bcb739b5ae5927c4739a3a7f662b47dbcc21e457fc82cc30dea349873ad4c22"
+    },
+    {
+      "path": "src/lib/auth.ts",
+      "sha256": "1c930c524a9a9779931fad114015e42199f29a2d4e07209f59168b17b61cd6b9"
+    },
+    {
+      "path": "src/lib/ai.ts",
+      "sha256": "12612aaa3aa1eb0d9bf6be072b96737cef49434b1803e84ef0a02e508a803b6b"
+    },
+    {
+      "path": "src/lib/beta-policy.ts",
+      "sha256": "e74fd6a1d7f4feb50a9f9cb59502d1e63b861e785a7220ed95fdd21ea7d03365"
+    },
+    {
+      "path": "src/lib/monitoring.ts",
+      "sha256": "90f8d51aeb6bbc5ce81ed54c7e56e1341cf3c831fd629c5cd696b270f823974d"
+    },
+    {
+      "path": "src/lib/media.ts",
+      "sha256": "04962a3013fbf2366fa3b4549ac4a2f83a071c6522a27a591b5f13198110da59"
+    },
+    {
+      "path": "src/lib/supabase.ts",
+      "sha256": "6c84ba103d64922c07e1fa1e214f5814d7c2447e1a4ca5cbc73f81f6171b6f85"
+    },
+    {
+      "path": "src/lib/translations.ts",
+      "sha256": "d7abd1f93bdf8790e0f0a18119f5204f90c43962c7d4fe0ca160b7c6c60a4b24"
+    },
+    {
+      "path": "src/styles.css",
+      "sha256": "d926582e7d16684333b9210f029d446905678892a8c2cbf77fbb12b2ec07efc1"
+    },
+    {
+      "path": "src/lib/posts.ts",
+      "sha256": "f440c9a435836374aca80e67e9c2f6d9c07cbe1e8f56c78292bddd7ea12efd0f"
+    },
+    {
+      "path": "src/lib/workflow.ts",
+      "sha256": "5f9b5478311899adfbb2ca093bdf8a78a2f5d88c681123bd8e2219b7851053fe"
+    },
+    {
+      "path": "src/types.ts",
+      "sha256": "a7563ff8309cc41d60bfe435805a176d8fd0bffe0934eaff93600dfddd6c290a"
+    },
+    {
+      "path": "package.json",
+      "sha256": "599528b128760e76f65408565de2f8a91f7d59027b3f51c9d49ff4d6d488c839"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "e790150cbbd07c55554255aa62bdd42c26271af822f623cbdb46130c10944a54"
+    },
+    {
+      "path": "src/main.tsx",
+      "sha256": "e12a519249e0ad1d53450da18161d1505feb98affaf732a3ddc898a21b400271"
+    },
+    {
+      "path": "src/components/MediaInput.tsx",
+      "sha256": "b096710ac434056d08c68444d11d6a472e69c31ed351dbb470e19fc8ea23cf24"
+    },
+    {
+      "path": "src/MediaLibrary.tsx",
+      "sha256": "9676f3365bd793d21dccc8f7f6de2f975560d10698b4988b41d9df894c93508f"
+    },
+    {
+      "path": "index.html",
+      "sha256": "560b80c58c21d6358ff547813c16b3e297e4b2c0bfdf4c4884a16056684c65a0"
+    },
+    {
+      "path": "src/features/velo/ModuleWorkspace.tsx",
+      "sha256": "0630596e365bddb23acbed6ee2d6ed7fe642c0a65448f1ee134e5e000da61ba5"
+    },
+    {
+      "path": "src/features/velo/locale.ts",
+      "sha256": "91012be39245c056477ff754b4e5a4df9b03afe926788dac588a16d67753e040"
+    },
+    {
+      "path": "src/features/velo/modules.css",
+      "sha256": "bc157b9ae3940b550ff55cf781dca967e2716b1c3e0c5002cfa72ce97303342d"
+    },
+    {
+      "path": "src/features/assets/AssetBridge.tsx",
+      "sha256": "37aeb129f7346cda36b125fe21a2e7f5a01b028a87e7120f0e746c0a1b8b7154"
+    },
+    {
+      "path": "src/features/assets/links.ts",
+      "sha256": "1cf7594f4a6880e96912a0b75cf409747e27172387437ba65ae15ed447df39c3"
+    },
+    {
+      "path": "src/features/assets/bulk-csv.ts",
+      "sha256": "4baa72d1dead4cb67d8b343a545aca7db979a2254d18ab6def5b9a236c3547b2"
+    },
+    {
+      "path": "src/features/assets/AssetConnections.tsx",
+      "sha256": "138ab2f5e45e88f818d6a45c0f508c04cfd62bf0872fb05d791a65ac1db4517e"
+    },
+    {
+      "path": "src/features/assets/connection-client.ts",
+      "sha256": "5fad1fa191460a797748a22bfb802cc02f20a1f50d80ded0c037830069809a3e"
+    },
+    {
+      "path": "src/features/assets/connections.ts",
+      "sha256": "77e9f6ba63b4ffd6e7b5a0f4e0d90d9997df89c2cab067898c74dcab9d5d10a3"
+    },
+    {
+      "path": "src/features/publishing/PublisherPreview.tsx",
+      "sha256": "2d5d7b20b12f8df89fa9d532c1d645b27b37327845f463c1c781f3528f8ac2f2"
+    },
+    {
+      "path": "src/features/publishing/connectors.ts",
+      "sha256": "83e841040dcf6f9974d2ecf1d2c40c4c81ec56d9d10ba06571c631f429454ff5"
+    },
+    {
+      "path": "src/features/leads/LeadSandbox.tsx",
+      "sha256": "8372019236ba1844670e26a000eb358bc7b792f0a1ccf94577f5e70f1617999d"
+    },
+    {
+      "path": "src/features/leads/filter.ts",
+      "sha256": "f784c88547915954c2818bc70152fec0088e0f2b54fdc250d621fa776cbbe6c2"
+    },
+    {
+      "path": "supabase/functions/_shared/velo-whatsapp.ts",
+      "sha256": "7f1813af595585eccebcbc8703b28c998c27fdea2d4175b86d02a1b0b6af198e"
+    },
+    {
+      "path": "supabase/proposals/velo_asset_connections.sql",
+      "sha256": "616eefdd9e8948b39f5c3ede23ce02a2095f625c0731d18f0b5f046ed0fe8612"
+    },
+    {
+      "path": "supabase/proposals/velo_asset_connections.pause.sql",
+      "sha256": "65dbfffbad22364349a8c5715c50763505062c9bcaf0fc6819add62d7ea46244"
+    },
+    {
+      "path": "supabase/functions/_shared/asset-bridge/protocol.ts",
+      "sha256": "ed4c1d6d20c90f06d1bb4997829f9b87f5a9b9bb422e89c38996830d86a3501b"
+    },
+    {
+      "path": "supabase/functions/_shared/asset-bridge/service.ts",
+      "sha256": "7ada2e6414ca42d7cd7d667767672a9c82373a57001177d2ab92deabef3cc326"
+    },
+    {
+      "path": "supabase/functions/_shared/asset-bridge/runtime.ts",
+      "sha256": "ceca88a516bbfe15222350107ac8b4d9719a84afca1d8794231de27ac60552dc"
+    },
+    {
+      "path": "supabase/functions/velo-asset-account/index.ts",
+      "sha256": "6bef1ed1c142d3a6c9d95e193001be519df76aac1e00e3684aa2927d6d8b2d67"
+    },
+    {
+      "path": "supabase/functions/velo-asset-account/deno.json",
+      "sha256": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb"
+    },
+    {
+      "path": "supabase/functions/velo-asset-callback/index.ts",
+      "sha256": "e5e964968398c4f60506ae060b9312a1cbd4df085d03f70281ed92379e1fd0a4"
+    },
+    {
+      "path": "supabase/functions/velo-asset-callback/deno.json",
+      "sha256": "23c59e614b0b6ce7dadea53ce14540c3cc966195f3f541838ccf2ef3312cbbbb"
+    },
+    {
+      "path": "scripts/run-deno.mjs",
+      "sha256": "4cf44dba9d57eaf75be90e8f0be95c9fdd363a79559aa38ed82f2de0467c4ebf"
+    },
+    {
+      "path": "scripts/backup-inventory.mjs",
+      "sha256": "33d07b31fb1c1d9d20be4cab835bae0befdc7265dedb5b9c2b093c5135500b2e"
+    },
+    {
+      "path": "deployment/continuation.json",
+      "sha256": "e88abab123e04856f2a75e13c0a6c534bce45bfedf30ebe30cb7c61246cfab76"
+    },
+    {
+      "path": "scripts/release-review.mjs",
+      "sha256": "8f489a13d870dd5d491d9c9c3f85a51cfeff86e4fee6d265d622c29bde1d4b43"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "8868b9ac22a99465adf61ddd7e2f422562f34fdef7fae01521c0815d3c4b6d5e"
+    },
+    {
+      "path": "scripts/verify-native-beta.mjs",
+      "sha256": "6729c7b880303e36e52923ab879d33905f84c4f20a2e0fb2d9b720df98ee034a"
+    },
+    {
+      "path": "scripts/native-pg-environment.mjs",
+      "sha256": "0d2fd5296d55ce5c3dad22f10ab2bdee137f15e3ed6d4ff2f2a56e8ac6acff7f"
+    },
+    {
+      "path": "deployment/target.json",
+      "sha256": "30939493fa6fe3f611845a3062ac890b0d7378bcd514d1b86e31d27475b38b83"
+    },
+    {
+      "path": "public/_headers",
+      "sha256": "7659bd8c1d56e3d451eab521603f559a366d57771cd9d4c9b5736851271d8146"
+    },
+    {
+      "path": "deployment/security-headers.json",
+      "sha256": "e7b32decf8857b342549dfefb88f30189d6a4fb6b51edb67c0206f6f2514f8dd"
+    }
+  ]
+}

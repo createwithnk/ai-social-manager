@@ -1,0 +1,128 @@
+{
+  "scope": "Development CI only. Not hosted release approval or hosted backup certification.",
+  "date": "2026-10-19",
+  "repository": "https://github.com/createwithnk/ai-social-manager",
+  "branch": "fix/beta-readiness-20261019",
+  "sourceCommit": "3c617adfb2eeb008b90a363a447797bbc236a240",
+  "sourceTree": "1ec8df95614fe02d0233056711ecdaa9732c4d3d",
+  "workflow": {
+    "id": 39267865055,
+    "url": "https://github.com/createwithnk/ai-social-manager/actions/runs/39267865055",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 118112077711,
+        "name": "validate",
+        "conclusion": "success"
+      },
+      {
+        "id": 118112077141,
+        "name": "native-beta",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "validation": {
+    "nodeTestsPassed": 96,
+    "pgliteChecksPassed": 81,
+    "browserCasesPassed": 26,
+    "denoTestsPassed": 24,
+    "denoPaymentSubsteps": 15,
+    "denoVersion": "2.9.6",
+    "lint": "passed",
+    "typescript": "passed",
+    "build": "passed",
+    "manifest": "passed",
+    "dependencyAuditKnownVulnerabilities": 0
+  },
+  "nativeReport": {
+    "checkedAt": "2026-10-19T14:19:30.840Z",
+    "status": "passed",
+    "scope": "Two disposable socket-only native PostgreSQL clusters with synthetic Auth/Storage",
+    "checks": [
+      "native cluster has no TCP listener",
+      "live-database.sql passes on native PostgreSQL",
+      "live-payment-database.sql passes on native PostgreSQL",
+      "three exact reviewed payloads preserve old posts, revisions and media",
+      "all release gates start closed and memberships start empty",
+      "synthetic invite membership preserves two-user isolation and disabled direct uploads",
+      "prior approval is required for direct scheduled inserts",
+      "eight independent overlapping sessions cannot overspend the two-request project budget",
+      "client completion forgery fails and server completion remains idempotent",
+      "operational rollback pauses runtime grants without deleting content or weakening invites",
+      "native logical backup restores synthetic roles, rows, RLS and privileges into a separate cluster"
+    ],
+    "sourceHashes": [
+      {
+        "path": "tests/local-bootstrap.sql",
+        "sha256": "6dbfae5d721ca521b03d9f62b903c1783fc6a4bf9730cab6fa61b2a2190a79e2"
+      },
+      {
+        "path": "supabase/migrations/20260901000000_create_posts.sql",
+        "sha256": "72429e79aa77c7d47df76baf1e82a2e8ea370dcc4dc3dad96f37f0fc9368c5fe"
+      },
+      {
+        "path": "supabase/migrations/20261003000000_content_system.sql",
+        "sha256": "b5d3b87ef0c025e493ae8751ea7165253df5727ad7547ed9dcbf065a15fd2a8b"
+      },
+      {
+        "path": "supabase/migrations/20261007071717_secure_connections_and_publish_queue.sql",
+        "sha256": "4cd66f287b558404ddd999bb6db80b58b21f685e864a78bea75a340606e8557d"
+      },
+      {
+        "path": "supabase/migrations/20261008073141_index_payment_events_order.sql",
+        "sha256": "47e60d804fdb12516fc3b9b3b7487a318de013dc0137a9d02de0b29cd88c1f8c"
+      },
+      {
+        "path": "supabase/migrations/20261008170431_publication_claim_lock_order.sql",
+        "sha256": "7946e8aa74b3b20ed2f570d100ac0272c7dfbdf881a167088cc6b1932d5acc8c"
+      },
+      {
+        "path": "tests/live-database.sql",
+        "sha256": "e6829af36c72f994ce8db6c4f9d1b1adfe80d3d0529ad576b27860a6def000c4"
+      },
+      {
+        "path": "tests/live-payment-database.sql",
+        "sha256": "150794c04c815f6ddcdcbcc5fa658c32634ea18bb439c0f791e513a89326595e"
+      },
+      {
+        "path": "supabase/migrations/20261013000000_require_prior_approval.sql",
+        "sha256": "1f9bc3e229183d5df1f1d7f80d28d688218e4e9c4726d2a920689ce84a38c756"
+      },
+      {
+        "path": "supabase/migrations/20261014000000_owner_monitoring.sql",
+        "sha256": "6c306c0c7b6c93b7a84ae613c019bd93d6bef7865c35b3027b4a9f192131e6ed"
+      },
+      {
+        "path": "supabase/proposals/20261015000000_private_beta_safety.sql",
+        "sha256": "bbc5892b77a6371d2c73d5dbebdd98db24707c61c3aec0259109bb67368f573c"
+      },
+      {
+        "path": "supabase/proposals/20261015000000_private_beta_safety.rollback.sql",
+        "sha256": "35ab8186c4a5a7055428a5ef905320cc5a4615fb4c680b80b8145b98ccbd88a1"
+      }
+    ],
+    "stopped": true,
+    "restoreStopped": true,
+    "syntheticLogicalRestoreVerified": true,
+    "separateClusterRestoreVerified": true,
+    "hostedBackupVerified": false,
+    "liveChanges": false,
+    "providerCalls": false,
+    "version": "postgres (PostgreSQL) 17.6 (Debian 17.6-2.pgdg12+1)",
+    "archiveSha256": "9de176d7ffe26a088c7045b95eb266a46b89990e02c0e4b441b7f0e9cae7b2ad",
+    "rolesSha256": "ee91d79526262fe93930178f728b4ec69eaf304c4418cfbc4268eb4221f9e003",
+    "restoreRolesSha256": "a8e5ae6392e0347336cb68f8dd7fc38990fe1ff372c9d345c3c2f6f707321388",
+    "bootstrapRoleCreateOmitted": true,
+    "snapshotSha256": "bac8227dc610a2bf7be0d2889e48550f75bb58214df916607d69dbdf79ca6e25"
+  },
+  "limits": [
+    "Auth/Storage catalogs and all identities/data are synthetic.",
+    "Logical restore uses a separate fresh native PostgreSQL cluster; only the duplicate CREATE ROLE postgres is omitted in a derived roles script. Every dumped ALTER/grant is retained with error-stop behavior.",
+    "Effective built-in ACL defaults normalize equivalent NULL/owner grants. Role attributes, memberships, owners, grantors, PUBLIC grants and grant options are compared; a rolled-back extra PUBLIC execute grant is detected.",
+    "Hosted backup recovery, actual Auth/Storage services and stored-object bytes are unverified.",
+    "No live SQL, memberships, provider calls, invitations, deployment, main merge, publishing or billing activation occurred.",
+    "SQL and runtime release approvals remain false; no launch permission is implied."
+  ]
+}

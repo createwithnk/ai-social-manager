@@ -1,0 +1,193 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { createHandler } from '../supabase/functions/generate-content/handler.ts'
+
+const brief = { idea: 'Help small businesses create better posts', platform: 'Instagram', tone: 'Friendly' }
+const draft = { caption: 'An editable caption. What would you add?', hashtags: ['Business', 'Tips', 'Growth'] }
+const provider = (value = draft, finishReason = 'STOP') => Response.json({ candidates: [{ finishReason, content: { parts: [{ text: JSON.stringify(value) }] } }] })
+function setup(overrides = {}) {
+  const calls = []
+  const env = { ALLOWED_ORIGINS: 'http://localhost:5173', SUPABASE_URL: 'https://example.invalid', SUPABASE_ANON_KEY: 'test-public-key', GEMINI_API_KEY: 'test-secret-sentinel', ...overrides.env }
+  const handler = createHandler({ env: (name) => env[name], authenticate: overrides.authenticate ?? (async (_url, _key, token) => token === 'valid-token' ? 'verified-user-id' : null), consumeCredit: overrides.consumeCredit ?? (async () => true), readMedia: overrides.readMedia, fetch: async (url, options) => { calls.push({ url, options }); return overrides.fetch ? overrides.fetch(url, options) : provider() }, timeoutMs: overrides.timeoutMs, readTimeoutMs: overrides.readTimeoutMs })
+  const request = (body = brief, options = {}) => handler(new Request('https://example.invalid/generate', { method: 'POST', headers: { Origin: 'http://localhost:5173', Authorization: 'Bearer valid-token', 'Content-Type': 'application/json', ...options.headers }, body: typeof body === 'string' ? body : JSON.stringify(body), ...options.init }))
+  return { handler, request, calls }
+}
+
+test('CORS preflight allows exact trusted origins without authenticating', async () => {
+  const { handler, calls } = setup({ authenticate: async () => { throw new Error('Must not authenticate preflight') } })
+  const result = await handler(new Request('https://example.invalid', { method: 'OPTIONS', headers: { Origin: 'http://localhost:5173' } }))
+  assert.equal(result.status, 204)
+  assert.equal(result.headers.get('access-control-allow-origin'), 'http://localhost:5173')
+  assert.equal(result.headers.get('vary'), 'Origin')
+  assert.match(result.headers.get('access-control-allow-headers'), /authorization/)
+  assert.equal(calls.length, 0)
+})
+test('CORS rejects untrusted, null, lookalike and unconfigured origins', async () => {
+  for (const origin of ['https://evil.invalid', 'null', 'http://localhost:5173.evil.invalid']) {
+    const { handler, request, calls } = setup()
+    assert.equal((await request(brief, { headers: { Origin: origin } })).status, 403)
+    const preflight = await handler(new Request('https://example.invalid', { method: 'OPTIONS', headers: { Origin: origin } }))
+    assert.equal(preflight.status, 403)
+    assert.equal(preflight.headers.get('access-control-allow-origin'), null)
+    assert.equal(calls.length, 0)
+  }
+  assert.equal((await setup({ env: { ALLOWED_ORIGINS: '' } }).request()).status, 403)
+})
+test('rejects unsupported methods and content types', async () => {
+  const { handler, request } = setup()
+  assert.equal((await handler(new Request('https://example.invalid', { method: 'GET' }))).status, 405)
+  assert.equal((await request(brief, { headers: { 'Content-Type': 'text/plain' } })).status, 415)
+})
+test('authentication rejects missing, empty, malformed, expired and anonymous tokens before provider calls', async () => {
+  for (const authorization of ['', 'Bearer ', 'Basic valid-token', 'Bearer expired-token', 'Bearer public-anon-key', 'Bearer valid-token extra']) {
+    const { request, calls } = setup()
+    const result = await request(brief, { headers: { Authorization: authorization } })
+    assert.equal(result.status, 401)
+    assert.equal(calls.length, 0)
+  }
+  assert.equal((await setup({ env: { GEMINI_API_KEY: undefined } }).request(brief, { headers: { Authorization: 'Bearer expired-token' } })).status, 401)
+})
+test('authentication exceptions and missing configuration return safe errors', async () => {
+  for (const overrides of [{ authenticate: async () => { throw new Error('test-secret-sentinel') } }, { env: { SUPABASE_URL: undefined } }, { env: { GEMINI_API_KEY: undefined } }, { env: { GEMINI_MODEL: '../invalid' } }]) {
+    const { request, calls } = setup(overrides)
+    const result = await request()
+    assert.equal(result.status, 503)
+    assert.doesNotMatch(await result.text(), /test-secret-sentinel/)
+    assert.equal(calls.length, 0)
+  }
+})
+test('invalid JSON, primitives, arrays, short/long ideas and unknown choices never reach Gemini', async () => {
+  for (const body of ['{', null, [], 42, { ...brief, idea: 'short' }, { ...brief, idea: ' '.repeat(10) }, { ...brief, idea: 'x'.repeat(501) }, { ...brief, platform: ['Instagram'] }, { ...brief, tone: 'Unknown' }]) {
+    const { request, calls } = setup()
+    assert.equal((await request(body)).status, 400)
+    assert.equal(calls.length, 0)
+  }
+})
+test('limits actual streamed body size as well as content-length', async () => {
+  const { request, calls } = setup()
+  assert.equal((await request(' '.repeat(8193))).status, 413)
+  assert.equal((await request(brief, { headers: { 'Content-Length': '9000' } })).status, 413)
+  assert.equal(calls.length, 0)
+})
+
+test('stalled request bodies are cancelled before consuming credits or calling Gemini', async () => {
+  let cancelled = false
+  let credits = 0
+  const { request, calls } = setup({ readTimeoutMs: 10, consumeCredit: async () => { credits++; return true } })
+  const body = new ReadableStream({
+    start(controller) { controller.enqueue(new TextEncoder().encode('{')) },
+    cancel() { cancelled = true },
+  })
+  const response = await request(undefined, { init: { body, duplex: 'half' } })
+  assert.equal(response.status, 408)
+  assert.equal(cancelled, true)
+  assert.equal(credits, 0)
+  assert.equal(calls.length, 0)
+  assert.deepEqual(await response.json(), { error: 'Request timed out. Please retry.' })
+})
+test('valid generation returns only an editable draft, with secret confined to provider header', async () => {
+  const { request, calls } = setup()
+  const result = await request()
+  assert.equal(result.status, 200)
+  assert.deepEqual(await result.json(), draft)
+  assert.equal(result.headers.get('cache-control'), 'no-store')
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].options.headers['x-goog-api-key'], 'test-secret-sentinel')
+  assert.equal(calls[0].options.redirect, 'error')
+  assert.doesNotMatch(calls[0].url + calls[0].options.body, /test-secret-sentinel|valid-token/)
+  assert.equal(JSON.parse(calls[0].options.body).generationConfig.responseFormat.text.schema.type, 'object')
+})
+
+test('provider model and credentials come only from server configuration', async () => {
+  const { request, calls } = setup({ env: { GEMINI_MODEL: 'gemini-2.5-pro' } })
+  const result = await request({ ...brief, model: '../client-model', apiKey: 'untrusted-client-key' })
+  assert.equal(result.status, 200)
+  assert.equal(calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent')
+  assert.equal(calls[0].options.headers['x-goog-api-key'], 'test-secret-sentinel')
+  assert.doesNotMatch(calls[0].options.body, /untrusted-client-key|client-model/)
+  assert.ok(calls[0].options.signal instanceof AbortSignal)
+})
+test('provider HTTP, network, JSON, schema and incomplete response errors are sanitized', async () => {
+  const failures = [
+    async () => new Response('test-secret-sentinel', { status: 429 }),
+    async () => { throw new Error('test-secret-sentinel') },
+    async () => new Response('invalid json'),
+    async () => Response.json({ candidates: {} }),
+    async () => provider(draft, 'MAX_TOKENS'),
+    async () => provider({ ...draft, caption: ' ' }),
+    async () => provider({ ...draft, caption: 'x'.repeat(10001) }),
+    async () => provider({ ...draft, hashtags: ['x'.repeat(81)] }),
+    async () => provider({ ...draft, hashtags: ['A', 'A', 'B'] }),
+    async () => provider({ ...draft, hashtags: ['#Bad', 'B', 'C'] }),
+  ]
+  for (const fetch of failures) {
+    const result = await setup({ fetch }).request()
+    assert.equal(result.status, 502)
+    assert.equal(result.headers.get('access-control-allow-origin'), 'http://localhost:5173')
+    assert.doesNotMatch(await result.text(), /test-secret-sentinel/)
+  }
+})
+test('timeout stays active while reading provider body', async () => {
+  const result = await setup({ timeoutMs: 5, fetch: async (_url, { signal }) => new Response(new ReadableStream({ start(controller) { signal.addEventListener('abort', () => controller.error(new Error('timeout')), { once: true }) } })) }).request()
+  assert.equal(result.status, 502)
+})
+
+test('oversized provider bodies fail safely without returning partial drafts', async () => {
+  const result = await setup({ fetch: async () => new Response('x'.repeat(128 * 1024 + 1)) }).request()
+  assert.equal(result.status, 502)
+  assert.deepEqual(await result.json(), { error: 'AI generation failed. Please retry.' })
+})
+test('credits use verified user identity, never a body-supplied user ID', async () => {
+  const users = []
+  const result = await setup({ consumeCredit: async (id) => { users.push(id); return true } }).request({ ...brief, user_id: 'forged-user', language: 'ar', market: 'UAE' })
+  assert.equal(result.status, 200)
+  assert.deepEqual(users, ['verified-user-id'])
+})
+test('exhausted quotas and usage-service failures never call Gemini', async () => {
+  for (const [consumeCredit, status] of [[async () => false, 429], [async () => { throw new Error('private-details') }, 503]]) {
+    const { request, calls } = setup({ consumeCredit })
+    const result = await request()
+    assert.equal(result.status, status)
+    assert.equal(calls.length, 0)
+    assert.doesNotMatch(await result.text(), /private-details/)
+  }
+})
+test('Arabic Gulf prompts carry validated preferences and accept Arabic hashtags', async () => {
+  const { request, calls } = setup({ fetch: async () => provider({ ...draft, hashtags: ['تسويق', 'أعمال', 'الإمارات'] }) })
+  assert.equal((await request({ ...brief, language: 'ar', market: 'UAE' })).status, 200)
+  const sent = JSON.parse(calls[0].options.body)
+  assert.match(sent.systemInstruction.parts[0].text, /Modern Standard Arabic/)
+  assert.match(sent.systemInstruction.parts[0].text, /UAE/)
+  for (const invalid of [{ language: 'invalid' }, { market: 'Unknown' }, { language: [] }]) {
+    assert.equal((await request({ ...brief, ...invalid })).status, 400)
+  }
+})
+
+test('legacy language names and public-key dictionaries work without client credentials', async () => {
+  for (const language of ['English', 'Arabic', 'Hindi', 'Urdu']) {
+    const { request } = setup({ env: { SUPABASE_ANON_KEY: undefined, SUPABASE_PUBLISHABLE_KEYS: '{"default":"fixture-public-key"}' } })
+    assert.equal((await request({ ...brief, language })).status, 200)
+  }
+})
+
+test('attachments are owner-scoped and loaded with the caller session before Gemini', async () => {
+  const reads = []
+  const { request, calls } = setup({ readMedia: async (...args) => { reads.push(args); return { mimeType: 'image/png', data: 'mock-base64-only' } } })
+  const result = await request({ ...brief, media: { path: 'verified-user-id/opaque-file', type: 'image/png' } })
+  assert.equal(result.status, 200)
+  assert.deepEqual(reads, [['verified-user-id/opaque-file', 'image/png', 'valid-token']])
+  assert.equal(JSON.parse(calls[0].options.body).contents[0].parts[1].inlineData.data, 'mock-base64-only')
+  for (const path of ['other-user/file', 'verified-user-id/../file', 'verified-user-id/folder/file']) {
+    assert.equal((await request({ ...brief, media: { path, type: 'image/png' } })).status, 400)
+  }
+  assert.equal(reads.length, 1)
+})
+
+test('unreadable attachments and overlong X drafts fail safely', async () => {
+  const { request, calls } = setup({ readMedia: async () => { throw new Error('private-storage-detail') } })
+  const failure = await request({ ...brief, media: { path: 'verified-user-id/file', type: 'image/png' } })
+  assert.equal(failure.status, 400)
+  assert.doesNotMatch(await failure.text(), /private-storage-detail/)
+  assert.equal(calls.length, 0)
+  assert.equal((await setup({ fetch: async () => provider({ caption: 'a'.repeat(279), hashtags: ['LongTag'] }) }).request({ ...brief, platform: 'X' })).status, 502)
+})

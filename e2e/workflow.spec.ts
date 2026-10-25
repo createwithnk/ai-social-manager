@@ -1,0 +1,197 @@
+import { expect, test, type Page } from '@playwright/test'
+
+test.beforeEach(async ({ page }) => {
+  // Only the private localhost preview is reachable. Never contact Supabase, Gemini or fonts.
+  await page.route('**/*', (route) => new URL(route.request().url()).hostname === '127.0.0.1' ? route.continue() : route.abort())
+  await page.goto('/')
+})
+async function navigate(page: Page, name: string, menuName = 'Open navigation') {
+  if (await page.getByRole('button', { name: menuName }).isVisible()) await page.getByRole('button', { name: menuName }).click()
+  await page.getByRole('button', { name, exact: true }).click()
+}
+
+test('keyboard navigation announces the new screen without stealing focus during editing', async ({ page }) => {
+  const post = {
+    id: 'fixture-keyboard', idea: 'Reviewed content for a UAE business', platform: 'Instagram', tone: 'Friendly',
+    caption: 'A reviewed caption', hashtags: ['UAE'], status: 'approved', createdAt: '2026-10-01T10:00:00Z',
+  }
+  await page.evaluate(post => localStorage.setItem('aasiflow-posts', JSON.stringify([post])), post)
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Dashboard', exact: true, includeHidden: true })).toHaveAttribute('aria-current', 'page')
+  await page.getByRole('button', { name: 'View', exact: true }).focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('heading', { name: 'Content details', exact: true })).toBeFocused()
+  await page.getByRole('button', { name: 'Back', exact: true }).focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('heading', { name: 'Your content workspace', exact: true })).toBeFocused()
+  await page.getByRole('button', { name: 'View', exact: true }).click()
+  await page.getByRole('checkbox', { name: 'I approve converting this post to a draft' }).check()
+  await page.getByRole('button', { name: 'Edit', exact: true }).focus()
+  await page.keyboard.press('Enter')
+  const title = page.getByRole('heading', { name: 'Create new content', exact: true })
+  await expect(title).toBeFocused()
+  const idea = page.getByLabel('Content idea', { exact: true })
+  await idea.fill('An edited content idea for a UAE business')
+  await expect(idea).toBeFocused()
+  await page.getByRole('button', { name: 'New post', exact: true }).click()
+  await expect(title).toBeFocused()
+  await expect(idea).toHaveValue('')
+  await navigate(page, 'Content calendar')
+  await expect(page.getByRole('heading', { name: 'Content calendar', exact: true })).toBeFocused()
+  await expect(page.getByRole('button', { name: 'Content calendar', exact: true, includeHidden: true })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('button', { name: 'Dashboard', exact: true, includeHidden: true })).not.toHaveAttribute('aria-current')
+})
+
+test('Arabic calendar and read-only details use the selected locale without changing the schedule', async ({ page }) => {
+  const post = {
+    id: 'fixture-arabic-schedule', idea: 'عرض خاص للشركات في الإمارات', platform: 'Instagram', tone: 'Friendly', language: 'ar',
+    caption: 'محتوى معتمد', hashtags: ['الإمارات'], status: 'scheduled', createdAt: '2026-10-01T10:00:00Z',
+    scheduledFor: '2099-05-20T16:45:00.000Z',
+  }
+  await page.evaluate(post => localStorage.setItem('aasiflow-posts', JSON.stringify([post])), post)
+  await page.reload()
+  await navigate(page, 'Content calendar')
+  const displayedInput = await page.getByLabel(`Schedule ${post.idea}`, { exact: true }).inputValue()
+  await page.getByLabel('Interface language').focus()
+  await page.getByLabel('Interface language').selectOption('ar')
+  await expect(page.getByLabel('لغة الواجهة')).toBeFocused()
+  await expect(page.getByLabel(`جدولة ${post.idea}`, { exact: true })).toHaveValue(displayedInput)
+  const date = await page.evaluate(value => new Date(value).toLocaleString('ar-AE'), post.scheduledFor)
+  const created = await page.evaluate(value => new Date(value).toLocaleString('ar-AE'), post.createdAt)
+  await expect(page.locator('.post p')).toHaveText(`موعد الجدولة ${date}`)
+  await expect(page.locator('.post')).not.toContainText('Scheduled for')
+  await page.getByRole('button', { name: 'عرض', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'تفاصيل المحتوى', exact: true })).toBeFocused()
+  await expect(page.locator('dd')).toHaveText(['Instagram', 'ودّي', created, date])
+  await page.getByRole('button', { name: 'رجوع', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'تقويم المحتوى', exact: true })).toBeFocused()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))).toEqual([post])
+})
+test('approval cannot revive after edits; scheduled edits clear status and schedule', async ({ page }) => {
+  await page.getByRole('button', { name: 'Create with AI' }).click()
+  await page.getByLabel('Content idea', { exact: true }).fill('Practical content tips for small businesses in the UAE')
+  await page.getByRole('button', { name: 'Generate draft' }).click()
+  const approve = page.getByRole('checkbox', { name: /I reviewed and approve/ })
+  const save = page.getByRole('button', { name: 'Approve & save' })
+  await expect(save).toBeDisabled()
+  await approve.check()
+  const caption = page.getByLabel('Caption', { exact: true })
+  const original = await caption.inputValue()
+  await caption.fill('Changed caption')
+  await expect(approve).not.toBeChecked()
+  await caption.fill(original)
+  await expect(save).toBeDisabled()
+  await approve.check()
+  await save.click()
+  await navigate(page, 'Content calendar')
+  const schedule = page.getByRole('button', { name: 'Schedule', exact: true })
+  await page.getByLabel(/Schedule Practical/).fill('2000-01-01T10:00')
+  await schedule.click()
+  await expect(page.getByRole('alert')).toContainText('future')
+  await page.getByLabel(/Schedule Practical/).fill('2099-01-01T10:00')
+  await schedule.click()
+  await expect(page.getByRole('button', { name: 'Unschedule' })).toBeVisible()
+  await page.getByRole('button', { name: 'View', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeDisabled()
+  const beforeEdit = await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))
+  expect(beforeEdit[0].status).toBe('scheduled')
+  await page.getByRole('checkbox', { name: 'I approve converting this post to a draft' }).check()
+  await page.getByRole('button', { name: 'Edit', exact: true }).click()
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))
+  expect(saved[0].status).toBe('draft')
+  expect(saved[0].scheduledFor).toBeUndefined()
+  await expect(page.getByRole('checkbox', { name: /I reviewed and approve/ })).not.toBeChecked()
+})
+
+test('saving a reviewed draft consumes consent and never approves, schedules or publishes it', async ({ page }) => {
+  await page.getByRole('button', { name: 'Create with AI' }).click()
+  await page.getByLabel('Content idea', { exact: true }).fill('Simple content ideas for a small UAE business')
+  await page.getByRole('button', { name: 'Generate draft' }).click()
+  const review = page.getByRole('checkbox', { name: /I reviewed and approve/ })
+  const save = page.getByRole('button', { name: 'Save draft', exact: true })
+  await expect(save).toBeDisabled()
+  await review.check()
+  await save.click()
+  const update = page.getByRole('button', { name: 'Update draft', exact: true })
+  await expect(review).not.toBeChecked()
+  await expect(update).toBeDisabled()
+  await expect(page.getByRole('button', { name: 'Approve & save' })).toBeDisabled()
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))
+  expect(stored).toHaveLength(1)
+  expect(stored[0].status).toBe('draft')
+  expect(stored[0].scheduledFor).toBeUndefined()
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Continue draft' })).toBeVisible()
+  await page.getByRole('button', { name: 'Continue draft' }).click()
+  await expect(review).not.toBeChecked()
+  await expect(update).toBeDisabled()
+})
+
+test('view and cancelled edit leave approved content unchanged; confirmation is not reused', async ({ page }) => {
+  const post = {
+    id: 'fixture-approved', idea: 'An approved UAE business idea', platform: 'Instagram', tone: 'Friendly',
+    caption: 'Reviewed caption', hashtags: ['UAE'], status: 'approved', createdAt: '2026-10-01T10:00:00Z',
+  }
+  await page.evaluate(post => localStorage.setItem('aasiflow-posts', JSON.stringify([post])), post)
+  await page.reload()
+  await page.getByRole('button', { name: 'View', exact: true }).click()
+  const confirmation = page.getByRole('checkbox', { name: 'I approve converting this post to a draft' })
+  await expect(confirmation).not.toBeChecked()
+  await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeDisabled()
+  await confirmation.check()
+  await page.getByRole('button', { name: 'Back', exact: true }).click()
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))).toEqual([post])
+  await page.getByRole('button', { name: 'View', exact: true }).click()
+  await expect(confirmation).not.toBeChecked()
+  await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeDisabled()
+})
+
+test('reschedule without changing the displayed time keeps the existing schedule', async ({ page }) => {
+  const post = {
+    id: 'fixture-scheduled', idea: 'A scheduled UAE business idea', platform: 'Instagram', tone: 'Friendly',
+    caption: 'Reviewed caption', hashtags: ['UAE'], status: 'scheduled', createdAt: '2026-10-01T10:00:00Z',
+    scheduledFor: '2099-05-20T16:45:00.000Z',
+  }
+  await page.evaluate(post => localStorage.setItem('aasiflow-posts', JSON.stringify([post])), post)
+  await page.reload()
+  await navigate(page, 'Content calendar')
+  await page.getByRole('button', { name: 'Reschedule', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Reschedule', exact: true })).toBeEnabled()
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('aasiflow-posts') ?? '[]'))
+  expect(stored[0].scheduledFor).toBe(post.scheduledFor)
+  await page.reload()
+  await navigate(page, 'Content calendar')
+  await expect(page.getByRole('button', { name: 'Unschedule', exact: true })).toBeVisible()
+})
+test('Arabic language preference survives reload and Arabic captions use RTL', async ({ page }, testInfo) => {
+  if (testInfo.project.name === 'mobile') {
+    await expect(page.getByRole('button', { name: 'Open navigation' })).toBeVisible()
+    expect(await page.evaluate(() => window.matchMedia('(max-width: 900px)').matches)).toBe(true)
+    const toggle = page.getByRole('button', { name: 'Open navigation' })
+    await toggle.click()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await expect(page.getByRole('button', { name: 'Close navigation' })).toBeFocused()
+    await page.keyboard.press('Shift+Tab')
+    await expect(page.getByRole('button', { name: 'Media library', exact: true })).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('button', { name: 'Close navigation' })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(toggle).toBeFocused()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  }
+  await page.getByLabel('Interface language').selectOption('ar')
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
+  await expect(page.getByRole('heading', { name: 'مساحة المحتوى الخاصة بك' })).toBeVisible()
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar')
+  await page.getByRole('button', { name: 'إنشاء بالذكاء الاصطناعي' }).click()
+  await page.getByLabel('فكرة المحتوى', { exact: true }).fill('نصائح عملية لإنشاء محتوى أفضل للشركات الصغيرة')
+  await page.getByLabel('لغة المحتوى', { exact: true }).selectOption('ar')
+  await page.getByLabel('السوق المستهدف', { exact: true }).selectOption('UAE')
+  await page.getByRole('button', { name: 'إنشاء مسودة' }).click()
+  await expect(page.getByLabel('نص المنشور', { exact: true })).toHaveAttribute('dir', 'rtl')
+  await expect(page.getByLabel('نص المنشور', { exact: true })).toHaveValue(/فكرة بسيطة/)
+  await expect(page.getByRole('button', { name: 'موافقة وحفظ' })).toBeDisabled()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  await page.screenshot({ path: `test-results/arabic-${test.info().project.name}.png`, fullPage: true })
+})
