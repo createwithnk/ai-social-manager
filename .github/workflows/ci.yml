@@ -1,8 +1,9 @@
 name: Validate development
 on:
   pull_request:
+    branches: [main, chore/security-and-approval-hardening, fix/beta-readiness-20261019]
   push:
-    branches: [chore/security-and-approval-hardening, fix/beta-readiness-20261019]
+    branches: [main, chore/security-and-approval-hardening, fix/beta-readiness-20261019]
 permissions:
   contents: read
 concurrency:
