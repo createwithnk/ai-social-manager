@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { connectionLabel, platformLabel, queueLabel, socialLabels } from './labels.ts'
 import { canCancelStatus, validateSnapshot } from './service.ts'
 import type { SocialLocale, SocialPlatform, SocialPublishingApi, SocialPublishingSnapshot } from './types.ts'
@@ -12,16 +12,20 @@ export default function SocialPublishingDashboard({ enabled = false, locale = 'e
   const [snapshot, setSnapshot] = useState<SocialPublishingSnapshot>(empty)
   const [loading, setLoading] = useState(false), [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState(''), [notice, setNotice] = useState('')
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
-  async function refresh() {
-    if (!enabled || !api) { setSnapshot(empty); return }
+  const refreshError = t.refreshError
+  const refresh = useCallback(async () => {
+    if (!enabled || !api) return
     setLoading(true); setError('')
     try { setSnapshot(validateSnapshot(await api.load())) }
-    catch { setError(t.refreshError) }
+    catch { setError(refreshError) }
     finally { setLoading(false) }
-  }
-  useEffect(() => { if (enabled && api) void refresh(); else setSnapshot(empty) }, [enabled, api])
+  }, [enabled, api, refreshError])
+  useEffect(() => {
+    if (!enabled || !api) return
+    let active = true
+    void api.load().then(value => { if (active) setSnapshot(validateSnapshot(value)) }).catch(() => { if (active) setError(refreshError) })
+    return () => { active = false }
+  }, [enabled, api, refreshError])
   async function connect(platform: SocialPlatform) {
     if (!enabled || !api || busy) return
     setBusy(platform); setError(''); setNotice('')
@@ -40,7 +44,7 @@ export default function SocialPublishingDashboard({ enabled = false, locale = 'e
   }
   return <section className="velo-social-publishing" dir={locale === 'ar' ? 'rtl' : 'ltr'} lang={locale} aria-labelledby={`${id}-title`} aria-busy={loading || !!busy}>
     <header className="vsp-header"><div><p className="vsp-eyebrow">VELO · SOCIAL</p><h2 id={`${id}-title`}>{t.title}</h2><p>{t.intro}</p></div><button type="button" onClick={() => void refresh()} disabled={!enabled || !api || loading || !!busy}>{t.refresh}</button></header>
-    {!enabled || !api || !mounted ? <p className="vsp-note" role="status">{t.paused}</p> : <>
+    {!enabled || !api ? <p className="vsp-note" role="status">{t.paused}</p> : <>
       {!snapshot.enabled && <p className="vsp-note" role="status">{t.paused}</p>}
       <section aria-labelledby={`${id}-connections`} className="vsp-section"><h3 id={`${id}-connections`}>{t.connections}</h3><div className="vsp-platform-grid">
         {snapshot.connections.map(item => <article className="vsp-platform" key={item.platform}>

@@ -18,17 +18,17 @@ const initial: SocialPublishingSnapshot = {
   ],
 }
 function fixtureApi(): SocialPublishingApi {
-  let data = structuredClone(initial)
+  const data = structuredClone(initial)
   return {
     load: async () => { document.body.dataset.loads = String(Number(document.body.dataset.loads ?? '0') + 1); return structuredClone(data) },
     connect: async (platform: SocialPlatform) => { if (platform === 'tiktok') throw new Error('private fixture error'); data.connections = data.connections.map(item => item.platform === platform ? { ...item, status: 'connected' as const } : item) },
     cancel: async (id: string) => { if (id === 'failed_1') throw new Error('private fixture error'); data.queue = data.queue.map(item => item.id === id ? { ...item, status: 'cancelled' as const } : item) },
   }
 }
-function Harness() {
+export default function Harness() {
   const [locale, setLocale] = useState<'en'|'ar'>(new URLSearchParams(location.search).get('lang') === 'ar' ? 'ar' : 'en')
   const [enabled, setEnabled] = useState(new URLSearchParams(location.search).get('mode') !== 'disabled')
-  const api = useMemo(fixtureApi, [])
+  const api = useMemo(() => fixtureApi(), [])
   return <main style={{ padding: 12, fontFamily: 'sans-serif' }}>
     <button onClick={() => setLocale(value => value === 'en' ? 'ar' : 'en')}>Toggle language</button>
     <button onClick={() => setEnabled(value => !value)}>Toggle enabled</button>
