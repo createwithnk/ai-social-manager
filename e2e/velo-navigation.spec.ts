@@ -13,7 +13,7 @@ test('main navigation mounts Velo Hub and opens each module without changing app
   await expect(hubNav).toBeVisible()
   await hubNav.click()
   await expect(page.getByRole('heading', { name: 'Velo Workspace Hub', exact: true })).toBeFocused()
-  await expect(page.locator('header').getByText('VELO WORKSPACE', { exact: true })).toBeVisible()
+  await expect(page.locator('.app-shell > main > header').getByText('VELO WORKSPACE', { exact: true })).toBeVisible()
   const hub = page.getByTestId('velo-workspace-hub')
   await expect(hub).toBeVisible()
 
@@ -25,5 +25,5 @@ test('main navigation mounts Velo Hub and opens each module without changing app
   }
 
   await expect(hub.getByTestId('velo-hub-card-drive-import')).toBeVisible()
-  await expect(page.getByText('Nothing is published without your approval.', { exact: true })).toBeVisible()
+  await expect(page.getByText('Nothing is published without your approval.', { exact: true })).toHaveCount(1)
 })
