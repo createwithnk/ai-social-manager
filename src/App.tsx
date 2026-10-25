@@ -14,9 +14,10 @@ import AdminDashboard from './AdminDashboard'
 import BetaGate from './BetaGate'
 import { reportRuntimeError } from './lib/monitoring'
 import ModuleWorkspace from './features/velo/ModuleWorkspace'
+import VeloWorkspaceHub from './features/velo-hub/VeloWorkspaceHub'
 import type { ContentLanguage, Market, Platform, Post } from './types'
 
-type View = 'dashboard' | 'create' | 'calendar' | 'detail' | 'media' | 'admin' | 'tools'
+type View = 'dashboard' | 'create' | 'calendar' | 'detail' | 'media' | 'admin' | 'tools' | 'velo-hub'
 
 function loadLocalPosts(): Post[] {
   try {
@@ -264,18 +265,20 @@ function Workspace({ auth }: { auth: AuthState }) {
         <Nav active={view === 'calendar'} icon={<CalendarDays />} label={t("Content calendar")} onClick={() => { setView('calendar'); setMobile(false) }} />
         {auth.user && <Nav active={view === 'admin'} icon={<BarChart3 />} label={t("Owner monitoring")} onClick={() => { setView('admin'); setMobile(false) }} />}
         <Nav active={view === 'tools'} icon={<WandSparkles />} label={t("Velo tools")} onClick={() => { setView('tools'); setMobile(false) }} />
+        <Nav active={view === 'velo-hub'} icon={<LayoutDashboard />} label="Velo Hub" onClick={() => { setView('velo-hub'); setMobile(false) }} />
         <Nav active={view === 'media'} icon={<FileText />} label={t("Media library")} onClick={() => { setView('media'); setMobile(false) }} />
       </nav>
       <div className="guardrail"><CheckCircle2 /><div><strong>{t("Approval protected")}</strong><span>{t("Nothing is published without your approval.")}</span></div></div>
     </aside>
     <main>
-      <header><LanguageSwitcher /><button ref={menuButton} aria-controls="workspace-navigation" aria-expanded={mobile} className="menu" onClick={() => setMobile(true)} aria-label={t("Open navigation")}><Menu /></button><div><small>{t("AI SOCIAL MEDIA WORKSPACE")}</small><h1 ref={viewHeading} tabIndex={-1}>{view === 'dashboard' ? t("Your content workspace") : view === 'create' ? t("Create new content") : view === 'detail' ? t("Content details") : view === 'admin' ? t("Owner monitoring") : view === 'tools' ? t("Velo tools") : view === 'media' ? t("Media library") : t("Content calendar")}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut />{t("Log out")}</button></div>}<button className="primary compact" onClick={createPost}><Plus />{t("New post")}</button></header>
+      <header><LanguageSwitcher /><button ref={menuButton} aria-controls="workspace-navigation" aria-expanded={mobile} className="menu" onClick={() => setMobile(true)} aria-label={t("Open navigation")}><Menu /></button><div><small>VELO WORKSPACE</small><h1 ref={viewHeading} tabIndex={-1}>{view === 'dashboard' ? t("Your content workspace") : view === 'create' ? t("Create new content") : view === 'detail' ? t("Content details") : view === 'admin' ? t("Owner monitoring") : view === 'tools' ? t("Velo tools") : view === 'velo-hub' ? 'Velo Workspace Hub' : view === 'media' ? t("Media library") : t("Content calendar")}</h1></div>{auth.user && <div className="account"><span>{auth.user.email}</span><button className="ghost" onClick={() => { void signOut() }} disabled={auth.loading}><LogOut />{t("Log out")}</button></div>}<button className="primary compact" onClick={createPost}><Plus />{t("New post")}</button></header>
       {(postsError ?? auth.error) && <p className="workspace-error" role="alert">{t(postsError ?? auth.error ?? '')}</p>}
       {view === 'dashboard' && <Dashboard posts={posts} drafts={posts.filter((post) => post.status === 'draft').length} approved={posts.filter((post) => post.status === 'approved').length} scheduled={posts.filter((post) => post.status === 'scheduled').length} onCreate={createPost} onEdit={editDraft} onView={(post) => viewPost(post, 'dashboard')} loading={postsLoading} />}
       {view === 'create' && <Generator key={editingPost?.id ?? `new-${composerKey}`} initialPost={editingPost} userId={userId} onSave={savePost} disabled={postsLoading} />}
       {view === 'admin' && <AdminDashboard />}
       {view === 'media' && <MediaLibrary userId={userId} />}
       {view === 'tools' && <ModuleWorkspace key={userId ?? 'local-preview'} ownerId={userId ?? 'local-preview'} posts={posts} />}
+      {view === 'velo-hub' && <VeloWorkspaceHub key={userId ?? 'local-preview'} ownerId={userId ?? 'local-preview'} posts={posts} initialLocale={locale === 'ar' ? 'ar' : 'en'} />}
       {view === 'calendar' && <Calendar posts={posts} onUpdate={persistPost} onView={(post) => viewPost(post, 'calendar')} disabled={postsLoading} />}
       {view === 'detail' && viewingPost && <PostDetail key={viewingPost.id} post={viewingPost} onBack={() => { setViewingPost(null); setView(detailBackView) }} onEdit={editApprovedOrScheduledPost} disabled={postsLoading} />}
     </main>
